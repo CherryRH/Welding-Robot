@@ -10,6 +10,7 @@ public class RobotModel
     public RobotConfig RobotConfig { get; private set; }
 
     public JointModel[] Joints { get; private set; }
+    public float[] JointAngles { get => System.Array.ConvertAll(Joints, joint => joint.Angle); }
     public int JointsCount => Joints.Length;
 
     /// <summary>
@@ -17,6 +18,7 @@ public class RobotModel
     /// </summary>
     public Vector3 TCPPosition { get; set; }
     public Quaternion TCPRotation { get; set; }
+    public Pose TCPPose { get => new(TCPPosition, TCPRotation); }
     // ¹¤¾ß×ËÌ¬Å·À­½Ç
     public Vector3 ToolEularAngles { get; set; }
 
@@ -25,6 +27,7 @@ public class RobotModel
     /// </summary>
     public Vector3 UTCPPosition { get; set; }
     public Quaternion UTCPRotation { get; set; }
+    public Pose UTCPPose { get => new(UTCPPosition, UTCPRotation); }
 
     public InverseKinematics IK { get; private set; } = new();
 

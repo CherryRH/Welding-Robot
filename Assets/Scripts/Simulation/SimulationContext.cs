@@ -20,7 +20,7 @@ public class SimulationContext : MonoBehaviour
 
     // 焊接规划层
     public string WeldTaskFileName;
-    public WeldTask WeldTaskData;
+    public WeldTask WeldTask;
     public WeldSeamSampler Sampler = new();
     public WeldPlanner WeldPlanner = new();
 
@@ -45,16 +45,18 @@ public class SimulationContext : MonoBehaviour
     {
         // 初始化配置
         RobotModel.Init(RobotConfig);
+        ForwardKinematics.Compute(RobotModel);
         Binder.Bind(RobotModel);
         WeldPlanner.Init(WorkpieceBinder.GetOriginPoint());
         // 读取焊接任务文件（WeldTaskFileName 应为绝对路径）
-        WeldTaskData = WeldTaskLoader.LoadFromFile(WeldTaskFileName);
+        WeldTask = WeldTaskLoader.LoadFromFile(WeldTaskFileName);
     }
 
     void Start()
     {
-        // 进行仿真准备工作，焊缝采样和监控记录初始化
-        Sampler.Sample(WeldTaskData);
+        // 进行仿真准备工作，焊缝采样和指令规划
+        Sampler.Sample(WeldTask);
+        WeldPlanner.PlanInstruction(RobotModel, Sampler, WeldTask);
         // 焊缝可视化
         WeldSeamVisualizer.ShowSeams(Sampler, 1e10f);
         WeldSeamVisualizer.ShowSamplePoints(Sampler, 1e10f);

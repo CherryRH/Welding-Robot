@@ -55,8 +55,11 @@ public class KeyInputManager : MonoBehaviour
                 case KeyCode.P:
                     LogUtil.PrintSimulationContextDebugLog(target);
                     break;
-                case KeyCode.O:
+                case KeyCode.I:
                     LogUtil.SaveSimulationContextLogToFile(target);
+                    break;
+                case KeyCode.O:
+                    WeldInstructionWriter.SaveToFile(target);
                     break;
             }
         };

@@ -5,7 +5,7 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 /// <summary>
-/// Json 工具（支持 UnityEngine.Vector3 与 WeldSeamData 的多态反序列化）
+/// Json 工具
 /// </summary>
 public static class JsonUtil
 {
@@ -17,7 +17,8 @@ public static class JsonUtil
             NullValueHandling = NullValueHandling.Ignore
         };
         settings.Converters.Add(new Vector3Converter());
-        settings.Converters.Add(new WeldSeamDataConverter());
+        settings.Converters.Add(new WeldSeamConverter());
+        settings.Converters.Add(new PoseConverter());
         return settings;
     }
 
@@ -71,7 +72,78 @@ public static class JsonUtil
         }
     }
 
-    private class WeldSeamDataConverter : JsonConverter
+    private class PoseConverter : JsonConverter
+    {
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(Pose);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartObject)
+            {
+                JObject jo = JObject.Load(reader);
+
+                // 读取位置信息
+                float x = jo["x"]?.Value<float>() ?? 0f;
+                float y = jo["y"]?.Value<float>() ?? 0f;
+                float z = jo["z"]?.Value<float>() ?? 0f;
+                Vector3 position = new(x, y, z);
+
+                // 优先尝试读取四元数
+                if (jo["qw"] != null && jo["qx"] != null && jo["qy"] != null && jo["qz"] != null)
+                {
+                    float qx = jo["qx"].Value<float>();
+                    float qy = jo["qy"].Value<float>();
+                    float qz = jo["qz"].Value<float>();
+                    float qw = jo["qw"].Value<float>();
+                    Quaternion rotation = new(qx, qy, qz, qw);
+                    return new Pose(position, rotation);
+                }
+                // 如果存在欧拉角，则转换为四元数
+                else if (jo["roll"] != null && jo["pitch"] != null && jo["yaw"] != null)
+                {
+                    float eulerX = jo["roll"].Value<float>();
+                    float eulerY = jo["pitch"].Value<float>();
+                    float eulerZ = jo["yaw"].Value<float>();
+                    Quaternion rotation = Quaternion.Euler(eulerX, eulerY, eulerZ);
+                    return new Pose(position, rotation);
+                }
+                // 默认使用单位四元数
+                else
+                {
+                    return new Pose(position, Quaternion.identity);
+                }
+            }
+
+            return new Pose(Vector3.zero, Quaternion.identity);
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            var v = (Pose)value;
+            Vector3 position = v.position;
+            Quaternion rotation = v.rotation;
+
+            Vector3 eulerAngles = rotation.eulerAngles;
+
+            writer.WriteStartObject();
+            writer.WritePropertyName("x"); writer.WriteValue(position.x);
+            writer.WritePropertyName("y"); writer.WriteValue(position.y);
+            writer.WritePropertyName("z"); writer.WriteValue(position.z);
+            writer.WritePropertyName("roll"); writer.WriteValue(eulerAngles.x);
+            writer.WritePropertyName("pitch"); writer.WriteValue(eulerAngles.y);
+            writer.WritePropertyName("yaw"); writer.WriteValue(eulerAngles.z);
+            writer.WritePropertyName("qx"); writer.WriteValue(rotation.x);
+            writer.WritePropertyName("qy"); writer.WriteValue(rotation.y);
+            writer.WritePropertyName("qz"); writer.WriteValue(rotation.z);
+            writer.WritePropertyName("qw"); writer.WriteValue(rotation.w);
+            writer.WriteEndObject();
+        }
+    }
+
+    private class WeldSeamConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
         {

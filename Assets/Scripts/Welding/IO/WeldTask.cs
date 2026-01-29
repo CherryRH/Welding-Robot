@@ -92,12 +92,7 @@ public class WeldSeam
     public float LengthDeviation;
 
     /// <summary>
-    /// 焊缝连接关系
+    /// 与下一个焊缝是否连续
     /// </summary>
-    public enum WeldSeamConnectionRelationship
-    {
-        Continuous,
-        Discontinuous
-    }
-    public WeldSeamConnectionRelationship ConnectionRelationship;
+    public bool IsContinous;
 }

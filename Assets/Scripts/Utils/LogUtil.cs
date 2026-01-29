@@ -232,7 +232,7 @@ public static class LogUtil
         sb.AppendLine("--- WeldTaskData ---");
         try
         {
-            var wtd = ctx.WeldTaskData;
+            var wtd = ctx.WeldTask;
             if (wtd == null)
             {
                 sb.AppendLine("WeldTaskData   : null");
@@ -259,7 +259,7 @@ public static class LogUtil
                         sb.AppendLine($"        Speed           : {seg.Speed:F3} m/s");
                         sb.AppendLine($"        GunAngle        : {seg.GunAngle:F3} deg");
                         sb.AppendLine($"        GunDistance     : {seg.GunDistance:F3} m");
-                        sb.AppendLine($"        ConnectionRelationship : {seg.ConnectionRelationship}");
+                        sb.AppendLine($"        IsContinous     : {seg.IsContinous}");
                         sb.AppendLine($"        StartPoint      : {FormatObject(seg.StartPoint)}");
                         sb.AppendLine($"        EndPoint        : {FormatObject(seg.EndPoint)}");
                         if (seg.MiddlePoints != null)

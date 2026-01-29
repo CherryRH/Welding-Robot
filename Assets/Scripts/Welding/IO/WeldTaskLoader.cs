@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -19,7 +20,7 @@ public static class WeldTaskLoader
         {
             var data = JsonUtil.Deserialize<WeldTask>(json) ?? new WeldTask();
             // 确保列表不为 null
-            data.WeldSeams ??= new System.Collections.Generic.List<WeldSeam>();
+            data.WeldSeams ??= new List<WeldSeam>();
             return data;
         }
         catch (Exception ex)

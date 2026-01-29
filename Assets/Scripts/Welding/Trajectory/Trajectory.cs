@@ -14,3 +14,20 @@ public class Trajectory
         return new float[0];
     }
 }
+
+/// <summary>
+/// Â·¾¶Æ¬¶Î
+/// </summary>
+public class TrajectorySegment
+{
+    public float StartTime;
+    public float EndTime;
+
+    public Pose StartTCP;
+    public Pose EndTCP;
+
+    public float[] QStart;
+    public float[] QEnd;
+
+    public PathInterpolation[] Interpolations;
+}
