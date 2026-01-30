@@ -85,6 +85,9 @@ public class ArcGeometry : WeldSeamGeometry
 
         if (this.normal.sqrMagnitude < 1e-6f)
             this.normal = Vector3.forward;
+        // 保持法向向上
+        if (this.normal.z < 0)
+            this.normal.z = -this.normal.z;
 
         // 构建圆平面坐标系
         u = v1;
