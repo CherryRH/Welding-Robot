@@ -45,7 +45,7 @@ public class SimulationContext : MonoBehaviour
     {
         // 初始化配置
         RobotModel.Init(RobotConfig);
-        ForwardKinematics.Compute(RobotModel);
+        FK.Compute(RobotModel);
         Binder.Bind(RobotModel);
         WeldPlanner.Init(WorkpieceBinder.GetOriginPoint());
         // 读取焊接任务文件（WeldTaskFileName 应为绝对路径）
@@ -54,9 +54,8 @@ public class SimulationContext : MonoBehaviour
 
     void Start()
     {
-        // 进行仿真准备工作，焊缝采样和指令规划
+        // 进行仿真准备工作，焊缝采样
         Sampler.Sample(WeldTask);
-        WeldPlanner.PlanInstruction(RobotModel, Sampler, WeldTask);
         // 焊缝可视化
         WeldSeamVisualizer.ShowSeams(Sampler, 1e10f);
         WeldSeamVisualizer.ShowSamplePoints(Sampler, 1e10f);
@@ -77,7 +76,7 @@ public class SimulationContext : MonoBehaviour
             StateMachine.Update(this, Clock.FixedDeltaTime);
 
             // 正向运动学计算，更新机械臂姿态、变换矩阵
-            ForwardKinematics.Compute(RobotModel);
+            FK.Compute(RobotModel);
             // 应用 Unity 机械臂姿态，更新 Unity 坐标和姿态
             Binder.Apply();
             // 调用仿真更新回调函数，更新 UI 等
@@ -87,7 +86,7 @@ public class SimulationContext : MonoBehaviour
         // Debug
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            
+            Debug.Log(RobotModel.Joints[2].WorldTransform.transpose * Matrix4x4.Rotate(RobotModel.TCPRotation));
         }
     }
 
@@ -99,5 +98,10 @@ public class SimulationContext : MonoBehaviour
     public void TryInput(KeyCode commandKey, int num = -1)
     {
         StateMachine.HandleInput(this, commandKey, num);
+    }
+
+    public void TryChangeIKMethod()
+    {
+        RobotModel.IK.SwitchMethod();
     }
 }

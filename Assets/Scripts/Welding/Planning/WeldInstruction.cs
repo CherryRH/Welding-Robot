@@ -30,15 +30,19 @@ public class WeldInstruction
     public bool IsContinous;
 
     // 到达点位后的暂停时间（秒）
-    public float PauseDuration;
+    public float Pause;
 
-    public WeldInstruction(WeldInstructionType type, Pose pose, float speed, bool isContinous, float pauseDuration)
+    // 所属焊缝ID
+    public int SeamID;
+
+    public WeldInstruction(WeldInstructionType type, Pose pose, float speed, bool isContinous, float pauseDuration, int seamID)
     {
         Type = type;
         TargetPose = pose;
         Speed = speed;
         IsContinous = isContinous;
-        PauseDuration = pauseDuration;
+        Pause = pauseDuration;
+        SeamID = seamID;
     }
 
     public void BindJoints(float[] joints)
@@ -48,17 +52,17 @@ public class WeldInstruction
 
     public static WeldInstruction MoveTo(Pose pose, float speed, bool continous, float pause = 0f)
     {
-        return new WeldInstruction(WeldInstructionType.Move, pose, speed, continous, pause);
+        return new WeldInstruction(WeldInstructionType.Move, pose, speed, continous, pause, -1);
     }
 
-    public static WeldInstruction WeldTo(Pose pose, float speed, bool continous, float pause = 0f)
+    public static WeldInstruction WeldTo(Pose pose, float speed, bool continous, int seamID, float pause = 0f)
     {
-        return new WeldInstruction(WeldInstructionType.Weld, pose, speed, continous, pause);
+        return new WeldInstruction(WeldInstructionType.Weld, pose, speed, continous, pause, seamID);
     }
 
     public static WeldInstruction AdjustTo(Pose pose, float speed, float pause = 0f)
     {
-        return new WeldInstruction(WeldInstructionType.Adjust, pose, speed, false, pause);
+        return new WeldInstruction(WeldInstructionType.Adjust, pose, speed, false, pause, -1);
     }
 
 }

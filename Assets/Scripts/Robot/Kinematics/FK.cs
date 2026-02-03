@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 正向运动学（使用 MDH 参数，矩阵顺序按 α -> a -> θ -> d）
 /// </summary>
-public static class ForwardKinematics
+public static class FK
 {
     public static Pose Compute(RobotModel robot)
     {
@@ -31,6 +31,7 @@ public static class ForwardKinematics
         // TCP 偏移
         Matrix4x4 tcp = Matrix4x4.Translate(robot.RobotConfig.TCPOffset);
         Matrix4x4 tcpT = T * tcp;
+        robot.TCPTransform = tcpT;
         // 将 TCP 的法兰坐标系（J6）转换为工具坐标系
         Vector3 toolRotation = robot.RobotConfig.ToolRotation;
         Matrix4x4 flangeToTool = MathUtil.RotX(toolRotation.x) * MathUtil.RotY(toolRotation.y) * MathUtil.RotZ(toolRotation.z);
@@ -53,7 +54,8 @@ public static class ForwardKinematics
     public static Pose ComputePoseFromAngles(RobotModel robot, float[] angles)
     {
         Matrix4x4 T = Matrix4x4.identity;
-        for (int i = 0; i < robot.Joints.Length; i++)
+        int n = Math.Min(angles.Length, robot.Joints.Length);
+        for (int i = 0; i < n; i++)
         {
             var jp = robot.RobotConfig.JointsParameters[i];
             float theta = angles[i] + jp.Theta;
@@ -66,6 +68,20 @@ public static class ForwardKinematics
         Vector3 pos = new(tcpT.m03, tcpT.m13, tcpT.m23);
         Quaternion rot = MathUtil.RotationFromMatrix(tcpT);
         return new Pose(pos, rot);
+    }
+
+    // 计算第 i 个关节的变换矩阵，基于给定角度数组
+    public static Matrix4x4 ComputeJointTransformMatrix(RobotModel robot, float[] angles, int jointIndex)
+    {
+        Matrix4x4 T = Matrix4x4.identity;
+        for (int i = 0; i <= jointIndex; i++)
+        {
+            var jp = robot.RobotConfig.JointsParameters[i];
+            float theta = angles[i] + jp.Theta;
+            Matrix4x4 Ti = MathUtil.MDH(jp.Alpha, jp.A, theta, jp.D);
+            T *= Ti;
+        }
+        return T;
     }
 
     // 计算第 i 个关节的世界位置（origin），基于给定角度数组

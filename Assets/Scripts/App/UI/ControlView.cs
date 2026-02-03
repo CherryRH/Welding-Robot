@@ -9,6 +9,7 @@ using UnityEngine;
 public class ControlView : MonoBehaviour
 {
     public TMP_Text StateText;
+    public TMP_Text IKText;
     public TMP_Text TimeText;
     public TMP_Text StateDetailText;
 
@@ -40,13 +41,6 @@ public class ControlView : MonoBehaviour
                 _ => "Unknown"
             };
             text += ", ";
-            text += context.RobotModel.IK.Method switch
-            {
-                InverseKinematics.IKMethod.CCD => "CCD",
-                InverseKinematics.IKMethod.JT => "JT",
-                _ => "Unknown"
-            };
-            text += ", ";
             text += tcpState.Symbol switch
             {
                 DataChangeSymbol.Increase => "Increase",
@@ -54,7 +48,24 @@ public class ControlView : MonoBehaviour
                 _ => "Stay"
             };
         }
+        else if (stateBase is WorkState workState)
+        {
+            
+        }
         StateDetailText.text = text;
+
+        switch (context.RobotModel.IK.Method)
+        {
+            case IK.IKMethod.CCD:
+                IKText.text = "CCD";
+                break;
+            case IK.IKMethod.JT:
+                IKText.text = "JT";
+                break;
+            case IK.IKMethod.ANALYTIC:
+                IKText.text = "ANALYTIC";
+                break;
+        }
     }
 
     public void OnStateChange(SimulationState from, SimulationState to)

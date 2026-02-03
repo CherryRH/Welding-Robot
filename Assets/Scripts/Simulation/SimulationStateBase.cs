@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Profiling;
 using static UnityEngine.GridBrushBase;
 
 /// <summary>
@@ -37,6 +38,7 @@ class IdleState : SimulationStateBase
     {
         if (ctx == null) return;
         if (key == KeyCode.Space) ctx.TryChangeState(SimulationState.Work);
+        if (key == KeyCode.LeftShift || key == KeyCode.RightShift) ctx.TryChangeIKMethod();
     }
 }
 
@@ -48,18 +50,41 @@ class WorkState : SimulationStateBase
     {
         // 进入 Working 时可以做准备工作（如果需要）
         ctx.Clock.Start();
+        // 规划指令序列
+        ctx.WeldPlanner.PlanInstruction(ctx.RobotModel, ctx.Sampler, ctx.WeldTask);
     }
 
     public override void Update(SimulationContext ctx, float dt)
     {
         // Working 状态负责推进模型仿真步进
         if (ctx == null) return;
+        // 规划（生产）
+        if (ctx.Trajectory.UnderHighWaterMark)
+        {
+            ctx.WeldPlanner.PlanTrajectory(
+                ctx.RobotModel,
+                ctx.Sampler,
+                ctx.Trajectory,
+                ctx.Clock.Time
+            );
+        }
+
+        // 执行（消费）
+        float[] joints = ctx.Trajectory.Evaluate(ctx.Clock.Time);
+        if (joints != null)
+        {
+            ctx.RobotModel.SetJointAngles(joints);
+        }
     }
 
     public override void Exit(SimulationContext ctx)
     {
         // 退出 Working 时可以做清理工作（如果需要）
         ctx.Clock.Stop();
+        // 清空路径队列
+        ctx.Trajectory.Clear();
+        // 重置规划器
+        ctx.WeldPlanner.Reset();
     }
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
@@ -171,7 +196,7 @@ class TCPState : SimulationStateBase
         {
             ControlledData = num;
         }
-        if (key == KeyCode.LeftShift || key == KeyCode.RightShift) ctx.RobotModel.IK.SwitchMethod();
+        if (key == KeyCode.LeftShift || key == KeyCode.RightShift) ctx.TryChangeIKMethod();
     }
 }
 

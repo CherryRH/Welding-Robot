@@ -11,7 +11,7 @@ public class WeldSeamSampler
     private float sampleInterval = 0.001f;
 
     // 焊缝几何数据，Key为焊缝ID，Value为焊缝几何对象
-    public Dictionary<int, WeldSeamGeometry> Geometries = new();
+    public Dictionary<int, PathGeometry> Geometries = new();
 
     // 采样结果，Key为焊缝ID，Value为焊枪TCP位姿列表
     public Dictionary<int, List<Pose>> Samples = new();
@@ -26,7 +26,7 @@ public class WeldSeamSampler
 
         foreach (var seam in task.WeldSeams)
         {
-            WeldSeamGeometry geo = seam.Type switch
+            PathGeometry geo = seam.Type switch
             {
                 WeldSeam.WeldSeamType.Line => new LineGeometry(seam.StartPoint, seam.EndPoint, seam.Normal),
 
@@ -42,7 +42,7 @@ public class WeldSeamSampler
         }
     }
 
-    private List<Pose> SampleGeometry(WeldSeam seam, WeldSeamGeometry geo)
+    private List<Pose> SampleGeometry(WeldSeam seam, PathGeometry geo)
     {
         int count = Mathf.Max(2, Mathf.CeilToInt(geo.Length / sampleInterval) + 1);
         List<Pose> poses = new(count);
@@ -83,6 +83,11 @@ public class WeldSeamSampler
         Quaternion gunRotation = Quaternion.LookRotation(gunDirection, weldDirection);
 
         return new Pose(gunPosition, gunRotation);
+    }
+
+    public List<Pose> TryGetSamples(int weldSeamID)
+    {
+        return Samples.ContainsKey(weldSeamID) ? Samples[weldSeamID] : null;
     }
 
     /// <summary>

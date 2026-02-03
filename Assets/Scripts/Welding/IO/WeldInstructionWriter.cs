@@ -57,7 +57,8 @@ public static class WeldInstructionWriter
                     } : new JObject(),
                     ["Speed"] = item.Speed,
                     ["IsContinous"] = item.IsContinous,
-                    ["PauseDuration"] = item.PauseDuration
+                    ["PauseDuration"] = item.Pause,
+                    ["SeamID"] = item.SeamID,
                 });
             }
             jo.Add("Instructions", jArr);

@@ -14,6 +14,11 @@ public class RobotModel
     public int JointsCount => Joints.Length;
 
     /// <summary>
+    /// TCP变换矩阵
+    /// </summary>
+    public Matrix4x4 TCPTransform { get; set; } = Matrix4x4.identity;
+
+    /// <summary>
     /// TCP 位姿（MDH 计算）
     /// </summary>
     public Vector3 TCPPosition { get; set; }
@@ -29,7 +34,7 @@ public class RobotModel
     public Quaternion UTCPRotation { get; set; }
     public Pose UTCPPose { get => new(UTCPPosition, UTCPRotation); }
 
-    public InverseKinematics IK { get; private set; } = new();
+    public IK IK { get; private set; }
 
     public void Init(RobotConfig robotConfig)
     {
@@ -50,9 +55,11 @@ public class RobotModel
         ToolEularAngles = Vector3.zero;
         UTCPPosition = Vector3.zero;
         UTCPRotation = Quaternion.identity;
+
+        IK = new(this);
     }
 
-    private void SetJointAngle(float angle, int index)
+    public void SetJointAngle(float angle, int index)
     {
         // 设定指定关节的角度并防止超出范围
         Joints[index].Angle = Mathf.Clamp(angle,
@@ -60,10 +67,11 @@ public class RobotModel
             RobotConfig.JointsParameters[index].AngleMax);
     }
 
-    private void SetJointAngles(float[] angles)
+    public void SetJointAngles(float[] angles)
     {
+        int n = Mathf.Min(angles.Length, Joints.Length);
         // 设定所有关节的角度
-        for (int i = 0; i < Joints.Length; i++)
+        for (int i = 0; i < n; i++)
         {
             SetJointAngle(angles[i], i);
         }
@@ -103,7 +111,7 @@ public class RobotModel
         }
 
         Pose targetPose = new(targetPos, targetRot);
-        float[] solved = IK.Solve(targetPose, this);
+        float[] solved = IK.Solve(targetPose, JointAngles);
 
         if (solved != null && solved.Length == Joints.Length)
         {

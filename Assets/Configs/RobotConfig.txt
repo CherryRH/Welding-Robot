@@ -1,0 +1,52 @@
+RobotName: M10iD12
+    JointsParameters:
+    - JointName: J1
+        Alpha: 0
+        A: 0
+        Theta: 0
+        D: 0.45
+        AngleMin: -185
+        AngleMax: 185
+        AngleVMax: 260
+    - JointName: J2
+        Alpha: -90
+        A: 0.075
+        Theta: -90
+        D: 0
+        AngleMin: -95
+        AngleMax: 140
+        AngleVMax: 240
+    - JointName: J3
+        Alpha: 0
+        A: 0.64
+        Theta: 0
+        D: 0
+        AngleMin: -215
+        AngleMax: 95
+        AngleVMax: 260
+    - JointName: J4
+        Alpha: -90
+        A: 0.195
+        Theta: 0
+        D: 0.7
+        AngleMin: -190
+        AngleMax: 190
+        AngleVMax: 430
+    - JointName: J5
+        Alpha: 90
+        A: 0
+        Theta: 0
+        D: 0
+        AngleMin: -180
+        AngleMax: 180
+        AngleVMax: 450
+    - JointName: J6
+        Alpha: -90
+        A: 0
+        Theta: 0
+        D: 0.075
+        AngleMin: -450
+        AngleMax: 450
+        AngleVMax: 720
+TCPOffset: {x: 0, y: 0, z: 0.2}
+FlangeOffset: {x: 0, y: 0, z: 0.075}

@@ -10,8 +10,6 @@ public class TransformBinder : MonoBehaviour
     public Transform[] JointTransforms = new Transform[6];
     public Transform TCP;
 
-    public float[] JointAngleMultiple = new float[6] { 1, 1, 1, 1, 1, 1 };
-
     private RobotModel robot;
 
     public Vector3 RobotBasePosition;
@@ -40,8 +38,7 @@ public class TransformBinder : MonoBehaviour
             if (jt == null) continue;
 
             // 角度应用
-            float multiple = (JointAngleMultiple != null && i < JointAngleMultiple.Length) ? JointAngleMultiple[i] : 1f;
-            float targetAngle = robot.Joints[i].Angle * multiple;
+            float targetAngle = -robot.Joints[i].Angle; // Unity是左手系所以取反
             Quaternion zRotation = Quaternion.Euler(0f, 0f, targetAngle);
             Quaternion baseLocal = (i < baseJointLocalRotations.Length) ? baseJointLocalRotations[i] : Quaternion.identity;
             jt.localRotation = baseLocal * zRotation;
