@@ -54,6 +54,7 @@ public class Trajectory
     {
         segments.AddLast(segment);
     }
+
     public void Clear()
     {
         segments.Clear();

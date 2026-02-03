@@ -24,7 +24,8 @@ public class SimulationContext : MonoBehaviour
     public WeldSeamSampler Sampler = new();
     public WeldPlanner WeldPlanner = new();
 
-    // 路径执行层
+    // 路径规划层
+    public TrajectoryPlanner TrajectoryPlanner = new();
     public Trajectory Trajectory = new();
 
     // 绑定层
@@ -45,20 +46,16 @@ public class SimulationContext : MonoBehaviour
     {
         // 初始化配置
         RobotModel.Init(RobotConfig);
+        RobotModel.SetUserOffset(WorkpieceBinder.GetOriginPoint());
         FK.Compute(RobotModel);
         Binder.Bind(RobotModel);
-        WeldPlanner.Init(WorkpieceBinder.GetOriginPoint());
         // 读取焊接任务文件（WeldTaskFileName 应为绝对路径）
         WeldTask = WeldTaskLoader.LoadFromFile(WeldTaskFileName);
     }
 
     void Start()
     {
-        // 进行仿真准备工作，焊缝采样
-        Sampler.Sample(WeldTask);
-        // 焊缝可视化
-        WeldSeamVisualizer.ShowSeams(Sampler, 1e10f);
-        WeldSeamVisualizer.ShowSamplePoints(Sampler, 1e10f);
+        Build();
     }
 
     void Update()
@@ -103,5 +100,16 @@ public class SimulationContext : MonoBehaviour
     public void TryChangeIKMethod()
     {
         RobotModel.IK.SwitchMethod();
+    }
+
+    public void Build()
+    {
+        // 进行仿真准备工作，焊缝采样
+        Sampler.Sample(WeldTask);
+        // 规划指令序列
+        WeldPlanner.PlanInstruction(RobotModel, Sampler, WeldTask);
+        // 焊缝可视化
+        WeldSeamVisualizer.ShowSeams(Sampler, 1e10f);
+        WeldSeamVisualizer.ShowSamplePoints(Sampler, 1e10f);
     }
 }

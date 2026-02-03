@@ -78,6 +78,15 @@ public class ControlView : MonoBehaviour
             case SimulationState.Work:
                 StateText.text = "Work";
                 break;
+            case SimulationState.Pause:
+                StateText.text = "Pause";
+                break;
+            case SimulationState.Succeed:
+                StateText.text = "Succeed";
+                break;
+            case SimulationState.Fail:
+                StateText.text = "Fail";
+                break;
             case SimulationState.Joint:
                 StateText.text = "Rotate Joint";
                 break;

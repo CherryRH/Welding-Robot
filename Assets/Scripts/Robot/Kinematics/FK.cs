@@ -10,13 +10,13 @@ public static class FK
     public static Pose Compute(RobotModel robot)
     {
         if (robot == null) return new Pose(Vector3.zero, Quaternion.identity);
-        if (robot.RobotConfig == null || robot.RobotConfig.JointsParameters == null) return new Pose(Vector3.zero, Quaternion.identity);
+        if (robot.Config == null || robot.Config.JointsParameters == null) return new Pose(Vector3.zero, Quaternion.identity);
 
         Matrix4x4 T = Matrix4x4.identity;
 
         for (int i = 0; i < robot.Joints.Length; i++)
         {
-            var jp = robot.RobotConfig.JointsParameters[i];
+            var jp = robot.Config.JointsParameters[i];
 
             float theta = robot.Joints[i].Angle + jp.Theta;
 
@@ -29,11 +29,11 @@ public static class FK
         }
 
         // TCP 偏移
-        Matrix4x4 tcp = Matrix4x4.Translate(robot.RobotConfig.TCPOffset);
+        Matrix4x4 tcp = Matrix4x4.Translate(robot.Config.TCPOffset);
         Matrix4x4 tcpT = T * tcp;
         robot.TCPTransform = tcpT;
         // 将 TCP 的法兰坐标系（J6）转换为工具坐标系
-        Vector3 toolRotation = robot.RobotConfig.ToolRotation;
+        Vector3 toolRotation = robot.Config.ToolRotation;
         Matrix4x4 flangeToTool = MathUtil.RotX(toolRotation.x) * MathUtil.RotY(toolRotation.y) * MathUtil.RotZ(toolRotation.z);
         Matrix4x4 toolT = tcpT * flangeToTool;
 
@@ -57,13 +57,13 @@ public static class FK
         int n = Math.Min(angles.Length, robot.Joints.Length);
         for (int i = 0; i < n; i++)
         {
-            var jp = robot.RobotConfig.JointsParameters[i];
+            var jp = robot.Config.JointsParameters[i];
             float theta = angles[i] + jp.Theta;
             Matrix4x4 Ti = MathUtil.MDH(jp.Alpha, jp.A, theta, jp.D);
             T *= Ti;
         }
 
-        Matrix4x4 tcp = Matrix4x4.Translate(robot.RobotConfig.TCPOffset);
+        Matrix4x4 tcp = Matrix4x4.Translate(robot.Config.TCPOffset);
         Matrix4x4 tcpT = T * tcp;
         Vector3 pos = new(tcpT.m03, tcpT.m13, tcpT.m23);
         Quaternion rot = MathUtil.RotationFromMatrix(tcpT);
@@ -76,7 +76,7 @@ public static class FK
         Matrix4x4 T = Matrix4x4.identity;
         for (int i = 0; i <= jointIndex; i++)
         {
-            var jp = robot.RobotConfig.JointsParameters[i];
+            var jp = robot.Config.JointsParameters[i];
             float theta = angles[i] + jp.Theta;
             Matrix4x4 Ti = MathUtil.MDH(jp.Alpha, jp.A, theta, jp.D);
             T *= Ti;
@@ -90,7 +90,7 @@ public static class FK
         Matrix4x4 T = Matrix4x4.identity;
         for (int i = 0; i <= jointIndex; i++)
         {
-            var jp = robot.RobotConfig.JointsParameters[i];
+            var jp = robot.Config.JointsParameters[i];
             float theta = angles[i] + jp.Theta;
             Matrix4x4 Ti = MathUtil.MDH(jp.Alpha, jp.A, theta, jp.D);
             T *= Ti;
@@ -104,7 +104,7 @@ public static class FK
         Matrix4x4 T = Matrix4x4.identity;
         for (int i = 0; i <= jointIndex; i++)
         {
-            var jp = robot.RobotConfig.JointsParameters[i];
+            var jp = robot.Config.JointsParameters[i];
             float theta = angles[i] + jp.Theta;
             Matrix4x4 Ti = MathUtil.MDH(jp.Alpha, jp.A, theta, jp.D);
             T *= Ti;

@@ -32,6 +32,13 @@ public class SimulationClock
         accumulator = 0f;
     }
 
+    public void Reset()
+    {
+        IsRunning = false;
+        Time = 0f;
+        accumulator = 0f;
+    }
+
     /// <summary>
     /// 视觉/节流用 Tick：无论时钟是否运行都累积并在达到 FixedDeltaTime 时返回 true。
     /// 当 IsRunning 为 true 时，会同时推进 Time（仿真时间）；否则仅作为视觉节拍使用（不改变 Time）。

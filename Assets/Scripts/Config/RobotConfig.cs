@@ -16,6 +16,10 @@ public class RobotConfig : ScriptableObject
     [Header("末端执行器")]
     [Tooltip("末端执行器端点偏移（米）")]
     public Vector3 TCPOffset = Vector3.zero;
+    [Tooltip("末端执行器最大线速度（米/秒）")]
+    public float TCPMaxSpeed = 0.2f;
+    [Tooltip("末端执行器安全高度（米）")]
+    public float TCPSafetyHeight = 0.2f;
     [Tooltip("法兰盘相对于腕点偏移（米）")]
     public Vector3 FlangeOffset = Vector3.zero;
     [Tooltip("工具姿态旋转（度）")]

@@ -70,9 +70,9 @@ public class TransformBinder : MonoBehaviour
 
         if (TCP != null)
         {
-            if (robot.RobotConfig != null)
+            if (robot.Config != null)
             {
-                TCP.localPosition = robot.RobotConfig.TCPOffset / 100f;
+                TCP.localPosition = robot.Config.TCPOffset / 100f;
             }
             baseTCPRotation = TCP.rotation;
         }

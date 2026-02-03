@@ -48,25 +48,26 @@ class WorkState : SimulationStateBase
 
     public override void Enter(SimulationContext ctx)
     {
-        // 进入 Working 时可以做准备工作（如果需要）
         ctx.Clock.Start();
-        // 规划指令序列
-        ctx.WeldPlanner.PlanInstruction(ctx.RobotModel, ctx.Sampler, ctx.WeldTask);
     }
 
     public override void Update(SimulationContext ctx, float dt)
     {
         // Working 状态负责推进模型仿真步进
-        if (ctx == null) return;
-        // 规划（生产）
-        if (ctx.Trajectory.UnderHighWaterMark)
+        // 取当前指令
+        WeldInstruction instr = ctx.WeldPlanner.GetInstruction();
+        // 根据指令规划路径
+        if (instr != null && ctx.Trajectory.UnderHighWaterMark)
         {
-            ctx.WeldPlanner.PlanTrajectory(
+            TrajectoryPlanResult result = ctx.TrajectoryPlanner.Plan(
                 ctx.RobotModel,
+                instr,
                 ctx.Sampler,
                 ctx.Trajectory,
                 ctx.Clock.Time
             );
+            // 将规划结果反馈给焊接规划器
+            ctx.WeldPlanner.HandleTrajectoryPlanResult(result);
         }
 
         // 执行（消费）
@@ -79,14 +80,74 @@ class WorkState : SimulationStateBase
 
     public override void Exit(SimulationContext ctx)
     {
-        // 退出 Working 时可以做清理工作（如果需要）
-        ctx.Clock.Stop();
-        // 清空路径队列
-        ctx.Trajectory.Clear();
-        // 重置规划器
-        ctx.WeldPlanner.Reset();
+        
     }
 
+    public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
+    {
+        if (ctx == null) return;
+        if (key == KeyCode.Space) ctx.TryChangeState(SimulationState.Pause);
+    }
+}
+
+class PauseState: SimulationStateBase
+{
+    public PauseState(SimulationStateMachine m) : base(m) { }
+    public override void Enter(SimulationContext ctx)
+    {
+        ctx.Clock.Stop();
+    }
+    public override void Exit(SimulationContext ctx)
+    {
+        ctx.Clock.Start();
+    }
+    public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
+    {
+        if (ctx == null) return;
+        if (key == KeyCode.Space) ctx.TryChangeState(SimulationState.Work);
+    }
+}
+
+class SucceedState: SimulationStateBase
+{
+    public SucceedState(SimulationStateMachine m) : base(m) { }
+
+    public override void Enter(SimulationContext ctx)
+    {
+        ctx.Clock.Stop();
+    }
+
+    public override void Exit(SimulationContext ctx)
+    {
+        // 重置
+        ctx.WeldPlanner.Reset();
+        ctx.TrajectoryPlanner.Reset();
+        ctx.Trajectory.Clear();
+        ctx.Clock.Reset();
+    }
+
+    public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
+    {
+        if (ctx == null) return;
+        if (key == KeyCode.Space) ctx.TryChangeState(SimulationState.Idle);
+    }
+}
+
+class FailState : SimulationStateBase
+{
+    public FailState(SimulationStateMachine m) : base(m) { }
+    public override void Enter(SimulationContext ctx)
+    {
+        ctx.Clock.Stop();
+    }
+    public override void Exit(SimulationContext ctx)
+    {
+        // 重置
+        ctx.WeldPlanner.Reset();
+        ctx.TrajectoryPlanner.Reset();
+        ctx.Trajectory.Clear();
+        ctx.Clock.Reset();
+    }
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
         if (ctx == null) return;
@@ -109,7 +170,6 @@ class JointState : SimulationStateBase
 
     public override void Update(SimulationContext ctx, float dt)
     {
-        if (ctx == null) return;
         switch (Symbol)
         {
             case DataChangeSymbol.Increase:
@@ -128,7 +188,6 @@ class JointState : SimulationStateBase
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
-        if (ctx == null) return;
         if (key == KeyCode.LeftArrow) Symbol = DataChangeSymbol.Decrease;
         else if (key == KeyCode.RightArrow) Symbol = DataChangeSymbol.Increase;
         if (num >= 1 && num <= ctx.RobotConfig.JointsParameters.Length)
@@ -153,7 +212,6 @@ class TCPState : SimulationStateBase
 
     public override void Update(SimulationContext ctx, float dt)
     {
-        if (ctx == null) return;
         switch (Symbol)
         {
             case DataChangeSymbol.Increase:
@@ -189,7 +247,6 @@ class TCPState : SimulationStateBase
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
-        if (ctx == null) return;
         if (key == KeyCode.LeftArrow) Symbol = DataChangeSymbol.Decrease;
         else if (key == KeyCode.RightArrow) Symbol = DataChangeSymbol.Increase;
         if (num >= 1 && num <= 6)

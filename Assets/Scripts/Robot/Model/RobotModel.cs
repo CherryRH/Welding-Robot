@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public class RobotModel
 {
-    public RobotConfig RobotConfig { get; private set; }
+    public RobotConfig Config { get; private set; }
 
     public JointModel[] Joints { get; private set; }
     public float[] JointAngles { get => System.Array.ConvertAll(Joints, joint => joint.Angle); }
@@ -34,13 +34,16 @@ public class RobotModel
     public Quaternion UTCPRotation { get; set; }
     public Pose UTCPPose { get => new(UTCPPosition, UTCPRotation); }
 
+    // 用户坐标系偏移
+    public Vector3 UserOffset { get; private set; } = Vector3.zero;
+
     public IK IK { get; private set; }
 
     public void Init(RobotConfig robotConfig)
     {
         // 初始化机器人模型
-        RobotConfig = robotConfig;
-        Joints = new JointModel[RobotConfig.JointsParameters.Length];
+        Config = robotConfig;
+        Joints = new JointModel[Config.JointsParameters.Length];
         for (int i = 0; i < Joints.Length; i++)
         {
             Joints[i] = new()
@@ -59,12 +62,36 @@ public class RobotModel
         IK = new(this);
     }
 
+    public void SetUserOffset(Vector3 offset)
+    {
+        // 设定用户坐标系偏移
+        UserOffset = offset;
+    }
+
+    public Vector3 RobotToUser(Vector3 robotPos)
+    {
+        return robotPos - UserOffset;
+    }
+
+    public Vector3 UserToRobot(Vector3 userPos)
+    {
+        return userPos + UserOffset;
+    }
+
+    public Pose GetSafePose(Pose pose)
+    {
+        // 获取位姿的安全高度点
+        Vector3 pos = pose.position;
+        Vector3 safePos = new(pos.x, pos.y, UserOffset.z + Config.TCPSafetyHeight);
+        return new Pose(safePos, pose.rotation);
+    }
+
     public void SetJointAngle(float angle, int index)
     {
         // 设定指定关节的角度并防止超出范围
         Joints[index].Angle = Mathf.Clamp(angle,
-            RobotConfig.JointsParameters[index].AngleMin,
-            RobotConfig.JointsParameters[index].AngleMax);
+            Config.JointsParameters[index].AngleMin,
+            Config.JointsParameters[index].AngleMax);
     }
 
     public void SetJointAngles(float[] angles)
@@ -81,9 +108,9 @@ public class RobotModel
     {
         // 控制单个关节旋转步进
         float v = Mathf.Clamp(direction ?
-            RobotConfig.TeleopAngleV :
-            -RobotConfig.TeleopAngleV, -RobotConfig.JointsParameters[index].AngleVMax,
-            RobotConfig.JointsParameters[index].AngleVMax);
+            Config.TeleopAngleV :
+            -Config.TeleopAngleV, -Config.JointsParameters[index].AngleVMax,
+            Config.JointsParameters[index].AngleVMax);
         SetJointAngle(v * dt + Joints[index].Angle, index);
     }
 
@@ -98,14 +125,14 @@ public class RobotModel
         // 处理平移（基于世界坐标系）
         if (linearSpeed.sqrMagnitude >= 1e-6f)
         {
-            targetPos += dt * RobotConfig.TeleopTCPV * linearSpeed;
+            targetPos += dt * Config.TeleopTCPV * linearSpeed;
         }
 
         // 处理旋转（基于世界坐标系）
         if (angularSpeed.sqrMagnitude >= 1e-6f)
         {
             Vector3 axis = angularSpeed.normalized;
-            float angle = dt * angularSpeed.magnitude * RobotConfig.TeleopTCPAngleV;
+            float angle = dt * angularSpeed.magnitude * Config.TeleopTCPAngleV;
             Quaternion rotationIncrement = Quaternion.AngleAxis(angle, axis);
             targetRot = rotationIncrement * TCPRotation;
         }

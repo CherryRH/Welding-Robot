@@ -15,15 +15,16 @@ public class SimulationStateMachine
     public event Action<SimulationState, SimulationState> OnStateChange;
 
     private readonly Dictionary<SimulationState, SimulationStateBase> states;
-    private readonly int jointCount;
 
-    public SimulationStateMachine(int jointCount = 6)
+    public SimulationStateMachine()
     {
-        this.jointCount = Math.Max(1, jointCount);
         states = new Dictionary<SimulationState, SimulationStateBase>
         {
             { SimulationState.Idle, new IdleState(this) },
             { SimulationState.Work, new WorkState(this) },
+            { SimulationState.Pause, new PauseState(this) },
+            { SimulationState.Succeed, new SucceedState(this) },
+            { SimulationState.Fail, new FailState(this) },
             { SimulationState.Joint, new JointState(this) },
             { SimulationState.TCP, new TCPState(this) }
         };
@@ -82,7 +83,9 @@ public class SimulationStateMachine
         return from switch
         {
             SimulationState.Idle => to == SimulationState.Work || to == SimulationState.Joint || to == SimulationState.TCP,
-            SimulationState.Work or SimulationState.Joint or SimulationState.TCP => to == SimulationState.Idle,
+            SimulationState.Joint or SimulationState.TCP or SimulationState.Succeed or SimulationState.Fail => to == SimulationState.Idle,
+            SimulationState.Work => to == SimulationState.Pause || to == SimulationState.Succeed || to == SimulationState.Fail,
+            SimulationState.Pause => to == SimulationState.Work,
             _ => false,
         };
     }
@@ -97,10 +100,12 @@ public enum SimulationState
     Idle = 1,
     // 工作（执行焊接任务）
     Work = 2,
+    // 暂停（焊接任务仿真暂停）
+    Pause = 3,
     // 成功（焊接任务仿真成功）
-    Succeed = 3,
+    Succeed = 4,
     // 失败（焊接任务仿真失败）
-    Fail = 4,
+    Fail = 5,
     // 关节控制（直接控制关节旋转）
     Joint = 9,
     // TCP 控制（直接控制 TCP 平移）

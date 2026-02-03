@@ -34,7 +34,7 @@ public class IK
 
     public float[] Solve(Pose tcpPose, float[] current)
     {
-        if (robot == null || robot.RobotConfig == null || robot.RobotConfig.JointsParameters == null)
+        if (robot == null || robot.Config == null || robot.Config.JointsParameters == null)
             return new float[robot?.Joints.Length ?? 0];
 
         switch (Method)
@@ -100,8 +100,8 @@ public class IK
                 float deltaDeg = Mathf.Clamp(0.5f * angleBetweenDeg * sign, -CCDStepLimitDeg, CCDStepLimitDeg); // 加入角度缩放
 
                 angles[i] = Mathf.Clamp(angles[i] + deltaDeg,
-                    robot.RobotConfig.JointsParameters[i].AngleMin,
-                    robot.RobotConfig.JointsParameters[i].AngleMax);
+                    robot.Config.JointsParameters[i].AngleMin,
+                    robot.Config.JointsParameters[i].AngleMax);
 
                 // 更新当前 TCP（局部更新即可）
                 current = FK.ComputePoseFromAngles(robot, angles);
@@ -221,8 +221,8 @@ public class IK
 
                 angles[j] = Mathf.Clamp(
                     angles[j] + deltaDeg,
-                    robot.RobotConfig.JointsParameters[j].AngleMin,
-                    robot.RobotConfig.JointsParameters[j].AngleMax
+                    robot.Config.JointsParameters[j].AngleMin,
+                    robot.Config.JointsParameters[j].AngleMax
                 );
             }
         }
@@ -237,7 +237,7 @@ public class IK
     public IKResult SolveAnalytic(Pose tcpPose)
     {
         IKResult result = new();
-        RobotConfig config = robot.RobotConfig;
+        RobotConfig config = robot.Config;
 
         float wristOffset = config.FlangeOffset.z + config.TCPOffset.z;
         Vector3 wristPos = tcpPose.position - tcpPose.rotation * Vector3.forward * wristOffset;
