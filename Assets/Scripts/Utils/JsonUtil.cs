@@ -147,13 +147,13 @@ public static class JsonUtil
     {
         public override bool CanConvert(Type objectType)
         {
-            return typeof(WeldSeam).IsAssignableFrom(objectType);
+            return typeof(WeldSeamData).IsAssignableFrom(objectType);
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             var jo = JObject.Load(reader);
-            WeldSeam result = new();
+            WeldSeamData result = new();
             // 将 JObject 的内容填充到具体类型实例
             serializer.Populate(jo.CreateReader(), result);
             return result;

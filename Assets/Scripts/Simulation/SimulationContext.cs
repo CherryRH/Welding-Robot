@@ -1,9 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
-using System.IO;
 
 /// <summary>
 /// 仿真环境
@@ -20,9 +18,8 @@ public class SimulationContext : MonoBehaviour
 
     // 焊接规划层
     public string WeldTaskFileName;
-    public WeldTask WeldTask;
-    public WeldSeamSampler Sampler = new();
-    public WeldPlanner WeldPlanner = new();
+    public WeldTask Task;
+    public TcpPathPlanner TcpPathPlanner = new();
 
     // 路径规划层
     public TrajectoryPlanner TrajectoryPlanner = new();
@@ -34,6 +31,7 @@ public class SimulationContext : MonoBehaviour
 
     // 可视化层
     public WeldSeamVisualizer WeldSeamVisualizer;
+    public TcpPathVisualizer TcpPathVisualizer;
 
     // 绑定事件
     public UnityEvent<SimulationContext> BeforeSimulationUpdate;
@@ -44,13 +42,7 @@ public class SimulationContext : MonoBehaviour
 
     void Awake()
     {
-        // 初始化配置
-        RobotModel.Init(RobotConfig);
-        RobotModel.SetUserOffset(WorkpieceBinder.GetOriginPoint());
-        FK.Compute(RobotModel);
-        Binder.Bind(RobotModel);
-        // 读取焊接任务文件（WeldTaskFileName 应为绝对路径）
-        WeldTask = WeldTaskLoader.LoadFromFile(WeldTaskFileName);
+        Init();
     }
 
     void Start()
@@ -102,14 +94,26 @@ public class SimulationContext : MonoBehaviour
         RobotModel.IK.SwitchMethod();
     }
 
+    private void Init()
+    {
+        // 初始化配置
+        RobotModel.Init(RobotConfig);
+        RobotModel.SetUserOffset(WorkpieceBinder.GetOriginPoint());
+        FK.Compute(RobotModel);
+        Binder.Bind(RobotModel);
+        TcpPathPlanner.Init(RobotModel);
+        TrajectoryPlanner.Init(RobotModel, Trajectory);
+        // 读取焊接任务文件（WeldTaskFileName 应为绝对路径）
+        WeldTaskData data = WeldTaskDataLoader.LoadFromFile(WeldTaskFileName);
+        // 构建焊缝任务
+        Task = new(data);
+    }
+
     public void Build()
     {
-        // 进行仿真准备工作，焊缝采样
-        Sampler.Sample(WeldTask);
-        // 规划指令序列
-        WeldPlanner.PlanInstruction(RobotModel, Sampler, WeldTask);
-        // 焊缝可视化
-        WeldSeamVisualizer.ShowSeams(Sampler, 1e10f);
-        WeldSeamVisualizer.ShowSamplePoints(Sampler, 1e10f);
+        // 优化焊缝任务
+        Task.Optimize();
+        // 可视化焊缝
+        WeldSeamVisualizer.ShowSeams(Task, 1e10f);
     }
 }

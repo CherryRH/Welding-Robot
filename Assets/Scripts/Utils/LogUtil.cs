@@ -39,11 +39,11 @@ public static class LogUtil
         try
         {
             string log = BuildSimulationContextLogString(context);
-            string folder = Path.Combine(Application.persistentDataPath, "Log");
+            string folder = System.IO.Path.Combine(Application.persistentDataPath, "Log");
             Directory.CreateDirectory(folder);
 
             string fileName = $"SimulationLog_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
-            string fullPath = Path.Combine(folder, fileName);
+            string fullPath = System.IO.Path.Combine(folder, fileName);
 
             File.WriteAllText(fullPath, log, Encoding.UTF8);
             Debug.Log($"Simulation log saved to: {fullPath}");
@@ -230,55 +230,54 @@ public static class LogUtil
 
         // WeldTaskData
         sb.AppendLine("--- WeldTaskData ---");
-        try
-        {
-            var wtd = ctx.WeldTask;
-            if (wtd == null)
-            {
-                sb.AppendLine("WeldTaskData   : null");
-            }
-            else
-            {
-                sb.AppendLine($"TaskName            : {wtd.TaskName}");
-                sb.AppendLine($"WorkpieceFileName   : {wtd.WorkpieceFileName}");
-                sb.AppendLine($"WeldSeamsCount      : {(wtd.WeldSeams != null ? wtd.WeldSeams.Count.ToString() : "n/a") }");
-                if (wtd.WeldSeams != null)
-                {
-                    for (int i = 0; i < wtd.WeldSeams.Count; i++)
-                    {
-                        var seg = wtd.WeldSeams[i];
-                        if (seg == null)
-                        {
-                            sb.AppendLine($"    WeldSeams[{i}]  : null");
-                            continue;
-                        }
-                        sb.AppendLine($"    WeldSeams[{i}]  :");
-                        sb.AppendLine($"        Type            : {seg.Type}");
-                        sb.AppendLine($"        ID              : {seg.ID}");
-                        sb.AppendLine($"        Name            : {seg.Name}");
-                        sb.AppendLine($"        Speed           : {seg.Speed:F3} m/s");
-                        sb.AppendLine($"        GunAngle        : {seg.GunAngle:F3} deg");
-                        sb.AppendLine($"        GunDistance     : {seg.GunDistance:F3} m");
-                        sb.AppendLine($"        IsContinous     : {seg.IsContinous}");
-                        sb.AppendLine($"        StartPoint      : {FormatObject(seg.StartPoint)}");
-                        sb.AppendLine($"        EndPoint        : {FormatObject(seg.EndPoint)}");
-                        if (seg.MiddlePoints != null)
-                        {
-                            for (int j = 0; j < seg.MiddlePoints.Count; j++)
-                            {
-                                sb.AppendLine($"        MiddlePoint[{j}]    : {FormatObject(seg.MiddlePoints[j])}");
-                            }
-                        }
-                        sb.AppendLine($"        Normal          : {FormatObject(seg.Normal)}");
-                        sb.AppendLine($"        LengthDeviation : {seg.LengthDeviation:F3} m");
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            sb.AppendLine($"(WeldTaskData read error) {ex.Message}");
-        }
+        //try
+        //{
+        //    var wtd = ctx.Task;
+        //    if (wtd == null)
+        //    {
+        //        sb.AppendLine("WeldTaskData   : null");
+        //    }
+        //    else
+        //    {
+        //        sb.AppendLine($"TaskName            : {wtd.TaskName}");
+        //        sb.AppendLine($"WorkpieceFileName   : {wtd.WorkpieceFileName}");
+        //        sb.AppendLine($"WeldSeamsCount      : {(wtd.WeldSeams != null ? wtd.WeldSeams.Count.ToString() : "n/a") }");
+        //        if (wtd.WeldSeams != null)
+        //        {
+        //            for (int i = 0; i < wtd.WeldSeams.Count; i++)
+        //            {
+        //                var seg = wtd.WeldSeams[i];
+        //                if (seg == null)
+        //                {
+        //                    sb.AppendLine($"    WeldSeams[{i}]  : null");
+        //                    continue;
+        //                }
+        //                sb.AppendLine($"    WeldSeams[{i}]  :");
+        //                sb.AppendLine($"        Type            : {seg.Type}");
+        //                sb.AppendLine($"        ID              : {seg.ID}");
+        //                sb.AppendLine($"        Name            : {seg.Name}");
+        //                sb.AppendLine($"        Speed           : {seg.Speed:F3} m/s");
+        //                sb.AppendLine($"        GunAngle        : {seg.GunAngle:F3} deg");
+        //                sb.AppendLine($"        GunDistance     : {seg.GunDistance:F3} m");
+        //                sb.AppendLine($"        StartPoint      : {FormatObject(seg.StartPoint)}");
+        //                sb.AppendLine($"        EndPoint        : {FormatObject(seg.EndPoint)}");
+        //                if (seg.MiddlePoints != null)
+        //                {
+        //                    for (int j = 0; j < seg.MiddlePoints.Count; j++)
+        //                    {
+        //                        sb.AppendLine($"        MiddlePoint[{j}]    : {FormatObject(seg.MiddlePoints[j])}");
+        //                    }
+        //                }
+        //                sb.AppendLine($"        Normal          : {FormatObject(seg.Normal)}");
+        //                sb.AppendLine($"        LengthDeviation : {seg.LengthDeviation:F3} m");
+        //            }
+        //        }
+        //    }
+        //}
+        //catch (Exception ex)
+        //{
+        //    sb.AppendLine($"(WeldTaskData read error) {ex.Message}");
+        //}
         sb.AppendLine();
 
         sb.AppendLine("=== End ===");

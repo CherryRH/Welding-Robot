@@ -1,9 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using System.Diagnostics;
 using UnityEngine;
-using UnityEngine.Profiling;
-using static UnityEngine.GridBrushBase;
 
 /// <summary>
 /// 仿真状态基类
@@ -48,29 +46,47 @@ class WorkState : SimulationStateBase
 
     public override void Enter(SimulationContext ctx)
     {
+        // 规划路径
+        ctx.TcpPathPlanner.Plan(ctx.Task);
+        // 可视化路径
+        ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner, 1e10f);
         ctx.Clock.Start();
     }
 
     public override void Update(SimulationContext ctx, float dt)
     {
-        // Working 状态负责推进模型仿真步进
-        // 取当前指令
-        WeldInstruction instr = ctx.WeldPlanner.GetInstruction();
-        // 根据指令规划路径
-        if (instr != null && ctx.Trajectory.UnderHighWaterMark)
+        // 取路径点
+        List<TcpPathPoint> points = ctx.TcpPathPlanner.TryGetPoints(ctx.TrajectoryPlanner.SegmentsPerPlan);
+
+        // 规划轨迹
+        if (ctx.Trajectory.UnderHighWaterMark)
         {
-            TrajectoryPlanResult result = ctx.TrajectoryPlanner.Plan(
-                ctx.RobotModel,
-                instr,
-                ctx.Sampler,
-                ctx.Trajectory,
-                ctx.Clock.Time
-            );
-            // 将规划结果反馈给焊接规划器
-            ctx.WeldPlanner.HandleTrajectoryPlanResult(result);
+            List<TrajectoryPlanResult> results = ctx.TrajectoryPlanner.Plan(points, ctx.Clock.Time);
+
+            // 处理规划结果
+            ctx.TcpPathPlanner.HandleTrajectoryPlanResults(results);
         }
 
-        // 执行（消费）
+        // 检查路径规划状态
+        switch (ctx.TcpPathPlanner.Status)
+        {
+            case TcpPathPlanner.PlanStatus.Unfinished:
+                // 继续仿真
+                break;
+            case TcpPathPlanner.PlanStatus.Suceeded:
+                // 等待轨迹执行结束
+                if (!ctx.Trajectory.HasSegment)
+                {
+                    ctx.TryChangeState(SimulationState.Succeed);
+                }
+                break;
+            case TcpPathPlanner.PlanStatus.Failed:
+                // 仿真失败
+                ctx.TryChangeState(SimulationState.Fail);
+                break;
+        }
+
+        // 执行轨迹
         float[] joints = ctx.Trajectory.Evaluate(ctx.Clock.Time);
         if (joints != null)
         {
@@ -86,25 +102,11 @@ class WorkState : SimulationStateBase
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
         if (ctx == null) return;
-        if (key == KeyCode.Space) ctx.TryChangeState(SimulationState.Pause);
-    }
-}
-
-class PauseState: SimulationStateBase
-{
-    public PauseState(SimulationStateMachine m) : base(m) { }
-    public override void Enter(SimulationContext ctx)
-    {
-        ctx.Clock.Stop();
-    }
-    public override void Exit(SimulationContext ctx)
-    {
-        ctx.Clock.Start();
-    }
-    public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
-    {
-        if (ctx == null) return;
-        if (key == KeyCode.Space) ctx.TryChangeState(SimulationState.Work);
+        if (key == KeyCode.Space)
+        {
+            if (ctx.Clock.IsRunning) ctx.Clock.Stop();
+            else ctx.Clock.Start();
+        }
     }
 }
 
@@ -120,8 +122,7 @@ class SucceedState: SimulationStateBase
     public override void Exit(SimulationContext ctx)
     {
         // 重置
-        ctx.WeldPlanner.Reset();
-        ctx.TrajectoryPlanner.Reset();
+        ctx.TcpPathPlanner.Clear();
         ctx.Trajectory.Clear();
         ctx.Clock.Reset();
     }
@@ -143,8 +144,7 @@ class FailState : SimulationStateBase
     public override void Exit(SimulationContext ctx)
     {
         // 重置
-        ctx.WeldPlanner.Reset();
-        ctx.TrajectoryPlanner.Reset();
+        ctx.TcpPathPlanner.Clear();
         ctx.Trajectory.Clear();
         ctx.Clock.Reset();
     }

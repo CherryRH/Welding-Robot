@@ -16,7 +16,6 @@ public class Trajectory
     public bool HasSegment => CurrentSegment != null || segments.Count > 0;
 
     public bool UnderHighWaterMark => segments.Count <= 20;
-    public bool OverLowWaterMark => segments.Count >= 10;
 
     public float[] Evaluate(float simTime)
     {

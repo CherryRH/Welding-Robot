@@ -6,7 +6,7 @@ using UnityEngine;
 /// 描述焊接任务数据
 /// </summary>
 [System.Serializable]
-public class WeldTask
+public class WeldTaskData
 {
     /// <summary>
     /// 任务名称
@@ -22,14 +22,14 @@ public class WeldTask
     /// <summary>
     /// 焊缝数据列表
     /// </summary>
-    public List<WeldSeam> WeldSeams;
+    public List<WeldSeamData> WeldSeams;
 }
 
 /// <summary>
 /// 描述焊缝数据
 /// </summary>
 [System.Serializable]
-public class WeldSeam
+public class WeldSeamData
 {
     /// <summary>
     /// 焊缝类型
@@ -90,9 +90,4 @@ public class WeldSeam
     /// 偏差值（米）
     /// </summary>
     public float LengthDeviation;
-
-    /// <summary>
-    /// 与下一个焊缝是否连续
-    /// </summary>
-    public bool IsContinous;
 }

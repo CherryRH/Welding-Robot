@@ -22,7 +22,6 @@ public class SimulationStateMachine
         {
             { SimulationState.Idle, new IdleState(this) },
             { SimulationState.Work, new WorkState(this) },
-            { SimulationState.Pause, new PauseState(this) },
             { SimulationState.Succeed, new SucceedState(this) },
             { SimulationState.Fail, new FailState(this) },
             { SimulationState.Joint, new JointState(this) },
@@ -84,8 +83,7 @@ public class SimulationStateMachine
         {
             SimulationState.Idle => to == SimulationState.Work || to == SimulationState.Joint || to == SimulationState.TCP,
             SimulationState.Joint or SimulationState.TCP or SimulationState.Succeed or SimulationState.Fail => to == SimulationState.Idle,
-            SimulationState.Work => to == SimulationState.Pause || to == SimulationState.Succeed || to == SimulationState.Fail,
-            SimulationState.Pause => to == SimulationState.Work,
+            SimulationState.Work => to == SimulationState.Succeed || to == SimulationState.Fail,
             _ => false,
         };
     }
@@ -100,8 +98,6 @@ public enum SimulationState
     Idle = 1,
     // 工作（执行焊接任务）
     Work = 2,
-    // 暂停（焊接任务仿真暂停）
-    Pause = 3,
     // 成功（焊接任务仿真成功）
     Succeed = 4,
     // 失败（焊接任务仿真失败）

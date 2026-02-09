@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 插值算法接口
 /// </summary>
-public interface Interpolation
+public interface IInterpolation
 {
     public float Evaluate(float t);
 }
@@ -13,7 +13,7 @@ public interface Interpolation
 /// <summary>
 /// 五次多项式插值（位置 + 速度 + 加速度约束）
 /// </summary>
-public class QuinticPolynomial : Interpolation
+public class QuinticPolynomial : IInterpolation
 {
     // 多项式系数
     private float c0, c1, c2, c3, c4, c5;
@@ -75,7 +75,7 @@ public class QuinticPolynomial : Interpolation
 /// <summary>
 /// 线性插值
 /// </summary>
-public class LinearInterpolation : Interpolation
+public class LinearInterpolation : IInterpolation
 {
     private float start;
     private float end;

@@ -25,7 +25,7 @@ public class TrajectorySegment
     public float[] QStart;
     public float[] QEnd;
 
-    public Interpolation[] Interpolations;
+    public IInterpolation[] Interpolations;
 
     public float[] Evaluate(float simTime)
     {
@@ -52,7 +52,7 @@ public class TrajectorySegment
         segment.QStart = qPose;
         segment.QEnd = qPose;
         int n = qPose.Length;
-        segment.Interpolations = new Interpolation[n];
+        segment.Interpolations = new IInterpolation[n];
         for (int i = 0; i < n; i++)
         {
             LinearInterpolation interpolation = new();
@@ -74,7 +74,7 @@ public class TrajectorySegment
         segment.QStart = qStart;
         segment.QEnd = qEnd;
         int n = Mathf.Max(qStart.Length, qEnd.Length);
-        segment.Interpolations = new Interpolation[n];
+        segment.Interpolations = new IInterpolation[n];
         for (int i = 0; i < n; i++)
         {
             LinearInterpolation interpolation = new();

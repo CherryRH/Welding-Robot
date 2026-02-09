@@ -2931,8 +2931,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
       propertyPath: WeldTaskFileName
-      value: C:\Cherry_CRH\Undergraduate4-2\Graduation Project\Welding Tasks\TestCapsuleTask.json
+      value: C:\Cherry_CRH\Undergraduate4-2\Graduation Project\Welding Tasks\TestLineTask.json
       objectReference: {fileID: 0}
+    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: TcpPathVisualizer
+      value: 
+      objectReference: {fileID: 791378068}
     - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
       propertyPath: OnSimulationUpdate.m_PersistentCalls.m_Calls.Array.size
       value: 0
@@ -3072,7 +3076,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8354069457065895611, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 791378068}
   m_SourcePrefab: {fileID: 100100000, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
 --- !u!114 &550549691 stripped
 MonoBehaviour:
@@ -4236,6 +4243,24 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1 &791378065 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8354069457065895611, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+  m_PrefabInstance: {fileID: 550549690}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &791378068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 791378065}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 885288fda5bdb7e4daf5ea7b671f6979, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SamplePoint: {fileID: 4926285720835067979, guid: 34c33004bde3c3f4babc552da1eeba80, type: 3}
 --- !u!1 &819329817
 GameObject:
   m_ObjectHideFlags: 0

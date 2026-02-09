@@ -31,6 +31,14 @@ public static class MathUtil
         return A + toCenter;
     }
 
+    public static bool IsAngleBetween(float a, float a0, float a1)
+    {
+        if (a0 < a1)
+            return a > a0 && a < a1;
+        else
+            return a > a1 && a < a0;
+    }
+
     public static Vector3 EulerZYX(Matrix4x4 m)
     {
         // 按照Z-Y-X顺序从变换矩阵中提取右手系欧拉角
