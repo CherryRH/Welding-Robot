@@ -83,7 +83,7 @@ public class SimulationStateMachine
         {
             SimulationState.Idle => to == SimulationState.Work || to == SimulationState.Joint || to == SimulationState.TCP,
             SimulationState.Joint or SimulationState.TCP or SimulationState.Succeed or SimulationState.Fail => to == SimulationState.Idle,
-            SimulationState.Work => to == SimulationState.Succeed || to == SimulationState.Fail,
+            SimulationState.Work => to == SimulationState.Idle || to == SimulationState.Succeed || to == SimulationState.Fail,
             _ => false,
         };
     }

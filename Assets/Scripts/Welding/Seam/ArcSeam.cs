@@ -111,9 +111,4 @@ public class ArcSeam : WeldSeam
     {
         return 1f / Radius;
     }
-
-    public override float GetMaxCurvature()
-    {
-        return 1f / Radius;
-    }
 }

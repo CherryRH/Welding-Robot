@@ -46,9 +46,4 @@ public class LineSeam : WeldSeam
     {
         return 0f;
     }
-
-    public override float GetMaxCurvature()
-    {
-        return 0f;
-    }
 }

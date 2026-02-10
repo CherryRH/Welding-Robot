@@ -71,9 +71,4 @@ public abstract class WeldSeam
     /// 获取路径参数s处的曲率
     /// </summary>
     public abstract float GetCurvature(float s);
-
-    /// <summary>
-    /// 获取最大曲率（用于采样间隔计算）
-    /// </summary>
-    public abstract float GetMaxCurvature();
 }

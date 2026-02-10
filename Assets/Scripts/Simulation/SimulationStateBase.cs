@@ -22,14 +22,15 @@ class IdleState : SimulationStateBase
     public IdleState(SimulationStateMachine m) : base(m) { }
     public override void Enter(SimulationContext ctx)
     {
-        // Idle 时无需自动步进
-        // 可以在此添加进入 Idle 的逻辑
-
+        // 重置时钟
+        ctx.Clock.Reset();
+        // 刷新UI
+        ctx.OnClockUpdate?.Invoke(ctx.Clock);
     }
 
     public override void Exit(SimulationContext ctx)
     {
-        // 退出 Idle 时可以做准备工作（如果需要）
+        
     }
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
@@ -55,16 +56,15 @@ class WorkState : SimulationStateBase
 
     public override void Update(SimulationContext ctx, float dt)
     {
-        // 取路径点
-        List<TcpPathPoint> points = ctx.TcpPathPlanner.TryGetPoints(ctx.TrajectoryPlanner.SegmentsPerPlan);
-
         // 规划轨迹
         if (ctx.Trajectory.UnderHighWaterMark)
         {
-            List<TrajectoryPlanResult> results = ctx.TrajectoryPlanner.Plan(points, ctx.Clock.Time);
+            // 取一段路径点
+            List<TcpPathPoint> points = ctx.TcpPathPlanner.GetPathPart();
+            TrajectoryPlanResult result = ctx.TrajectoryPlanner.Plan(points, ctx.Clock.Time);
 
             // 处理规划结果
-            ctx.TcpPathPlanner.HandleTrajectoryPlanResults(results);
+            ctx.TcpPathPlanner.HandleTrajectoryPlanResult(result);
         }
 
         // 检查路径规划状态
@@ -107,6 +107,14 @@ class WorkState : SimulationStateBase
             if (ctx.Clock.IsRunning) ctx.Clock.Stop();
             else ctx.Clock.Start();
         }
+        if (key == KeyCode.Escape)
+        {
+            // 强制退出
+            ctx.Clock.Stop();
+            ctx.TcpPathPlanner.Clear();
+            ctx.Trajectory.Clear();
+            ctx.TryChangeState(SimulationState.Idle);
+        }
     }
 }
 
@@ -124,13 +132,12 @@ class SucceedState: SimulationStateBase
         // 重置
         ctx.TcpPathPlanner.Clear();
         ctx.Trajectory.Clear();
-        ctx.Clock.Reset();
     }
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
         if (ctx == null) return;
-        if (key == KeyCode.Space) ctx.TryChangeState(SimulationState.Idle);
+        if (key == KeyCode.Escape) ctx.TryChangeState(SimulationState.Idle);
     }
 }
 
@@ -146,12 +153,11 @@ class FailState : SimulationStateBase
         // 重置
         ctx.TcpPathPlanner.Clear();
         ctx.Trajectory.Clear();
-        ctx.Clock.Reset();
     }
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
         if (ctx == null) return;
-        if (key == KeyCode.Space) ctx.TryChangeState(SimulationState.Idle);
+        if (key == KeyCode.Escape) ctx.TryChangeState(SimulationState.Idle);
     }
 }
 

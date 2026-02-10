@@ -74,43 +74,46 @@ public class TcpPathPlanner
         currentNode = Points.First;
     }
 
-    public List<TcpPathPoint> TryGetPoints(int n = 1)
+    public List<TcpPathPoint> GetPathPart()
     {
-        // 尝试获取下n个TCP路径点，并额外包括上一个点
+        // 获取下一部分路径点
         List<TcpPathPoint> result = new();
         LinkedListNode<TcpPathPoint> node = currentNode;
-        for (int i = 0; i <= n; i++)
+        while (node != null)
         {
-            if (node == null)
+            var point = node.Value;
+            result.Add(point);
+            node = node.Next;
+            if (point.Flag == TcpPathPoint.PointFlag.End)
             {
                 break;
             }
-            result.Add(node.Value);
-            node = node.Next;
         }
         return result;
     }
 
-    public void HandleTrajectoryPlanResults(List<TrajectoryPlanResult> results)
+    public void HandleTrajectoryPlanResult(TrajectoryPlanResult result)
     {
-        // 处理每一段轨迹的规划结果
-        foreach (var result in results)
+        // 处理轨迹规划结果
+        switch (result.PlanStatus)
         {
-            switch (result.PlanStatus)
-            {
-                case TrajectoryPlanResult.TrajectoryPlanStatus.Completed:
-                    // 推进当前规划节点
-                    if (result.StartPoint == currentNode.Value)
+            case TrajectoryPlanResult.TrajectoryPlanStatus.Ok:
+                // 推进当前规划节点到下一段路径
+                while (currentNode != null)
+                {
+                    var point = currentNode.Value;
+                    currentNode = currentNode.Next;
+                    if (point.Flag == TcpPathPoint.PointFlag.End)
                     {
-                        currentNode = currentNode.Next;
+                        break;
                     }
-                    // 全部规划完
-                    if (currentNode == null)
-                    {
-                        Status = PlanStatus.Suceeded;
-                    }
-                    break;
-            }
+                }
+                // 全部规划完
+                if (currentNode == null)
+                {
+                    Status = PlanStatus.Suceeded;
+                }
+                break;
         }
     }
 

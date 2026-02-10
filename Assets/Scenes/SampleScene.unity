@@ -2931,7 +2931,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
       propertyPath: WeldTaskFileName
-      value: C:\Cherry_CRH\Undergraduate4-2\Graduation Project\Welding Tasks\TestLineTask.json
+      value: E:\Cherry_CRH\Undergraduate4-2\Graduation Project\Welding Tasks\TestLineTask.json
       objectReference: {fileID: 0}
     - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
       propertyPath: TcpPathVisualizer

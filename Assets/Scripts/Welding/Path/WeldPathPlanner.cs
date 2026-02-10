@@ -17,11 +17,6 @@ public class WeldPathPlanner
     /// </summary>
     public float MinInterval = 0.001f;
 
-    /// <summary>
-    /// 曲率敏感度系数（越大对曲率变化越敏感）
-    /// </summary>
-    public float CurvatureSensitivity = 10f;
-
     private RobotModel robot;
 
     public void Init(RobotModel robot)
@@ -41,7 +36,7 @@ public class WeldPathPlanner
         {
             // 基于当前曲率计算采样间隔
             float currentCurvature = seam.GetCurvature(s);
-            float interval = CalculateAdaptiveInterval(currentCurvature, seam.GetMaxCurvature());
+            float interval = CalculateAdaptiveInterval(currentCurvature);
 
             // 确保s不超过1
             s = Mathf.Min(s + interval / seam.Length, 1f);
@@ -67,15 +62,12 @@ public class WeldPathPlanner
     /// <summary>
     /// 计算自适应采样间隔
     /// </summary>
-    private float CalculateAdaptiveInterval(float currentCurvature, float maxCurvature)
+    private float CalculateAdaptiveInterval(float curvature)
     {
-        if (maxCurvature <= 0) return MaxInterval;
-
         // 使用非线性映射：曲率越大，间隔越小
-        float curvatureRatio = currentCurvature / maxCurvature;
-        float t = Mathf.Pow(curvatureRatio, CurvatureSensitivity);
+        float ds = MinInterval + (MaxInterval - MinInterval) / (1 + curvature * 1e-1f);
 
-        return Mathf.Lerp(MaxInterval, MinInterval, t);
+        return ds;
     }
 
     /// <summary>

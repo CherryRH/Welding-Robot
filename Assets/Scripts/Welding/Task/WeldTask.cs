@@ -27,17 +27,20 @@ public class WeldTask
         // 构建焊接任务
         TaskName = data.TaskName;
         WorkpieceFileName = data.WorkpieceFileName;
-        foreach (var seamData in data.WeldSeams)
+        if (data.WeldSeams != null)
         {
-            WeldSeam seam = seamData.Type switch
+            foreach (var seamData in data.WeldSeams)
             {
-                WeldSeamData.WeldSeamType.Line => new LineSeam(seamData),
-                WeldSeamData.WeldSeamType.Arc => new ArcSeam(seamData),
-                _ => null
-            };
-            if (seam != null)
-            {
-                WeldSeams.Add(seam);
+                WeldSeam seam = seamData.Type switch
+                {
+                    WeldSeamData.WeldSeamType.Line => new LineSeam(seamData),
+                    WeldSeamData.WeldSeamType.Arc => new ArcSeam(seamData),
+                    _ => null
+                };
+                if (seam != null)
+                {
+                    WeldSeams.Add(seam);
+                }
             }
         }
     }
