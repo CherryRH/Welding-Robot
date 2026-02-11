@@ -1,4 +1,7 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class TrajectoryPlanner
@@ -6,6 +9,7 @@ public class TrajectoryPlanner
     public int SegmentsPerPlan = 5;
 
     private RobotModel robot;
+
     private Trajectory trajectory;
 
     public void Init(RobotModel robot, Trajectory trajectory)
@@ -17,183 +21,144 @@ public class TrajectoryPlanner
     public TrajectoryPlanResult Plan(List<TcpPathPoint> points, float currentTime)
     {
         TrajectoryPlanResult result = new();
-        if (points == null || points.Count < 2)
+        if (points == null || points.Count < 2) return result;
+        var pathType = points[0].Type;
+        switch (pathType)
         {
-            result.PlanStatus = TrajectoryPlanResult.TrajectoryPlanStatus.Ok;
-            return result;
+            case TcpPathPoint.PointType.Approach:
+                result = PlanApproachTrajectory(points, currentTime);
+                break;
+            case TcpPathPoint.PointType.Weld:
+                result = PlanWeldTrajectory(points, currentTime);
+                break;
+            case TcpPathPoint.PointType.Adjust:
+                result = PlanAdjustTrajectory(points, currentTime);
+                break;
+        }
+        return result;
+    }
+
+    private TrajectoryPlanResult PlanApproachTrajectory(List<TcpPathPoint> points, float currentTime)
+    {
+        // 规划移动任务轨迹
+        TrajectoryPlanResult result = new();
+        for (int i = 0; i < points.Count-1; i++)
+        {
+            var start = points[i];
+            var end = points[i+1];
+            // Trajectory是否为空
+            bool isTrajectoryEmpty = !trajectory.HasSegment;
+            // 起始位姿
+            Pose startPose = start.Pose;
+            // 结束位姿
+            Pose endPose = end.Pose;
+            // 计算直线路径长度
+            float length = Vector3.Distance(startPose.position, endPose.position);
+            // 确定当前规划的起始时间
+            float startTime = isTrajectoryEmpty ? currentTime : trajectory.LastSegment.EndTime;
+            // 确定起始关节角度
+            float[] startJoints = isTrajectoryEmpty ? robot.JointAngles : trajectory.LastSegment.QEnd;
+            // 求解结束关节角度
+            // TODO: 后续增加解的选择、冗余度处理和解算失败处理等
+            float[] endJoints = robot.IK.Solve(endPose, startJoints) ?? startJoints;
+            // 计算轨迹结束时间
+            float endTime = startTime + length / start.Speed;
+            // 生成移动轨迹段
+            // TODO: 要考虑前一段轨迹是否是连续的
+            trajectory.Add(TrajectorySegment.BuildLinearSegment(
+                TrajectorySegment.TrajectorySegmentType.Move,
+                startTime, endTime,
+                startPose, endPose,
+                startJoints, endJoints));
         }
 
-        var pathType = points[0].Type;
-        return pathType switch
-        {
-            TcpPathPoint.PointType.Approach => PlanNonWeldTrajectory(points, currentTime, TrajectorySegment.TrajectorySegmentType.Move),
-            TcpPathPoint.PointType.Adjust => PlanNonWeldTrajectory(points, currentTime, TrajectorySegment.TrajectorySegmentType.Adjust),
-            TcpPathPoint.PointType.Weld => PlanWeldTrajectory(points, currentTime),
-            _ => result
-        };
+        result.PlanStatus = TrajectoryPlanResult.TrajectoryPlanStatus.Ok;
+        return result;
     }
 
     private TrajectoryPlanResult PlanWeldTrajectory(List<TcpPathPoint> points, float currentTime)
     {
-        return PlanPath(
-            points,
-            currentTime,
-            TrajectorySegment.TrajectorySegmentType.Weld,
-            strictTcpSpeed: true,
-            mapJointLimitViolationToTcpUnreachable: true);
-    }
-
-    private TrajectoryPlanResult PlanNonWeldTrajectory(
-        List<TcpPathPoint> points,
-        float currentTime,
-        TrajectorySegment.TrajectorySegmentType segType)
-    {
-        return PlanPath(
-            points,
-            currentTime,
-            segType,
-            strictTcpSpeed: false,
-            mapJointLimitViolationToTcpUnreachable: false);
-    }
-
-    private TrajectoryPlanResult PlanPath(
-        List<TcpPathPoint> points,
-        float currentTime,
-        TrajectorySegment.TrajectorySegmentType segmentType,
-        bool strictTcpSpeed,
-        bool mapJointLimitViolationToTcpUnreachable)
-    {
-        TrajectoryPlanResult result = new { PlanStatus = TrajectoryPlanResult.TrajectoryPlanStatus.Ok };
-
+        // 规划移动任务轨迹
+        TrajectoryPlanResult result = new();
         for (int i = 0; i < points.Count - 1; i++)
         {
             var start = points[i];
             var end = points[i + 1];
-
+            // Trajectory是否为空
             bool isTrajectoryEmpty = !trajectory.HasSegment;
+            // 起始位姿
             Pose startPose = start.Pose;
+            // 结束位姿
             Pose endPose = end.Pose;
-
+            // 计算直线路径长度
+            float length = Vector3.Distance(startPose.position, endPose.position);
+            // 确定当前规划的起始时间
             float startTime = isTrajectoryEmpty ? currentTime : trajectory.LastSegment.EndTime;
+            // 确定起始关节角度
             float[] startJoints = isTrajectoryEmpty ? robot.JointAngles : trajectory.LastSegment.QEnd;
-            float[] endJoints = robot.IK.Solve(endPose, startJoints);
-
-            if (endJoints == null || endJoints.Length != startJoints.Length)
-            {
-                return BuildFailedResult(
-                    TrajectoryPlanResult.TrajectoryPlanStatus.TcpPositionUnreachable,
-                    start,
-                    end);
-            }
-
-            float segmentDuration;
-            bool jointLimitViolated;
-
-            if (strictTcpSpeed)
-            {
-                float pathLength = Vector3.Distance(startPose.position, endPose.position);
-                float tcpSpeed = Mathf.Max(1e-5f, start.Speed);
-                segmentDuration = pathLength / tcpSpeed;
-                segmentDuration = Mathf.Max(1e-4f, segmentDuration);
-
-                jointLimitViolated = ViolatesJointVelocityLimit(startJoints, endJoints, segmentDuration);
-                if (jointLimitViolated)
-                {
-                    return BuildFailedResult(
-                        mapJointLimitViolationToTcpUnreachable
-                            ? TrajectoryPlanResult.TrajectoryPlanStatus.TcpSpeedUnreachable
-                            : TrajectoryPlanResult.TrajectoryPlanStatus.JointSpeedLimitViolated,
-                        start,
-                        end);
-                }
-            }
-            else
-            {
-                float tcpBasedDuration = GetTcpReferenceDuration(startPose, endPose, start.Speed);
-                float jointLimitedDuration = GetJointLimitedDuration(startJoints, endJoints);
-                segmentDuration = Mathf.Max(tcpBasedDuration, jointLimitedDuration, 1e-4f);
-
-                jointLimitViolated = ViolatesJointVelocityLimit(startJoints, endJoints, segmentDuration);
-                if (jointLimitViolated)
-                {
-                    return BuildFailedResult(
-                        TrajectoryPlanResult.TrajectoryPlanStatus.JointSpeedLimitViolated,
-                        start,
-                        end);
-                }
-            }
-
-            float endTime = startTime + segmentDuration;
-            trajectory.Add(TrajectorySegment.BuildQuinticSegment(
-                segmentType,
-                startTime,
-                endTime,
-                startPose,
-                endPose,
-                startJoints,
-                endJoints));
+            // 求解结束关节角度
+            // TODO: 后续增加解的选择、冗余度处理和解算失败处理等
+            float[] endJoints = robot.IK.Solve(endPose, startJoints) ?? startJoints;
+            // 计算轨迹结束时间
+            float endTime = startTime + length / start.Speed;
+            // 生成移动轨迹段
+            // TODO: 要考虑前一段轨迹是否是连续的
+            trajectory.Add(TrajectorySegment.BuildLinearSegment(
+                TrajectorySegment.TrajectorySegmentType.Move,
+                startTime, endTime,
+                startPose, endPose,
+                startJoints, endJoints));
         }
 
+        result.PlanStatus = TrajectoryPlanResult.TrajectoryPlanStatus.Ok;
         return result;
     }
 
-    private float GetTcpReferenceDuration(Pose startPose, Pose endPose, float speed)
+    private TrajectoryPlanResult PlanAdjustTrajectory(List<TcpPathPoint> points, float currentTime)
     {
-        float pathLength = Vector3.Distance(startPose.position, endPose.position);
-        if (speed <= 1e-5f || pathLength <= 1e-6f)
-            return 0f;
-        return pathLength / speed;
-    }
-
-    private float GetJointLimitedDuration(float[] startJoints, float[] endJoints)
-    {
-        float minDuration = 0f;
-        int n = Mathf.Min(startJoints.Length, endJoints.Length);
-        for (int j = 0; j < n; j++)
+        // 规划移动任务轨迹
+        TrajectoryPlanResult result = new();
+        for (int i = 0; i < points.Count - 1; i++)
         {
-            float vmax = Mathf.Max(1e-4f, robot.RobotConfig.JointsParameters[j].AngleVMax);
-            float duration = Mathf.Abs(endJoints[j] - startJoints[j]) / vmax;
-            if (duration > minDuration)
-                minDuration = duration;
+            var start = points[i];
+            var end = points[i + 1];
+            // Trajectory是否为空
+            bool isTrajectoryEmpty = !trajectory.HasSegment;
+            // 起始位姿
+            Pose startPose = start.Pose;
+            // 结束位姿
+            Pose endPose = end.Pose;
+            // 计算直线路径长度
+            float length = Vector3.Distance(startPose.position, endPose.position);
+            // 确定当前规划的起始时间
+            float startTime = isTrajectoryEmpty ? currentTime : trajectory.LastSegment.EndTime;
+            // 确定起始关节角度
+            float[] startJoints = isTrajectoryEmpty ? robot.JointAngles : trajectory.LastSegment.QEnd;
+            // 求解结束关节角度
+            // TODO: 后续增加解的选择、冗余度处理和解算失败处理等
+            float[] endJoints = robot.IK.Solve(endPose, startJoints) ?? startJoints;
+            // 计算轨迹结束时间
+            float endTime = startTime + length / start.Speed;
+            // 生成移动轨迹段
+            // TODO: 要考虑前一段轨迹是否是连续的
+            trajectory.Add(TrajectorySegment.BuildLinearSegment(
+                TrajectorySegment.TrajectorySegmentType.Move,
+                startTime, endTime,
+                startPose, endPose,
+                startJoints, endJoints));
         }
-        return minDuration;
-    }
 
-    private bool ViolatesJointVelocityLimit(float[] startJoints, float[] endJoints, float duration)
-    {
-        if (duration <= 1e-6f) return false;
-
-        int n = Mathf.Min(startJoints.Length, endJoints.Length);
-        for (int j = 0; j < n; j++)
-        {
-            float delta = Mathf.Abs(endJoints[j] - startJoints[j]);
-            float requiredVelocity = delta / duration;
-            float vmax = robot.RobotConfig.JointsParameters[j].AngleVMax;
-            if (requiredVelocity > vmax + 1e-4f)
-                return true;
-        }
-        return false;
-    }
-
-    private TrajectoryPlanResult BuildFailedResult(
-        TrajectoryPlanResult.TrajectoryPlanStatus status,
-        TcpPathPoint start,
-        TcpPathPoint end)
-    {
-        return new TrajectoryPlanResult
-        {
-            PlanStatus = status,
-            StartPoint = start,
-            EndPoint = end
-        };
+        result.PlanStatus = TrajectoryPlanResult.TrajectoryPlanStatus.Ok;
+        return result;
     }
 }
 
 /// <summary>
-/// 杞ㄨ抗瑙勫垝缁撴灉
+/// 轨迹规划结果
 /// </summary>
 public class TrajectoryPlanResult
 {
+    // 规划状态
     public enum TrajectoryPlanStatus
     {
         Ok,
@@ -204,9 +169,9 @@ public class TrajectoryPlanResult
         CollisionPredicted,
         Unknown
     }
-
     public TrajectoryPlanStatus PlanStatus = TrajectoryPlanStatus.Unknown;
 
+    // 对应的路径点
     public TcpPathPoint StartPoint;
     public TcpPathPoint EndPoint;
 }
