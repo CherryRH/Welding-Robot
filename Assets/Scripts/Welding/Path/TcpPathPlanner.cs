@@ -94,6 +94,9 @@ public class TcpPathPlanner
 
     public void HandleTrajectoryPlanResult(TrajectoryPlanResult result)
     {
+        if (result == null)
+            return;
+
         // 处理轨迹规划结果
         switch (result.PlanStatus)
         {
@@ -113,6 +116,12 @@ public class TcpPathPlanner
                 {
                     Status = PlanStatus.Suceeded;
                 }
+                break;
+
+            default:
+                Status = PlanStatus.Failed;
+                Debug.LogWarning($"Trajectory planning failed: {result.PlanStatus}. " +
+                    $"From seam {result.StartPoint?.SeamId} to seam {result.EndPoint?.SeamId}.");
                 break;
         }
     }

@@ -8,14 +8,14 @@ using UnityEngine;
 /// </summary>
 public class IK
 {
-    public enum IKMethod
+    public enum IKMethodType
     {
         JT,// Jacobian Transpose
         CCD,// Cyclic Coordinate Descent
         ANALYTIC // Anlytic
     }
 
-    public IKMethod Method = IKMethod.ANALYTIC;
+    public IKMethodType IKMethod = IKMethodType.ANALYTIC;
 
     // 公共参数，可按需调整
     public int MaxIterations = 100; // 数值法最大迭代次数
@@ -37,13 +37,13 @@ public class IK
         if (robot == null || robot.Config == null || robot.Config.JointsParameters == null)
             return new float[robot?.Joints.Length ?? 0];
 
-        switch (Method)
+        switch (IKMethod)
         {
-            case IKMethod.CCD:
+            case IKMethodType.CCD:
                 return SolveCCD(tcpPose).GetBestSolution(current);
-            case IKMethod.JT:
+            case IKMethodType.JT:
                 return SolveJacobianTranspose(tcpPose).GetBestSolution(current);
-            case IKMethod.ANALYTIC:
+            case IKMethodType.ANALYTIC:
                 return SolveAnalytic(tcpPose).GetBestSolution(current);
             default:
                 return SolveCCD(tcpPose).GetBestSolution(current);
@@ -369,9 +369,9 @@ public class IK
     public void SwitchMethod()
     {
         // 切换逆向运动学方法
-        IKMethod[] values = (IKMethod[])Enum.GetValues(typeof(IKMethod));
-        int currentIndex = Array.IndexOf(values, Method);
+        IKMethodType[] values = (IKMethodType[])Enum.GetValues(typeof(IKMethodType));
+        int currentIndex = Array.IndexOf(values, IKMethod);
         int nextIndex = (currentIndex + 1) % values.Length;
-        Method = values[nextIndex];
+        IKMethod = values[nextIndex];
     }
 }

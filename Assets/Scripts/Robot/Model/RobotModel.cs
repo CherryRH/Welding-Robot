@@ -145,4 +145,21 @@ public class RobotModel
             SetJointAngles(solved);
         }
     }
+
+    public bool ViolatesJointVelocityLimit(float[] startJoints, float[] endJoints, float duration)
+    {
+        // 判断是否超出关节角速度限制
+        if (duration <= 1e-6f) return false;
+
+        int n = Mathf.Min(startJoints.Length, endJoints.Length);
+        for (int j = 0; j < n; j++)
+        {
+            float delta = Mathf.Abs(endJoints[j] - startJoints[j]);
+            float requiredVelocity = delta / duration;
+            float vmax = Config.JointsParameters[j].AngleVMax;
+            if (requiredVelocity > vmax + 1e-4f)
+                return true;
+        }
+        return false;
+    }
 }

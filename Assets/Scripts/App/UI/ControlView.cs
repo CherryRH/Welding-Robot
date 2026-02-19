@@ -54,15 +54,15 @@ public class ControlView : MonoBehaviour
         }
         StateDetailText.text = text;
 
-        switch (context.RobotModel.IK.Method)
+        switch (context.RobotModel.IK.IKMethod)
         {
-            case IK.IKMethod.CCD:
+            case IK.IKMethodType.CCD:
                 IKText.text = "CCD";
                 break;
-            case IK.IKMethod.JT:
+            case IK.IKMethodType.JT:
                 IKText.text = "JT";
                 break;
-            case IK.IKMethod.ANALYTIC:
+            case IK.IKMethodType.ANALYTIC:
                 IKText.text = "ANALYTIC";
                 break;
         }
