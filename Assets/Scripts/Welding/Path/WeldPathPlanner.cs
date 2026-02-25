@@ -54,7 +54,7 @@ public class WeldPathPlanner
             TcpPathPoint.PointFlag flag = TcpPathPoint.PointFlag.Intermediate;
             if (i == 0) flag = TcpPathPoint.PointFlag.Start;
             else if (i == samples.Count - 1) flag = TcpPathPoint.PointFlag.End;
-            points.Add(new(pose, TcpPathPoint.PointType.Weld, flag, seam.Id, seam.Speed));
+            points.Add(new(pose, TcpPathPoint.PointType.Weld, flag, seam, seam.Speed));
         }
         return points;
     }

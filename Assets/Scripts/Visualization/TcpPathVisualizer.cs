@@ -9,7 +9,7 @@ public class TcpPathVisualizer : MonoBehaviour
 {
     public GameObject SamplePoint;
 
-    private List<GameObject> samplePoints = new();
+    private Dictionary<TcpPathPoint, GameObject> samplePoints = new();
 
     void Start()
     {
@@ -21,7 +21,7 @@ public class TcpPathVisualizer : MonoBehaviour
         
     }
 
-    public void ShowTcpPathPoints(TcpPathPlanner tcpPathPlanner, float duration)
+    public void ShowTcpPathPoints(TcpPathPlanner tcpPathPlanner)
     {
         // 显示采样点
         Clear();
@@ -29,34 +29,24 @@ public class TcpPathVisualizer : MonoBehaviour
         foreach (TcpPathPoint item in tcpPathPlanner.Points)
         {
             Pose pose = item.Pose;
-            Vector3 unityPos = MathUtil.DataToUnityPosition(pose.position);
-            Quaternion unityRot = MathUtil.DataToUnityRotation(pose.rotation);
-
-            Debug.DrawRay(
-                unityPos,
-                unityRot * Vector3.forward * 0.01f,
-                Color.red,
-                duration
-            );
-
             // 实例化采样点
             GameObject point = Instantiate(
                 SamplePoint,
-                unityPos,
-                unityRot,
+                MathUtil.DataToUnityPosition(pose.position),
+                MathUtil.DataToUnityRotation(pose.rotation),
                 transform
             );
             point.name = $"TcpPathPoint_{item.Type}_{++i}";
-            samplePoints.Add(point);
+            samplePoints.Add(item, point);
         }
     }
 
     public void Clear()
     {
         // 清除采样点
-        foreach (var point in samplePoints)
+        foreach (var item in samplePoints)
         {
-            Destroy(point);
+            Destroy(item.Value);
         }
         samplePoints.Clear();
     }

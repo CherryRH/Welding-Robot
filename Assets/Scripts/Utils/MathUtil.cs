@@ -39,19 +39,19 @@ public static class MathUtil
             return a > a1 && a < a0;
     }
 
-    public static bool IsVector3Close(Vector3 a, Vector3 b)
+    public static bool IsVector3Equal(Vector3 a, Vector3 b)
     {
         return (a - b).sqrMagnitude < 1e-10f;
     }
 
-    public static bool IsQuaternionClose(Quaternion a, Quaternion b)
+    public static bool IsQuaternionEqual(Quaternion a, Quaternion b)
     {
         return Mathf.Abs(Quaternion.Dot(a, b)) > 0.99999f;
     }
 
-    public static bool IsPoseClose(Pose a, Pose b)
+    public static bool IsPoseEqual(Pose a, Pose b)
     {
-        return IsVector3Close(a.position, b.position) && IsQuaternionClose(a.rotation, b.rotation);
+        return IsVector3Equal(a.position, b.position) && IsQuaternionEqual(a.rotation, b.rotation);
     }
 
     public static Vector3 EulerZYX(Matrix4x4 m)

@@ -15,13 +15,14 @@ public class TcpPathPlanner
     /// <summary>
     /// 当前规划到的TCP路径节点
     /// </summary>
-    private LinkedListNode<TcpPathPoint> currentNode = null;
+    public LinkedListNode<TcpPathPoint> CurrentNode { get; private set; } = null;
 
     /// <summary>
     /// 路径规划器
     /// </summary>
     private ApproachPathPlanner approachPlanner = new();
     private WeldPathPlanner weldPlanner = new();
+    private AdjustPathPlanner adjustPlanner = new();
 
     /// <summary>
     /// 规划状态
@@ -41,6 +42,7 @@ public class TcpPathPlanner
         this.robot = robot;
         approachPlanner.Init(robot);
         weldPlanner.Init(robot);
+        adjustPlanner.Init(robot);
     }
 
     public void Plan(WeldTask task)
@@ -71,14 +73,14 @@ public class TcpPathPlanner
             currentPose = weldSeamPoints[weldSeamPoints.Count-1].Pose;
         }
         // 设置当前节点
-        currentNode = Points.First;
+        CurrentNode = Points.First;
     }
 
     public List<TcpPathPoint> GetPathPart()
     {
         // 获取下一部分路径点
         List<TcpPathPoint> result = new();
-        LinkedListNode<TcpPathPoint> node = currentNode;
+        LinkedListNode<TcpPathPoint> node = CurrentNode;
         while (node != null)
         {
             var point = node.Value;
@@ -102,26 +104,59 @@ public class TcpPathPlanner
         {
             case TrajectoryPlanResult.TrajectoryPlanStatus.Ok:
                 // 推进当前规划节点到下一段路径
-                while (currentNode != null)
+                while (CurrentNode != null)
                 {
-                    var point = currentNode.Value;
-                    currentNode = currentNode.Next;
+                    var point = CurrentNode.Value;
+                    CurrentNode = CurrentNode.Next;
                     if (point.Flag == TcpPathPoint.PointFlag.End)
                     {
                         break;
                     }
                 }
                 // 全部规划完
-                if (currentNode == null)
+                if (CurrentNode == null)
                 {
                     Status = PlanStatus.Suceeded;
                 }
                 break;
 
+            case TrajectoryPlanResult.TrajectoryPlanStatus.JointSpeedLimitViolated:
+                // 推进当前规划节点到调姿点，截断当前路径，并插入调姿路径
+                while (CurrentNode != null)
+                {
+                    TcpPathPoint point = CurrentNode.Value;
+                    if (point == result.CurrentPoint)
+                    {
+                        // 截断当前路径
+                        point.Flag = TcpPathPoint.PointFlag.End;
+                        // 规划调姿路径
+                        List<TcpPathPoint> adjustPoints = adjustPlanner.Plan(point.Pose, point.Seam);
+                        LinkedListNode<TcpPathPoint> insertNode = CurrentNode;
+                        foreach (var item in adjustPoints)
+                        {
+                            Points.AddAfter(insertNode, item);
+                            insertNode = insertNode.Next;
+                        }
+                        // 插入一个新的起点
+                        TcpPathPoint newStartPoint = new(
+                            point.Pose,
+                            point.Type,
+                            TcpPathPoint.PointFlag.Start,
+                            point.Seam,
+                            point.Speed);
+                        Points.AddAfter(insertNode, newStartPoint);
+                        break;
+                    }
+                    else
+                    {
+                        CurrentNode = CurrentNode.Next;
+                    }
+                }
+                break;
+
             default:
                 Status = PlanStatus.Failed;
-                Debug.LogWarning($"Trajectory planning failed: {result.PlanStatus}. " +
-                    $"From seam {result.StartPoint?.SeamId} to seam {result.EndPoint?.SeamId}.");
+                Debug.LogWarning($"Trajectory planning failed: {result.PlanStatus}. ");
                 break;
         }
     }
@@ -129,7 +164,7 @@ public class TcpPathPlanner
     public void Clear()
     {
         Points.Clear();
-        currentNode = null;
+        CurrentNode = null;
         Status = PlanStatus.Unfinished;
     }
 }

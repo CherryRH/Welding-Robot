@@ -158,7 +158,9 @@ public class RobotModel
             float requiredVelocity = delta / duration;
             float vmax = Config.JointsParameters[j].AngleVMax;
             if (requiredVelocity > vmax + 1e-4f)
+            {
                 return true;
+            }
         }
         return false;
     }

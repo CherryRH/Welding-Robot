@@ -50,7 +50,7 @@ class WorkState : SimulationStateBase
         // 规划路径
         ctx.TcpPathPlanner.Plan(ctx.Task);
         // 可视化路径
-        ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner, 1e10f);
+        ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner);
         ctx.Clock.Start();
     }
 
@@ -65,6 +65,10 @@ class WorkState : SimulationStateBase
 
             // 处理规划结果
             ctx.TcpPathPlanner.HandleTrajectoryPlanResult(result);
+
+            // 更新可视化路径
+            if (result.PlanStatus != TrajectoryPlanResult.TrajectoryPlanStatus.Ok)
+                ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner);
         }
 
         // 检查路径规划状态

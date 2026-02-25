@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Net;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class TrajectoryPlanner
@@ -29,30 +27,12 @@ public class TrajectoryPlanner
 
     public TrajectoryPlanResult Plan(List<TcpPathPoint> points, float currentTime)
     {
+        // 规划关节空间的轨迹
         TrajectoryPlanResult result = new();
         if (points == null || points.Count < 2)
         {
             return result;
         }
-        var pathType = points[0].Type;
-
-        switch (InterpolationMethod)
-        {
-            case InterpolationMethodType.Linear:
-                result = PlanLinearTrajectory(points, currentTime);
-                break;
-            case InterpolationMethodType.CubicHermite:
-                result = PlanCubicHermiteTrajectory(points, currentTime);
-                break;
-        }
-
-        return result;
-    }
-
-    private TrajectoryPlanResult PlanLinearTrajectory(List<TcpPathPoint> points, float currentTime)
-    {
-        // 规划关节空间线性插值下的轨迹
-        TrajectoryPlanResult result = new();
 
         // 记录每个点的时间和关节角
         List<float> timeList = new();
@@ -64,62 +44,7 @@ public class TrajectoryPlanner
         timeList.Add(time);
         jointsList.Add(joints);
 
-        int n = points.Count - 1;
-        for (int i = 0; i < n; i++)
-        {
-            var start = points[i];
-            var end = points[i+1];
-            // 确定起始关节角度
-            float[] startJoints = joints;
-            // 求解结束关节角度
-            // TODO: 后续增加解的选择、冗余度处理和解算失败处理等
-            float[] endJoints = robot.IK.Solve(end.Pose, startJoints) ?? startJoints;
-            joints = endJoints;
-
-            // 确定当前轨迹的起始时间和结束时间
-            float startTime = time;
-            float endTime = startTime + PlanTrajectoryDuration(start, end, startJoints, endJoints);
-            time = endTime;
-
-            timeList.Add(endTime);
-            jointsList.Add(endJoints);
-        }
-
-        // 生成轨迹
-        for (int i = 0; i < n; i++)
-        {
-            // 构造关节角插值器
-            LinearJointInterpolator inter = new();
-            inter.Build(jointsList[i+1], jointsList[i], timeList[i+1] - timeList[i]);
-
-            // 生成移动轨迹段
-            trajectory.Add(new TrajectorySegment(
-                TrajectorySegment.TrajectorySegmentType.Move,
-                timeList[i], timeList[i+1],
-                jointsList[i], jointsList[i+1],
-                inter));
-        }
-
-        return result;
-    }
-
-    private TrajectoryPlanResult PlanCubicHermiteTrajectory(List<TcpPathPoint> points, float currentTime)
-    {
-        // 规划关节空间三次Hermite样条插值下的轨迹
-        TrajectoryPlanResult result = new();
-
-        // 记录每个点的时间和关节角
-        List<float> timeList = new();
-        List<float[]> jointsList = new();
-
-        bool isTrajectoryEmpty = !trajectory.HasSegment;
-        float time = isTrajectoryEmpty ? currentTime : trajectory.LastSegment.EndTime;
-        float[] joints = isTrajectoryEmpty ? robot.JointAngles : trajectory.LastSegment.QEnd;
-        timeList.Add(time);
-        jointsList.Add(joints);
-
-        int n = points.Count - 1;
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < points.Count - 1; i++)
         {
             var start = points[i];
             var end = points[i + 1];
@@ -132,15 +57,97 @@ public class TrajectoryPlanner
 
             // 确定当前轨迹的起始时间和结束时间
             float startTime = time;
-            float endTime = startTime + PlanTrajectoryDuration(start, end, startJoints, endJoints);
+            float duration = PlanTrajectoryDuration(start, end, startJoints, endJoints);
+            float endTime = startTime + duration;
             time = endTime;
+
+            // 检查关节是否会超速
+            if (robot.ViolatesJointVelocityLimit(startJoints, endJoints, duration))
+            {
+                result.PlanStatus = TrajectoryPlanResult.TrajectoryPlanStatus.JointSpeedLimitViolated;
+                result.CurrentPoint = start;
+                break;
+            }
 
             timeList.Add(endTime);
             jointsList.Add(endJoints);
+            result.CurrentPoint = end;
         }
 
-        // 计算每个点的关节角速度（Fritsch–Carlson 单调限制）
+        if (timeList.Count > 2 && jointsList.Count > 2)
+        {
+            // 根据选择的插值方法构造轨迹段
+            switch (InterpolationMethod)
+            {
+                case InterpolationMethodType.Linear:
+                    BuildLinearTrajectory(timeList, jointsList);
+                    break;
+                case InterpolationMethodType.CubicHermite:
+                    List<float[]> velocities = PlanJointVelocities(timeList, jointsList);
+                    BuildCubicHermiteTrajectory(timeList, jointsList, velocities);
+                    break;
+            }
+        }
+
+        return result;
+    }
+
+    private void BuildLinearTrajectory(List<float> timeList, List<float[]> jointsList)
+    {
+        // 构造关节空间线性插值下的轨迹
+        for (int i = 0; i < timeList.Count-1; i++)
+        {
+            // 构造关节角插值器
+            LinearJointInterpolator inter = new();
+            inter.Build(jointsList[i], jointsList[i+1], timeList[i + 1] - timeList[i]);
+
+            // 生成移动轨迹段
+            trajectory.Add(new TrajectorySegment(
+                TrajectorySegment.TrajectorySegmentType.Move,
+                timeList[i], timeList[i + 1],
+                jointsList[i], jointsList[i + 1],
+                inter));
+        }
+    }
+
+    private void BuildCubicHermiteTrajectory(List<float> timeList, List<float[]> jointsList, List<float[]> velocities)
+    {
+        // 构造关节空间三次Hermite样条插值下的轨迹段
+        for (int i = 0; i < timeList.Count-1; i++)
+        {
+            // 构造关节角插值器
+            CubicHermiteSegmentInterpolator inter = new();
+            inter.Build(jointsList[i], jointsList[i + 1], velocities[i], velocities[i + 1], timeList[i + 1] - timeList[i]);
+
+            // 生成移动轨迹段
+            trajectory.Add(new TrajectorySegment(
+                TrajectorySegment.TrajectorySegmentType.Move,
+                timeList[i], timeList[i + 1],
+                jointsList[i], jointsList[i + 1],
+                inter));
+        }
+    }
+
+    private float PlanTrajectoryDuration(TcpPathPoint start, TcpPathPoint end, float[] startJoints, float[] endJoints)
+    {
+        // 规划轨迹所需的时间
+        float duration = 0f;
+        duration = start.Type switch
+        {
+            TcpPathPoint.PointType.Weld => GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed),
+            TcpPathPoint.PointType.Approach => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints)),
+            TcpPathPoint.PointType.Adjust => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints)),
+            _ => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints))
+        };
+        return duration;
+    }
+
+    private List<float[]> PlanJointVelocities(List<float> timeList, List<float[]> jointsList)
+    {
+        // 规划每个点的关节角速度（Fritsch–Carlson 单调限制）
         List<float[]> velocities = new();
+        int n = timeList.Count - 1;
+        if (n < 1) return velocities;
 
         // 初始化
         for (int i = 0; i < n + 1; i++)
@@ -150,7 +157,7 @@ public class TrajectoryPlanner
         {
             float[] h = new float[n];
             float[] delta = new float[n];
-            float[] m = new float[n+1];
+            float[] m = new float[n + 1];
             // Step 1: 计算 h 和 delta
             for (int i = 0; i < n; i++)
             {
@@ -192,7 +199,7 @@ public class TrajectoryPlanner
                 }
             }
             // 写回 velocities
-            for (int i = 0; i < n+1; i++)
+            for (int i = 0; i < n + 1; i++)
             {
                 velocities[i][j] = m[i];
                 if (float.IsNaN(velocities[i][j]) || float.IsInfinity(velocities[i][j]))
@@ -201,44 +208,7 @@ public class TrajectoryPlanner
                 }
             }
         }
-
-
-        // 生成轨迹
-        for (int i = 0; i < n; i++)
-        {
-            // 构造关节角插值器
-            CubicHermiteSegmentInterpolator inter = new();
-            inter.Build(jointsList[i], jointsList[i+1], velocities[i], velocities[i+1], timeList[i+1] - timeList[i]);
-
-            // 生成移动轨迹段
-            trajectory.Add(new TrajectorySegment(
-                TrajectorySegment.TrajectorySegmentType.Move,
-                timeList[i], timeList[i + 1],
-                jointsList[i], jointsList[i + 1],
-                inter));
-        }
-
-        return result;
-    }
-
-    private float PlanTrajectoryDuration(TcpPathPoint start, TcpPathPoint end, float[] startJoints, float[] endJoints)
-    {
-        // 规划轨迹所需的时间
-        float duration = 0f;
-        switch (start.Type)
-        {
-            case TcpPathPoint.PointType.Weld:
-                duration = GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed);
-                break;
-            case TcpPathPoint.PointType.Approach:
-            case TcpPathPoint.PointType.Adjust:
-            default:
-                duration = Mathf.Max(
-                    GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed),
-                    GetJointLimitedDuration(startJoints, endJoints));
-                break;
-        }
-        return duration;
+        return velocities;
     }
 
     private float GetTcpReferenceDuration(Pose startPose, Pose endPose, float speed)
@@ -281,7 +251,6 @@ public class TrajectoryPlanResult
     }
     public TrajectoryPlanStatus PlanStatus = TrajectoryPlanStatus.Ok;
 
-    // 对应的路径点
-    public TcpPathPoint StartPoint;
-    public TcpPathPoint EndPoint;
+    // 规划到的路径点
+    public TcpPathPoint CurrentPoint;
 }
