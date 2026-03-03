@@ -14,23 +14,54 @@ public class IKResult
 
     public bool Success => Solutions.Count > 0;
 
-    public float[] GetBestSolution(float[] current)
+    public float[] GetBestSolution(float[] current, RobotModel robot)
     {
         float minCost = float.MaxValue;
         float[] best = null;
 
         foreach (var sol in Solutions)
         {
-            float cost = 0;
+            float[] adjusted = (float[])sol.Clone();
+
+            // ====== J6 ¶àÈ¦²¹³¥ ======
+            float minRange = robot.Config.JointsParameters[5].AngleMin;
+            float maxRange = robot.Config.JointsParameters[5].AngleMax;
+
+            float bestJ6 = adjusted[5];
+            float minDiff = float.MaxValue;
+
+            // ³¢ÊÔ ¡À2 È¦£¨×ã¹»¸²¸Ç£©
+            for (int k = -2; k <= 2; k++)
+            {
+                float candidate = sol[5] + 360f * k;
+
+                if (candidate < minRange || candidate > maxRange)
+                    continue;
+
+                float diff = Mathf.Abs(candidate - current[5]);
+
+                if (diff < minDiff)
+                {
+                    minDiff = diff;
+                    bestJ6 = candidate;
+                }
+            }
+
+            adjusted[5] = bestJ6;
+
+            // ====== ¼ÆËãÕûÌå cost ======
+            float cost = 0f;
+
             for (int i = 0; i < 6; i++)
-                cost += Mathf.Abs(sol[i] - current[i]);
+                cost += Mathf.Abs(adjusted[i] - current[i]);
 
             if (cost < minCost)
             {
                 minCost = cost;
-                best = sol;
+                best = adjusted;
             }
         }
+
         return best;
     }
 }

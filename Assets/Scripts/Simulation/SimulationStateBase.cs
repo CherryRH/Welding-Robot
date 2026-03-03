@@ -57,7 +57,7 @@ class WorkState : SimulationStateBase
     public override void Update(SimulationContext ctx, float dt)
     {
         // 规划轨迹
-        if (ctx.Trajectory.UnderHighWaterMark)
+        if (ctx.Trajectory.UnderHighWaterMark && ctx.TaskState.Status != WeldTaskPlanState.PlanStatus.Failed)
         {
             // 取一段路径点
             List<TcpPathPoint> points = ctx.TcpPathPlanner.GetPathPart();
@@ -71,22 +71,25 @@ class WorkState : SimulationStateBase
                 ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner);
         }
 
-        // 检查路径规划状态
-        switch (ctx.TcpPathPlanner.Status)
+        // 检查规划状态
+        switch (ctx.TaskState.Status)
         {
-            case TcpPathPlanner.PlanStatus.Unfinished:
+            case WeldTaskPlanState.PlanStatus.Unfinished:
                 // 继续仿真
                 break;
-            case TcpPathPlanner.PlanStatus.Suceeded:
+            case WeldTaskPlanState.PlanStatus.Suceeded:
                 // 等待轨迹执行结束
                 if (!ctx.Trajectory.HasSegment)
                 {
                     ctx.TryChangeState(SimulationState.Succeed);
                 }
                 break;
-            case TcpPathPlanner.PlanStatus.Failed:
-                // 仿真失败
-                ctx.TryChangeState(SimulationState.Fail);
+            case WeldTaskPlanState.PlanStatus.Failed:
+                // 仿真失败，等待轨迹执行结束
+                if (!ctx.Trajectory.HasSegment)
+                {
+                    ctx.TryChangeState(SimulationState.Fail);
+                }
                 break;
         }
 
@@ -115,9 +118,8 @@ class WorkState : SimulationStateBase
         {
             // 强制退出
             ctx.Clock.Stop();
-            ctx.TcpPathPlanner.Clear();
-            ctx.Trajectory.Clear();
             ctx.TryChangeState(SimulationState.Idle);
+            ctx.Clear();
         }
     }
 }
@@ -134,8 +136,7 @@ class SucceedState: SimulationStateBase
     public override void Exit(SimulationContext ctx)
     {
         // 重置
-        ctx.TcpPathPlanner.Clear();
-        ctx.Trajectory.Clear();
+        ctx.Clear();
     }
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
@@ -155,8 +156,7 @@ class FailState : SimulationStateBase
     public override void Exit(SimulationContext ctx)
     {
         // 重置
-        ctx.TcpPathPlanner.Clear();
-        ctx.Trajectory.Clear();
+        ctx.Clear();
     }
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {

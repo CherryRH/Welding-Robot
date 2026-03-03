@@ -40,13 +40,13 @@ public class IK
         switch (IKMethod)
         {
             case IKMethodType.CCD:
-                return SolveCCD(tcpPose).GetBestSolution(current);
+                return SolveCCD(tcpPose).GetBestSolution(current, robot);
             case IKMethodType.JT:
-                return SolveJacobianTranspose(tcpPose).GetBestSolution(current);
+                return SolveJacobianTranspose(tcpPose).GetBestSolution(current, robot);
             case IKMethodType.ANALYTIC:
-                return SolveAnalytic(tcpPose).GetBestSolution(current);
+                return SolveAnalytic(tcpPose).GetBestSolution(current, robot);
             default:
-                return SolveCCD(tcpPose).GetBestSolution(current);
+                return SolveCCD(tcpPose).GetBestSolution(current, robot);
         }
     }
 

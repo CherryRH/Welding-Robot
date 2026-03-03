@@ -19,6 +19,7 @@ public class SimulationContext : MonoBehaviour
     // 焊接规划层
     public string WeldTaskFileName;
     public WeldTask Task;
+    public WeldTaskPlanState TaskState = new();
     public TcpPathPlanner TcpPathPlanner = new();
 
     // 路径规划层
@@ -101,7 +102,7 @@ public class SimulationContext : MonoBehaviour
         RobotModel.SetUserOffset(WorkpieceBinder.GetOriginPoint());
         FK.Compute(RobotModel);
         Binder.Bind(RobotModel);
-        TcpPathPlanner.Init(RobotModel);
+        TcpPathPlanner.Init(RobotModel, TaskState);
         TrajectoryPlanner.Init(RobotModel, Trajectory);
         // 读取焊接任务文件（WeldTaskFileName 应为绝对路径）
         WeldTaskData data = WeldTaskDataLoader.LoadFromFile(WeldTaskFileName);
@@ -115,5 +116,15 @@ public class SimulationContext : MonoBehaviour
         Task.Optimize();
         // 可视化焊缝
         WeldSeamVisualizer.ShowSeams(Task, 1e10f);
+    }
+
+    public void Clear()
+    {
+        // 清除规划数据
+        TcpPathPlanner.Clear();
+        Trajectory.Clear();
+        TaskState.Reset();
+        // 清除可视化
+        TcpPathVisualizer.Clear();
     }
 }
