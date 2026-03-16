@@ -52,8 +52,12 @@ public class IKResult
             // ====== 计算整体 cost ======
             float cost = 0f;
 
+            // 关节角度差
             for (int i = 0; i < 6; i++)
                 cost += Mathf.Abs(adjusted[i] - current[i]);
+
+            // 限制Roll
+            cost += Mathf.Abs(adjusted[3] + adjusted[5] - current[3] - current[5]);
 
             if (cost < minCost)
             {

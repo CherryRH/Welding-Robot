@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static TrajectorySegment;
 
 public class TrajectoryPlanner
 {
@@ -34,6 +35,14 @@ public class TrajectoryPlanner
             return result;
         }
 
+        // 路径类型
+        TrajectorySegmentType segmentType = points[0].Type switch
+        {
+            TcpPathPoint.PointType.Weld => TrajectorySegmentType.Weld,
+            TcpPathPoint.PointType.Approach => TrajectorySegmentType.Approach,
+            TcpPathPoint.PointType.Adjust => TrajectorySegmentType.Adjust,
+            _ => TrajectorySegmentType.Approach
+        };
         // 记录每个点的时间和关节角
         List<float> timeList = new();
         List<float[]> jointsList = new();
@@ -50,9 +59,8 @@ public class TrajectoryPlanner
             var end = points[i + 1];
             // 确定起始关节角度
             float[] startJoints = joints;
-            // 求解结束关节角度
-            // TODO: 后续增加解的选择、冗余度处理和解算失败处理等
-            float[] endJoints = robot.IK.Solve(end.Pose, startJoints) ?? startJoints;
+            // 确定结束关节角度
+            float[] endJoints = PlanEndJoints(startJoints, start, end);
             joints = endJoints;
 
             // 确定当前轨迹的起始时间和结束时间
@@ -80,11 +88,11 @@ public class TrajectoryPlanner
             switch (InterpolationMethod)
             {
                 case InterpolationMethodType.Linear:
-                    BuildLinearTrajectory(timeList, jointsList);
+                    BuildLinearTrajectory(timeList, jointsList, segmentType);
                     break;
                 case InterpolationMethodType.CubicHermite:
                     List<float[]> velocities = PlanJointVelocities(timeList, jointsList);
-                    BuildCubicHermiteTrajectory(timeList, jointsList, velocities);
+                    BuildCubicHermiteTrajectory(timeList, jointsList, velocities, segmentType);
                     break;
             }
         }
@@ -92,7 +100,7 @@ public class TrajectoryPlanner
         return result;
     }
 
-    private void BuildLinearTrajectory(List<float> timeList, List<float[]> jointsList)
+    private void BuildLinearTrajectory(List<float> timeList, List<float[]> jointsList, TrajectorySegmentType segmentType)
     {
         // 构造关节空间线性插值下的轨迹
         for (int i = 0; i < timeList.Count-1; i++)
@@ -103,14 +111,14 @@ public class TrajectoryPlanner
 
             // 生成移动轨迹段
             trajectory.Add(new TrajectorySegment(
-                TrajectorySegment.TrajectorySegmentType.Move,
+                segmentType,
                 timeList[i], timeList[i + 1],
                 jointsList[i], jointsList[i + 1],
                 inter));
         }
     }
 
-    private void BuildCubicHermiteTrajectory(List<float> timeList, List<float[]> jointsList, List<float[]> velocities)
+    private void BuildCubicHermiteTrajectory(List<float> timeList, List<float[]> jointsList, List<float[]> velocities, TrajectorySegmentType segmentType)
     {
         // 构造关节空间三次Hermite样条插值下的轨迹段
         for (int i = 0; i < timeList.Count-1; i++)
@@ -121,10 +129,52 @@ public class TrajectoryPlanner
 
             // 生成移动轨迹段
             trajectory.Add(new TrajectorySegment(
-                TrajectorySegment.TrajectorySegmentType.Move,
+                segmentType,
                 timeList[i], timeList[i + 1],
                 jointsList[i], jointsList[i + 1],
                 inter));
+        }
+    }
+
+    private float[] PlanEndJoints(float[] startJoints, TcpPathPoint start, TcpPathPoint end)
+    {
+        // 规划结束关节角度
+        switch (start.Flag)
+        {
+            case TcpPathPoint.PointFlag.SingularityApproach:
+                {
+                    // 进入奇异状态，J5归零
+                    float[] singularity = (float[])startJoints.Clone();
+                    singularity[4] = 0f;
+                    return singularity;
+                }
+            case TcpPathPoint.PointFlag.FlipWrist:
+                {
+                    // 调整腕部姿态
+                    float[] adjusted = (float[])startJoints.Clone();
+
+                    // wrist flip
+                    adjusted[3] += 180f;
+                    adjusted[5] += 180f;
+
+                    // 角度归一化
+                    adjusted[3] = MathUtil.NormalizeEulerAngle(adjusted[3]);
+                    adjusted[5] = MathUtil.NormalizeEulerAngle(adjusted[5]);
+
+                    return adjusted;
+                }
+            case TcpPathPoint.PointFlag.SingularityLeave:
+                {
+                    // 通过IK求解
+                    float[] endJoints = robot.IK.Solve(end.Pose, startJoints) ?? startJoints;
+                    return endJoints;
+                }
+            default:
+                {
+                    // 其他类型的点，直接通过IK求解
+                    float[] endJoints = robot.IK.Solve(end.Pose, startJoints) ?? startJoints;
+                    return endJoints;
+                }
         }
     }
 
@@ -136,7 +186,7 @@ public class TrajectoryPlanner
         {
             TcpPathPoint.PointType.Weld => GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed),
             TcpPathPoint.PointType.Approach => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints)),
-            TcpPathPoint.PointType.Adjust => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints)),
+            TcpPathPoint.PointType.Adjust => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints, 2.0f)),
             _ => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints))
         };
         return duration;
@@ -220,7 +270,7 @@ public class TrajectoryPlanner
         return pathLength / speed;
     }
 
-    private float GetJointLimitedDuration(float[] startJoints, float[] endJoints)
+    private float GetJointLimitedDuration(float[] startJoints, float[] endJoints, float multiple = 1.2f)
     {
         // 参考关节角速度限制所需的时间
         float minDuration = 0f;
@@ -231,7 +281,7 @@ public class TrajectoryPlanner
             float duration = Mathf.Abs(endJoints[j] - startJoints[j]) / vmax;
             minDuration = Mathf.Max(minDuration, duration);
         }
-        return minDuration;
+        return minDuration * multiple;
     }
 }
 

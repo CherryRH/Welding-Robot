@@ -20,12 +20,18 @@ public class AdjustPathPlanner
         if (pose == null) return points;
         // 起点
         points.Add(new(pose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
-        // 安全高度，保持当前旋转，开始调姿
+        // 安全高度，开始调姿
         Pose safePose = robot.GetSafePose(pose);
         points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
-        // 安全高度，保持当前旋转，结束调姿
+        // 进入奇异状态
+        points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.SingularityApproach, seam, robot.Config.TCPMaxSpeed));
+        // 翻腕
+        points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.FlipWrist, seam, robot.Config.TCPMaxSpeed));
+        // 离开奇异状态
+        points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.SingularityLeave, seam, robot.Config.TCPMaxSpeed));
+        // 下降到初始高度
         points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
-        // 终点，回到起始点
+        // 回到起始点
         points.Add(new(pose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
 
         return points;

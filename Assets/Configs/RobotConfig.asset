@@ -63,6 +63,8 @@ MonoBehaviour:
     AngleMax: 450
     AngleVMax: 720
   TCPOffset: {x: 0, y: 0, z: 0.2}
+  TCPMaxSpeed: 0.2
+  TCPSafetyHeight: 0.3
   FlangeOffset: {x: 0, y: 0, z: 0.075}
   ToolRotation: {x: 0, y: 90, z: 180}
   TeleopAngleV: 20

@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// »úÆ÷ÈË×ËÌ¬°ó¶¨
 /// </summary>
-public class TransformBinder : MonoBehaviour
+public class RobotPostureBinder : MonoBehaviour
 {
     public Transform[] JointTransforms = new Transform[6];
     public Transform TCP;
@@ -56,7 +56,7 @@ public class TransformBinder : MonoBehaviour
     {
         if (robot == null)
         {
-            Debug.LogWarning($"{nameof(TransformBinder)}: robot is not bound in Start()");
+            Debug.LogWarning($"{nameof(RobotPostureBinder)}: robot is not bound in Start()");
             return;
         }
 

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using UnityEngine;
 
 /// <summary>
@@ -56,7 +55,7 @@ class WorkState : SimulationStateBase
 
     public override void Update(SimulationContext ctx, float dt)
     {
-        // 规划轨迹
+        // 申请规划轨迹
         if (ctx.Trajectory.UnderHighWaterMark && ctx.TaskState.Status != WeldTaskPlanState.PlanStatus.Failed)
         {
             // 取一段路径点
@@ -98,6 +97,16 @@ class WorkState : SimulationStateBase
         if (joints != null)
         {
             ctx.RobotModel.SetJointAngles(joints);
+        }
+
+        // 更新焊接特效
+        if (ctx.Trajectory.CurrentSegment != null && ctx.Trajectory.CurrentSegment.Type == TrajectorySegment.TrajectorySegmentType.Weld)
+        {
+            ctx.EffectBinder.PlayWeldingEffect();
+        }
+        else
+        {
+            ctx.EffectBinder.StopWeldingEffect();
         }
     }
 
@@ -142,7 +151,7 @@ class SucceedState: SimulationStateBase
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
         if (ctx == null) return;
-        if (key == KeyCode.Escape) ctx.TryChangeState(SimulationState.Idle);
+        if (key == KeyCode.Escape || key == KeyCode.Space) ctx.TryChangeState(SimulationState.Idle);
     }
 }
 

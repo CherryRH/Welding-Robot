@@ -203,13 +203,13 @@ public static class MathUtil
     {
         // 将欧拉角规范到 [-180,180] 范围内
         return new Vector3(
-            NormalizeAngle(eulerAngles.x),
-            NormalizeAngle(eulerAngles.y),
-            NormalizeAngle(eulerAngles.z)
+            NormalizeEulerAngle(eulerAngles.x),
+            NormalizeEulerAngle(eulerAngles.y),
+            NormalizeEulerAngle(eulerAngles.z)
         );
     }
 
-    public static float NormalizeAngle(float angle)
+    public static float NormalizeEulerAngle(float angle)
     {
         // 将角度规范到 [-180,180] 范围内
         angle %= 360;

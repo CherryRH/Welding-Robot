@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -17,6 +18,7 @@ public class SimulationContext : MonoBehaviour
     public SimulationClock Clock = new(0.01f);
 
     // 焊接规划层
+    public string WeldTaskFileDirectory;
     public string WeldTaskFileName;
     public WeldTask Task;
     public WeldTaskPlanState TaskState = new();
@@ -27,8 +29,9 @@ public class SimulationContext : MonoBehaviour
     public Trajectory Trajectory = new();
 
     // 绑定层
-    public TransformBinder Binder;
-    public WorkpieceBinder WorkpieceBinder;
+    public RobotPostureBinder RobotPostureBinder;
+    public WorkbenchBinder WorkpieceBinder;
+    public EffectBinder EffectBinder;
 
     // 可视化层
     public WeldSeamVisualizer WeldSeamVisualizer;
@@ -68,7 +71,7 @@ public class SimulationContext : MonoBehaviour
             // 正向运动学计算，更新机械臂姿态、变换矩阵
             FK.Compute(RobotModel);
             // 应用 Unity 机械臂姿态，更新 Unity 坐标和姿态
-            Binder.Apply();
+            RobotPostureBinder.Apply();
             // 调用仿真更新回调函数，更新 UI 等
             OnSimulationUpdate?.Invoke(this);
         }
@@ -101,11 +104,12 @@ public class SimulationContext : MonoBehaviour
         RobotModel.Init(RobotConfig);
         RobotModel.SetUserOffset(WorkpieceBinder.GetOriginPoint());
         FK.Compute(RobotModel);
-        Binder.Bind(RobotModel);
+        RobotPostureBinder.Bind(RobotModel);
         TcpPathPlanner.Init(RobotModel, TaskState);
         TrajectoryPlanner.Init(RobotModel, Trajectory);
-        // 读取焊接任务文件（WeldTaskFileName 应为绝对路径）
-        WeldTaskData data = WeldTaskDataLoader.LoadFromFile(WeldTaskFileName);
+        // 读取焊接任务文件
+        string weldTaskFile = Path.Combine(WeldTaskFileDirectory, WeldTaskFileName);
+        WeldTaskData data = WeldTaskDataLoader.LoadFromFile(weldTaskFile);
         // 构建焊缝任务
         Task = new(data);
     }

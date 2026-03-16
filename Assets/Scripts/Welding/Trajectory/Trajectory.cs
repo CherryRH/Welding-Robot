@@ -22,11 +22,9 @@ public class Trajectory
         // 如果当前没有执行段，尝试取一个
         if (CurrentSegment == null)
         {
-            if (segments.Count == 0)
-                return null;
-
-            CurrentSegment = segments.First.Value;
-            segments.RemoveFirst();
+            ToNextSegment();
+            if (CurrentSegment == null)
+                return null; // 没有段了
         }
 
         TrajectorySegment seg = CurrentSegment;
@@ -41,12 +39,23 @@ public class Trajectory
             float[] qEnd = seg.QEnd;
 
             // 切换到下一段
-            CurrentSegment = null;
+            ToNextSegment();
 
             return qEnd;
         }
 
         return seg.Evaluate(simTime);
+    }
+
+    private void ToNextSegment()
+    {
+        if (segments.Count == 0)
+        {
+            CurrentSegment = null;
+            return;
+        }
+        CurrentSegment = segments.First.Value;
+        segments.RemoveFirst();
     }
 
     public void Add(TrajectorySegment segment)

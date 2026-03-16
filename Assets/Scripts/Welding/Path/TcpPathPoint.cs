@@ -40,6 +40,9 @@ public class TcpPathPoint
     {
         Start,
         Intermediate,
+        FlipWrist,
+        SingularityApproach,
+        SingularityLeave,
         End
     }
     public PointFlag Flag = PointFlag.Start;

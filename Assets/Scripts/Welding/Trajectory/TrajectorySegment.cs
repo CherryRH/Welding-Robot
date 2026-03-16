@@ -9,7 +9,7 @@ public class TrajectorySegment
 {
     public enum TrajectorySegmentType
     {
-        Move,
+        Approach,
         Weld,
         Adjust
     }

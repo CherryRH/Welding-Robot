@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 工件绑定
+/// 工作台绑定
 /// </summary>
-public class WorkpieceBinder : MonoBehaviour
+public class WorkbenchBinder : MonoBehaviour
 {
     public Transform Origin;
 
@@ -21,7 +21,7 @@ public class WorkpieceBinder : MonoBehaviour
 
     public Vector3 GetOriginPoint()
     {
-        // 获取工件原点位置（数据坐标系）
+        // 获取工作台原点位置（数据坐标系）
         return Origin != null ? MathUtil.UnityToDataPosition(Origin.position) : Vector3.zero;
     }
 }
