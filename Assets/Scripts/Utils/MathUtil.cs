@@ -230,16 +230,26 @@ public static class MathUtil
     // Data :  forward = +X, left = +Y, up = +Z
     // 位置映射（线性变换）
     // ------------------------
-    public static Vector3 UnityToDataPosition(Vector3 u)
+    public static Vector3 U2DPosition(Vector3 u)
     {
         // D.x = U.z, D.y = -U.x, D.z = U.y
         return new Vector3(u.z, -u.x, u.y);
     }
 
-    public static Vector3 DataToUnityPosition(Vector3 d)
+    public static Vector3 D2UPosition(Vector3 d)
     {
         // 逆映射： U.x = -D.y, U.y = D.z, U.z = D.x
         return new Vector3(-d.y, d.z, d.x);
+    }
+
+    public static Vector3 Abs(Vector3 v)
+    {
+        return new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
+    }
+
+    public static Vector3 Division(Vector3 a, Vector3 b)
+    {
+        return new Vector3(a.x / b.x, a.y / b.y, a.z / b.z);
     }
 
     // ------------------------
@@ -247,15 +257,15 @@ public static class MathUtil
     // 原理：把 Unity 旋转作用于 Unity 的基向量 (forward, up)，
     // 再把这两个向量映射到 Data 坐标系，用 LookRotation 构建 Data 下的四元数。
     // ------------------------
-    public static Quaternion UnityToDataRotation(Quaternion uRot)
+    public static Quaternion U2DRotation(Quaternion uRot)
     {
         // Unity 基向量经 uRot 变换后的方向（世界向量）
         Vector3 uForward = uRot * Vector3.forward;
         Vector3 uUp = uRot * Vector3.up;
 
         // 将这两个 world 向量映射到 data 坐标系
-        Vector3 dForward = UnityToDataPosition(uForward).normalized;
-        Vector3 dUp = UnityToDataPosition(uUp).normalized;
+        Vector3 dForward = U2DPosition(uForward).normalized;
+        Vector3 dUp = U2DPosition(uUp).normalized;
 
         // 容错：避免零向量导致 LookRotation 报错
         if (dForward.sqrMagnitude < 1e-6f)
@@ -266,13 +276,13 @@ public static class MathUtil
         return Quaternion.LookRotation(dForward, dUp);
     }
 
-    public static Quaternion DataToUnityRotation(Quaternion dRot)
+    public static Quaternion D2URotation(Quaternion dRot)
     {
         Vector3 dForward = dRot * Vector3.forward;
         Vector3 dUp = dRot * Vector3.up;
 
-        Vector3 uForward = DataToUnityPosition(dForward).normalized;
-        Vector3 uUp = DataToUnityPosition(dUp).normalized;
+        Vector3 uForward = D2UPosition(dForward).normalized;
+        Vector3 uUp = D2UPosition(dUp).normalized;
 
         if (uForward.sqrMagnitude < 1e-6f)
             uForward = Vector3.forward;

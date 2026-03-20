@@ -73,8 +73,8 @@ public static class LogUtil
         try
         {
             var sm = ctx.StateMachine;
-            sb.AppendLine($"CurrentState    : {sm.CurrentState}");
-            sb.AppendLine($"JointsCount     : { (ctx.RobotModel != null ? ctx.RobotModel.JointsCount.ToString() : "n/a") }");
+            sb.AppendLine($"CurrentState: {sm.CurrentState}");
+            sb.AppendLine($"JointsCount: { (ctx.RobotModel != null ? ctx.RobotModel.JointsCount.ToString() : "n/a") }");
         }
         catch (Exception ex)
         {
@@ -87,9 +87,9 @@ public static class LogUtil
         try
         {
             var c = ctx.Clock;
-            sb.AppendLine($"IsRunning       : {c.IsRunning}");
-            sb.AppendLine($"Time            : {c.Time:F3}");
-            sb.AppendLine($"FixedDeltaTime  : {c.FixedDeltaTime:F4}");
+            sb.AppendLine($"IsRunning: {c.IsRunning}");
+            sb.AppendLine($"Time: {c.Time:F3}");
+            sb.AppendLine($"FixedDeltaTime: {c.FixedDeltaTime:F4}");
         }
         catch (Exception ex)
         {
@@ -104,34 +104,34 @@ public static class LogUtil
             var rc = ctx.RobotConfig;
             if (rc == null)
             {
-                sb.AppendLine("RobotConfig  : null");
+                sb.AppendLine("RobotConfig: null");
             }
             else
             {
-                sb.AppendLine($"RobotName       : {rc.RobotName}");
-                sb.AppendLine($"TCPOffset       : {rc.TCPOffset.x:F3}, {rc.TCPOffset.y:F3}, {rc.TCPOffset.z:F3}");
-                sb.AppendLine($"TeleopAngleV    : {rc.TeleopAngleV:F3}");
-                sb.AppendLine($"TeleopTCPV      : {rc.TeleopTCPV:F3}");
+                sb.AppendLine($"RobotName: {rc.RobotName}");
+                sb.AppendLine($"TCPOffset: {rc.TCPOffset.x:F3}, {rc.TCPOffset.y:F3}, {rc.TCPOffset.z:F3}");
+                sb.AppendLine($"TeleopAngleV: {rc.TeleopAngleV:F3}");
+                sb.AppendLine($"TeleopTCPV: {rc.TeleopTCPV:F3}");
 
                 // JointsParameters：使用反射以便不依赖具体类型定义，易于扩展
-                sb.AppendLine("JointsParameters :");
                 var jpArray = rc.JointsParameters;
                 if (jpArray == null)
                 {
-                    sb.AppendLine("  (null)");
+                    sb.AppendLine("JointsParameters: null");
                 }
                 else
                 {
+                    sb.AppendLine("JointsParameters:");
                     for (int i = 0; i < jpArray.Length; i++)
                     {
                         object jp = jpArray[i];
                         if (jp == null)
                         {
-                            sb.AppendLine($"    Joint[{i}]  : null");
+                            sb.AppendLine($"    JointsParameters[{i}]: null");
                             continue;
                         }
 
-                        sb.AppendLine($"    Joint[{i}]  :");
+                        sb.AppendLine($"    JointsParameters[{i}]:");
                         var t = jp.GetType();
 
                         // 尝试读取公共字段/属性
@@ -141,7 +141,7 @@ public static class LogUtil
                             try
                             {
                                 var v = f.GetValue(jp);
-                                sb.AppendLine($"        {f.Name} : {FormatObject(v)}");
+                                sb.AppendLine($"        {f.Name}: {FormatObject(v)}");
                             }
                             catch { }
                         }
@@ -153,7 +153,7 @@ public static class LogUtil
                             try
                             {
                                 var v = p.GetValue(jp, null);
-                                sb.AppendLine($"        {p.Name} : {FormatObject(v)}");
+                                sb.AppendLine($"        {p.Name}: {FormatObject(v)}");
                             }
                             catch { }
                         }
@@ -163,7 +163,7 @@ public static class LogUtil
         }
         catch (Exception ex)
         {
-            sb.AppendLine($"(RobotConfig read error) {ex.Message}");
+            sb.AppendLine($"RobotConfig read error: {ex.Message}");
         }
         sb.AppendLine();
 
@@ -174,44 +174,44 @@ public static class LogUtil
             var rm = ctx.RobotModel;
             if (rm == null)
             {
-                sb.AppendLine("RobotModel   : null");
+                sb.AppendLine("RobotModel: null");
             }
             else
             {
-                sb.AppendLine($"TCPPosition (MDH)           : {rm.TCPPosition.x:F3}, {rm.TCPPosition.y:F3}, {rm.TCPPosition.z:F3}");
+                sb.AppendLine($"TCPPosition (MDH): {rm.TCPPosition.x:F3}, {rm.TCPPosition.y:F3}, {rm.TCPPosition.z:F3}");
                 var euler = rm.TCPRotation.eulerAngles;
-                sb.AppendLine($"TCPRotationEuler (MDH)      : {euler.x:F1}, {euler.y:F1}, {euler.z:F1}");
-                sb.AppendLine($"ToolEularAngles (MDH)       : {rm.ToolEularAngles.x:F1}, {rm.ToolEularAngles.y:F1}, {rm.ToolEularAngles.z:F1}");
+                sb.AppendLine($"TCPRotationEuler (MDH): {euler.x:F1}, {euler.y:F1}, {euler.z:F1}");
+                sb.AppendLine($"ToolEularAngles (MDH): {rm.ToolEularAngles.x:F1}, {rm.ToolEularAngles.y:F1}, {rm.ToolEularAngles.z:F1}");
 
-                sb.AppendLine($"UTCPPosition (Unity)        : {rm.UTCPPosition.x:F3}, {rm.UTCPPosition.y:F3}, {rm.UTCPPosition.z:F3}");
+                sb.AppendLine($"UTCPPosition (Unity): {rm.UTCPPosition.x:F3}, {rm.UTCPPosition.y:F3}, {rm.UTCPPosition.z:F3}");
                 var uEuler = rm.UTCPRotation.eulerAngles;
-                sb.AppendLine($"UTCPRotationEuler (Unity)   : {uEuler.x:F1}, {uEuler.y:F1}, {uEuler.z:F1}");
+                sb.AppendLine($"UTCPRotationEuler (Unity): {uEuler.x:F1}, {uEuler.y:F1}, {uEuler.z:F1}");
 
                 var joints = rm.Joints;
                 if (joints == null)
                 {
-                    sb.AppendLine("Joints   : null");
+                    sb.AppendLine("Joints: null");
                 }
                 else
                 {
-                    sb.AppendLine("Joints   :");
+                    sb.AppendLine("Joints:");
                     for (int i = 0; i < joints.Length; i++)
                     {
                         var j = joints[i];
                         if (j == null)
                         {
-                            sb.AppendLine($"    Joint[{i}]  : null");
+                            sb.AppendLine($"    Joint[{i}]: null");
                             continue;
                         }
 
-                        sb.AppendLine($"    Joint[{i}]    :");
-                        sb.AppendLine($"        Angle       : {j.Angle:F3} deg");
-                        sb.AppendLine($"        AngleV      : {j.AngleV:F3} deg/s");
-                        sb.AppendLine($"        AngleA      : {j.AngleA:F3} deg/s²");
+                        sb.AppendLine($"    Joint[{i}]:");
+                        sb.AppendLine($"        Angle: {j.Angle:F3} deg");
+                        sb.AppendLine($"        AngleV: {j.AngleV:F3} deg/s");
+                        sb.AppendLine($"        AngleA: {j.AngleA:F3} deg/s²");
                         var pos = j.Position;
-                        sb.AppendLine($"        Position (MDH)      : {pos.x:F3}, {pos.y:F3}, {pos.z:F3}");
+                        sb.AppendLine($"        Position (MDH): {pos.x:F3}, {pos.y:F3}, {pos.z:F3}");
                         var upos = j.UPosition;
-                        sb.AppendLine($"        UPosition (Unity)   : {upos.x:F3}, {upos.y:F3}, {upos.z:F3}");
+                        sb.AppendLine($"        UPosition (Unity): {upos.x:F3}, {upos.y:F3}, {upos.z:F3}");
 
                         // 输出矩阵（局部 / 世界）简洁表示（每行）
                         sb.AppendLine("        LocalTransform:");
@@ -224,60 +224,92 @@ public static class LogUtil
         }
         catch (Exception ex)
         {
-            sb.AppendLine($"(RobotModel read error) {ex.Message}");
+            sb.AppendLine($"RobotModel read error: {ex.Message}");
         }
         sb.AppendLine();
 
-        // WeldTaskData
-        sb.AppendLine("--- WeldTaskData ---");
-        //try
-        //{
-        //    var wtd = ctx.Task;
-        //    if (wtd == null)
-        //    {
-        //        sb.AppendLine("WeldTaskData   : null");
-        //    }
-        //    else
-        //    {
-        //        sb.AppendLine($"TaskName            : {wtd.TaskName}");
-        //        sb.AppendLine($"WorkpieceFileName   : {wtd.WorkpieceFileName}");
-        //        sb.AppendLine($"WeldSeamsCount      : {(wtd.WeldSeams != null ? wtd.WeldSeams.Count.ToString() : "n/a") }");
-        //        if (wtd.WeldSeams != null)
-        //        {
-        //            for (int i = 0; i < wtd.WeldSeams.Count; i++)
-        //            {
-        //                var seg = wtd.WeldSeams[i];
-        //                if (seg == null)
-        //                {
-        //                    sb.AppendLine($"    WeldSeams[{i}]  : null");
-        //                    continue;
-        //                }
-        //                sb.AppendLine($"    WeldSeams[{i}]  :");
-        //                sb.AppendLine($"        Type            : {seg.Type}");
-        //                sb.AppendLine($"        ID              : {seg.ID}");
-        //                sb.AppendLine($"        Name            : {seg.Name}");
-        //                sb.AppendLine($"        Speed           : {seg.Speed:F3} m/s");
-        //                sb.AppendLine($"        GunAngle        : {seg.GunAngle:F3} deg");
-        //                sb.AppendLine($"        GunDistance     : {seg.GunDistance:F3} m");
-        //                sb.AppendLine($"        StartPoint      : {FormatObject(seg.StartPoint)}");
-        //                sb.AppendLine($"        EndPoint        : {FormatObject(seg.EndPoint)}");
-        //                if (seg.MiddlePoints != null)
-        //                {
-        //                    for (int j = 0; j < seg.MiddlePoints.Count; j++)
-        //                    {
-        //                        sb.AppendLine($"        MiddlePoint[{j}]    : {FormatObject(seg.MiddlePoints[j])}");
-        //                    }
-        //                }
-        //                sb.AppendLine($"        Normal          : {FormatObject(seg.Normal)}");
-        //                sb.AppendLine($"        LengthDeviation : {seg.LengthDeviation:F3} m");
-        //            }
-        //        }
-        //    }
-        //}
-        //catch (Exception ex)
-        //{
-        //    sb.AppendLine($"(WeldTaskData read error) {ex.Message}");
-        //}
+        // WeldTask
+        sb.AppendLine("--- WeldTask ---");
+        try
+        {
+            var wtd = ctx.Task;
+            if (wtd == null)
+            {
+                sb.AppendLine("WeldTask: null");
+            }
+            else
+            {
+                sb.AppendLine($"TaskName: {wtd.TaskName}");
+                if (wtd.Workpiece == null)
+                {
+                    sb.AppendLine($"Workpiece: null");
+                }
+                else 
+                {
+                    var workpiece = wtd.Workpiece;
+                    sb.AppendLine($"Workpiece:");
+                    sb.AppendLine($"    FileName: {workpiece.FileName}");
+                    sb.AppendLine($"    Position: {workpiece.Position}");
+                    sb.AppendLine($"    Rotation: {workpiece.Rotation}");
+                    sb.AppendLine($"    Scale: {workpiece.Scale}");
+                    if (workpiece.Colliders == null)
+                    {
+                        sb.AppendLine($"    Colliders: null");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"    Colliders:");
+                        for (int i = 0; i < workpiece.Colliders.Count; i++)
+                        {
+                            var collider = workpiece.Colliders[i];
+                            sb.AppendLine($"        Colliders[{i}]:");
+                            sb.AppendLine($"            Center: {collider.Min}");
+                            sb.AppendLine($"            Scale: {collider.Max}");
+                        }
+                    }
+                }
+                if (wtd.WeldSeams == null)
+                {
+                    sb.AppendLine($"WeldSeams: null");
+                }
+                else
+                {
+                    sb.AppendLine($"WeldSeams:");
+                    for (int i = 0; i < wtd.WeldSeams.Count; i++)
+                    {
+                        var seg = wtd.WeldSeams[i];
+                        if (seg == null)
+                        {
+                            sb.AppendLine($"    WeldSeams[{i}]: null");
+                            continue;
+                        }
+                        sb.AppendLine($"    WeldSeams[{i}]:");
+                        if (seg is LineSeam) sb.AppendLine($"        Type: Line");
+                        else if (seg is ArcSeam) sb.AppendLine($"        Type: Arc");
+                        sb.AppendLine($"        Id: {seg.Id}");
+                        sb.AppendLine($"        Name: {seg.Name}");
+                        sb.AppendLine($"        Speed: {seg.Speed:F3} m/s");
+                        sb.AppendLine($"        GunAngle: {seg.GunAngle:F3} deg");
+                        sb.AppendLine($"        GunDistance: {seg.GunDistance:F3} m");
+                        sb.AppendLine($"        StartPoint: {FormatObject(seg.StartPoint)}");
+                        sb.AppendLine($"        EndPoint: {FormatObject(seg.EndPoint)}");
+                        sb.AppendLine($"        Length: {seg.Length:F3} m");
+                        sb.AppendLine($"        Normal: {FormatObject(seg.Normal)}");
+                        sb.AppendLine($"        LengthDeviation: {seg.LengthDeviation:F3} m");
+                        if (seg is ArcSeam arcSeam)
+                        {
+                            sb.AppendLine($"        Center: {FormatObject(arcSeam.Center)}");
+                            sb.AppendLine($"        Radius: {arcSeam.Radius:F3} m");
+                            sb.AppendLine($"        Angle: {arcSeam.Angle:F3} deg");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            sb.AppendLine($"(WeldTaskData read error) {ex.Message}");
+        }
         sb.AppendLine();
 
         sb.AppendLine("=== End ===");

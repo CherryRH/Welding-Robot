@@ -13,9 +13,9 @@ public class WeldTask
     public string TaskName;
 
     /// <summary>
-    /// 工件模型文件名称
+    /// 工件
     /// </summary>
-    public string WorkpieceFileName;
+    public Workpiece Workpiece;
 
     /// <summary>
     /// 焊缝列表
@@ -26,7 +26,10 @@ public class WeldTask
     {
         // 构建焊接任务
         TaskName = data.TaskName;
-        WorkpieceFileName = data.WorkpieceFileName;
+        if (data.Workpiece != null)
+        {
+            Workpiece = new Workpiece(data.Workpiece);
+        }
         if (data.WeldSeams != null)
         {
             foreach (var seamData in data.WeldSeams)

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 机器人姿态绑定
+/// 机器人绑定
 /// </summary>
-public class RobotPostureBinder : MonoBehaviour
+public class RobotBinder : MonoBehaviour
 {
     public Transform[] JointTransforms = new Transform[6];
     public Transform TCP;
@@ -17,6 +17,12 @@ public class RobotPostureBinder : MonoBehaviour
 
     private Quaternion[] baseJointLocalRotations = new Quaternion[6];
     private Quaternion baseTCPRotation;
+
+    public BoxCollider[] BoxColliders = new BoxCollider[7];
+
+    // 碰撞箱可视化相关
+    private List<int> colliderVisualIds = new();
+    private ColliderVisualizer colliderVisualizer;
 
     public void Bind(RobotModel model)
     {
@@ -56,7 +62,7 @@ public class RobotPostureBinder : MonoBehaviour
     {
         if (robot == null)
         {
-            Debug.LogWarning($"{nameof(RobotPostureBinder)}: robot is not bound in Start()");
+            Debug.LogWarning($"{nameof(RobotBinder)}: robot is not bound in Start()");
             return;
         }
 
@@ -126,5 +132,43 @@ public class RobotPostureBinder : MonoBehaviour
         if (TCP == null) return Quaternion.identity;
         // 获取 TCP 在 Unity 机器人坐标系中的旋转（相对于初始 baseTCPRotation）
         return Quaternion.Inverse(RobotBaseRotation) * Quaternion.Inverse(baseTCPRotation) * TCP.rotation;
+    }
+
+    /// <summary>
+    /// 添加所有碰撞箱到可视化器（机械臂 7 个碰撞箱）
+    /// </summary>
+    public void AddCollidersToVisualizer(ColliderVisualizer visualizer)
+    {
+        if (visualizer == null || BoxColliders == null) return;
+
+        colliderVisualizer = visualizer;
+        colliderVisualIds.Clear();
+
+        // 机械臂碰撞箱用黄色
+        Color armColor = Color.yellow;
+
+        for (int i = 0; i < BoxColliders.Length; i++)
+        {
+            var collider = BoxColliders[i];
+            if (collider == null) continue;
+
+            // 使用 AddTracked 实现自动跟随（机械臂会运动）
+            int id = visualizer.AddTracked(collider, armColor);
+            colliderVisualIds.Add(id);
+        }
+    }
+
+    /// <summary>
+    /// 从可视化器中移除所有碰撞箱
+    /// </summary>
+    public void RemoveCollidersFromVisualizer()
+    {
+        if (colliderVisualizer == null) return;
+
+        foreach (int id in colliderVisualIds)
+        {
+            colliderVisualizer.Remove(id);
+        }
+        colliderVisualIds.Clear();
     }
 }

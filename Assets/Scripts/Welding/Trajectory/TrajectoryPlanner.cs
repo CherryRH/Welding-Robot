@@ -82,7 +82,7 @@ public class TrajectoryPlanner
             result.CurrentPoint = end;
         }
 
-        if (timeList.Count > 2 && jointsList.Count > 2)
+        if (timeList.Count > 1 && jointsList.Count > 1)
         {
             // 根据选择的插值方法构造轨迹段
             switch (InterpolationMethod)

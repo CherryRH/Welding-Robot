@@ -2873,243 +2873,6 @@ MonoBehaviour:
   IKText: {fileID: 1749655308}
   TimeText: {fileID: 361377277}
   StateDetailText: {fileID: 2128344211}
---- !u!1001 &550549690
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 249470850376401456, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: JointTransforms.Array.data[0]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 249470850376401456, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: JointTransforms.Array.data[1]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 249470850376401456, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: JointTransforms.Array.data[2]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 249470850376401456, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: JointTransforms.Array.data[3]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 249470850376401456, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: JointTransforms.Array.data[4]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 249470850376401456, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: JointTransforms.Array.data[5]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 698826232129466008, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 698826232129466008, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 698826232129466008, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3178746754199498455, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: InitialModule.startSizeY.minMaxState
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 3178746754199498455, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: InitialModule.startSizeZ.minMaxState
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 3490372215174756417, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: JointAngleBias.Array.data[1]
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3846741550146189775, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: SamplePoint
-      value: 
-      objectReference: {fileID: 4926285720835067979, guid: 34c33004bde3c3f4babc552da1eeba80, type: 3}
-    - target: {fileID: 3846741550146189775, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: SamplePointShowScale
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: WeldTaskFileName
-      value: obstacle.json
-      objectReference: {fileID: 0}
-    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: WeldTaskFileDirectory
-      value: E:\Unity\Projects\Welding Robot\Welding Tasks
-      objectReference: {fileID: 0}
-    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: OnSimulationUpdate.m_PersistentCalls.m_Calls.Array.size
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: OnSimulationUpdate.m_PersistentCalls.m_Calls.Array.data[0].m_Target
-      value: 
-      objectReference: {fileID: 535371901}
-    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: OnSimulationUpdate.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: OnSimulationUpdate.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: SetUI
-      objectReference: {fileID: 0}
-    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: OnSimulationUpdate.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: SimulationView, Assembly-CSharp
-      objectReference: {fileID: 0}
-    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: OnSimulationUpdate.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
-      objectReference: {fileID: 0}
-    - target: {fileID: 5040006793479340045, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5377096467574827499, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5377096467574827499, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5377096467574827499, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5377096467574827499, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5377096467574827499, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7004481334270432577, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.7071068
-      objectReference: {fileID: 0}
-    - target: {fileID: 7004481334270432577, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0.7071068
-      objectReference: {fileID: 0}
-    - target: {fileID: 7004481334270432577, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7004481334270432577, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7004481334270432577, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: -90
-      objectReference: {fileID: 0}
-    - target: {fileID: 7004481334270432577, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8123742631557539137, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_Name
-      value: Simulation
-      objectReference: {fileID: 0}
-    - target: {fileID: 8378396848285985968, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8378396848285985968, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_Materials.Array.size
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 8941760303973008042, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.7072302
-      objectReference: {fileID: 0}
-    - target: {fileID: 8941760303973008042, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0.7069834
-      objectReference: {fileID: 0}
-    - target: {fileID: 8941760303973008042, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8941760303973008042, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8941760303973008042, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: -89.98
-      objectReference: {fileID: 0}
-    - target: {fileID: 8941760303973008042, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 3490372215174756417, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
---- !u!114 &550549691 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
-  m_PrefabInstance: {fileID: 550549690}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c86cf2521846e504dbeb0aa5a7caf265, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &556724801
 GameObject:
   m_ObjectHideFlags: 0
@@ -4261,6 +4024,75 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1001 &815571514
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: WeldTaskFileName
+      value: obstacle.json
+      objectReference: {fileID: 0}
+    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: WeldTaskDirectory
+      value: E:\Unity\Projects\Welding Robot\Welding Tasks
+      objectReference: {fileID: 0}
+    - target: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: WeldTaskFileDirectory
+      value: E:\Unity\Projects\Welding Robot\Welding Tasks
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5286666284013123505, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8123742631557539137, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+      propertyPath: m_Name
+      value: Simulation
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
 --- !u!1 &819329817
 GameObject:
   m_ObjectHideFlags: 0
@@ -12866,7 +12698,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SimulationPrefab: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
   SimulationContexts:
-  - {fileID: 550549691}
+  - {fileID: 2122960758}
   SimulationView: {fileID: 535371901}
   AppView: {fileID: 535371902}
   ControlView: {fileID: 535371903}
@@ -13540,6 +13372,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2081694501}
   m_CullTransparentMesh: 1
+--- !u!114 &2122960758 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5009735146356747641, guid: 5b6f8c77ebe738e44aff81c079501277, type: 3}
+  m_PrefabInstance: {fileID: 815571514}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c86cf2521846e504dbeb0aa5a7caf265, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2128344209
 GameObject:
   m_ObjectHideFlags: 0
@@ -13815,6 +13658,6 @@ SceneRoots:
   - {fileID: 963194228}
   - {fileID: 705507995}
   - {fileID: 2025189665}
-  - {fileID: 550549690}
   - {fileID: 937429570}
   - {fileID: 1960917092}
+  - {fileID: 815571514}

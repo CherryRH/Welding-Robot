@@ -1,6 +1,17 @@
 {
   "TaskName": "测试障碍物任务",
-  "WorkpieceFileName": "example_workpiece.fbx",
+  "Workpiece": {
+    "FileName": "board.glb",
+    "Position": { "x": -0.005, "y": -0.25, "z": 0.0 },
+    "Rotation": { "x": 0.0, "y": 0.0, "z": -90.0 },
+    "Scale": { "x": 0.5, "y": 0.5, "z": 0.5 },
+    "Colliders": [
+      {
+        "Min": { "x": 0.0, "y": 0.0, "z": 0.0 },
+        "Max": { "x": 0.01, "y": 0.5, "z": 0.1 }
+      }
+    ]
+  },
   "WeldSeams": [
     {
       "Type": "Line",

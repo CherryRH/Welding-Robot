@@ -32,8 +32,8 @@ public class WeldSeamVisualizer : MonoBehaviour
                 float s = (float)i / segments;
                 Vector3 cur = seam.GetPoint(s);
 
-                Vector3 wp0 = WorkpieceOrigin.position + MathUtil.DataToUnityPosition(prev);
-                Vector3 wp1 = WorkpieceOrigin.position + MathUtil.DataToUnityPosition(cur);
+                Vector3 wp0 = WorkpieceOrigin.position + MathUtil.D2UPosition(prev);
+                Vector3 wp1 = WorkpieceOrigin.position + MathUtil.D2UPosition(cur);
 
                 Debug.DrawLine(wp0, wp1, Color.cyan, duration);
 

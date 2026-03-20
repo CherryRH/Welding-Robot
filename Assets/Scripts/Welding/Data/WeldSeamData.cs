@@ -3,30 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 描述焊接任务数据
-/// </summary>
-[System.Serializable]
-public class WeldTaskData
-{
-    /// <summary>
-    /// 任务名称
-    /// </summary>
-    public string TaskName;
-
-    /// <summary>
-    /// 工件模型文件名称
-    /// （暂设为默认值，暂时不进行模型动态加载）
-    /// </summary>
-    public string WorkpieceFileName;
-
-    /// <summary>
-    /// 焊缝数据列表
-    /// </summary>
-    public List<WeldSeamData> WeldSeams;
-}
-
-/// <summary>
-/// 描述焊缝数据
+/// 焊缝数据
 /// </summary>
 [System.Serializable]
 public class WeldSeamData

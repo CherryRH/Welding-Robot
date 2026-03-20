@@ -32,8 +32,8 @@ public class TcpPathVisualizer : MonoBehaviour
             // 实例化采样点
             GameObject point = Instantiate(
                 SamplePoint,
-                MathUtil.DataToUnityPosition(pose.position),
-                MathUtil.DataToUnityRotation(pose.rotation),
+                MathUtil.D2UPosition(pose.position),
+                MathUtil.D2URotation(pose.rotation),
                 transform
             );
             point.name = $"TcpPathPoint_{item.Type}_{++i}";
