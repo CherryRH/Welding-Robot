@@ -54,9 +54,7 @@ public class KeyInputManager : MonoBehaviour
             {
                 case KeyCode.P:
                     LogUtil.PrintSimulationContextDebugLog(target);
-                    break;
-                case KeyCode.I:
-                    LogUtil.SaveSimulationContextLogToFile(target);
+                    // LogUtil.SaveSimulationContextLogToFile(target);
                     break;
                 case KeyCode.O:
                     

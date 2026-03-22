@@ -13,12 +13,13 @@ public class Trajectory
 
     public TrajectorySegment LastSegment => segments.Count > 0 ? segments.Last.Value : CurrentSegment;
 
-    public bool HasSegment => CurrentSegment != null || segments.Count > 0;
+    public bool HasActiveSegment => CurrentSegment != null || segments.Count > 0;
 
     public bool UnderHighWaterMark => segments.Count <= 20;
 
-    public float[] Evaluate(float simTime)
+    public float[] Evaluate(float simTime, out TrajectorySegment finishedSegment)
     {
+        finishedSegment = null;
         // 如果当前没有执行段，尝试取一个
         if (CurrentSegment == null)
         {
@@ -41,6 +42,8 @@ public class Trajectory
             // 切换到下一段
             ToNextSegment();
 
+            // 输出已完成的段
+            finishedSegment = seg;
             return qEnd;
         }
 

@@ -15,6 +15,9 @@ public class TrajectorySegment
     }
     public TrajectorySegmentType Type;
 
+    public TcpPathPoint StartPoint;
+    public TcpPathPoint EndPoint;
+
     public float StartTime;
     public float EndTime;
 
@@ -25,11 +28,14 @@ public class TrajectorySegment
 
     public TrajectorySegment(
         TrajectorySegmentType type,
+        TcpPathPoint startPoint, TcpPathPoint endPoint,
         float startTime, float endTime,
         float[] qStart, float[] qEnd,
         IJointInterpolator interpolation)
     {
         Type = type;
+        StartPoint = startPoint;
+        EndPoint = endPoint;
         StartTime = startTime;
         EndTime = endTime;
         QStart = qStart;

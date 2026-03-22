@@ -29,32 +29,40 @@ public class WeldPathPlanner
         List<TcpPathPoint> points = new();
         if (seam == null || seam.Length <= 0) return points;
 
-        // 自适应采样
+        // 采样参数
         float s = 0f;
         List<float> samples = new() { s };
         while (s < 1f)
         {
-            // 基于当前曲率计算采样间隔
+            // 根据当前曲率计算间隔
             float currentCurvature = seam.GetCurvature(s);
             float interval = CalculateAdaptiveInterval(currentCurvature);
 
-            // 确保s不超过1
+            // 确保 s 不超过 1
             s = Mathf.Min(s + interval / seam.Length, 1f);
-            samples.Add(s);
-        }
-        samples.Add(1f); // 确保末尾点被采样
 
-        // 生成TCP路径点
+            // 避免重复添加（如果 s 已经是 1f，跳过添加，由后面的确保语句处理）
+            if (s < 1f)
+                samples.Add(s);
+        }
+
+        // 确保末端点被采样（如果最后一个点不是 1f）
+        if (samples.Count == 0 || samples[^1] < 1f)
+            samples.Add(1f);
+
+        // 生成 TCP 路径点
         for (int i = 0; i < samples.Count; i++)
         {
             s = samples[i];
             Vector3 p = seam.GetPoint(s);
             Vector3 t = seam.GetTangent(s);
             Pose pose = CalculateTcpPose(seam, p, t);
+
             TcpPathPoint.PointFlag flag = TcpPathPoint.PointFlag.Intermediate;
             if (i == 0) flag = TcpPathPoint.PointFlag.Start;
             else if (i == samples.Count - 1) flag = TcpPathPoint.PointFlag.End;
-            points.Add(new(pose, TcpPathPoint.PointType.Weld, flag, seam, seam.Speed));
+
+            points.Add(new TcpPathPoint(pose, TcpPathPoint.PointType.Weld, flag, seam, seam.Speed));
         }
         return points;
     }

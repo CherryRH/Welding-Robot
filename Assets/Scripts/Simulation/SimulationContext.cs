@@ -29,6 +29,9 @@ public class SimulationContext : MonoBehaviour
     public TrajectoryPlanner TrajectoryPlanner = new();
     public Trajectory Trajectory = new();
 
+    // 碰撞监测层
+
+
     // 绑定层
     public RobotBinder RobotBinder;
     public WorkbenchBinder WorkbenchBinder;
@@ -38,6 +41,9 @@ public class SimulationContext : MonoBehaviour
     public WeldSeamVisualizer WeldSeamVisualizer;
     public TcpPathVisualizer TcpPathVisualizer;
     public ColliderVisualizer ColliderVisualizer;
+
+    // 数据输出层
+    public WeldResultDataWriter ResultWriter = new();
 
     // 绑定事件
     public UnityEvent<SimulationContext> BeforeSimulationUpdate;
@@ -149,9 +155,8 @@ public class SimulationContext : MonoBehaviour
     public void ShowColliders()
     {
         if (ColliderVisualizer == null) return;
-
-        RobotBinder.AddCollidersToVisualizer(ColliderVisualizer);
         WorkbenchBinder.AddCollidersToVisualizer(ColliderVisualizer);
+        RobotBinder.AddCollidersToVisualizer(ColliderVisualizer);
     }
 
     /// <summary>
@@ -160,8 +165,7 @@ public class SimulationContext : MonoBehaviour
     public void HideColliders()
     {
         if (ColliderVisualizer == null) return;
-
-        RobotBinder.RemoveCollidersFromVisualizer();
         WorkbenchBinder.RemoveCollidersFromVisualizer();
+        RobotBinder.RemoveCollidersFromVisualizer();
     }
 }

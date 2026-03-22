@@ -8,7 +8,8 @@ using UnityEngine;
 public class RobotBinder : MonoBehaviour
 {
     public Transform[] JointTransforms = new Transform[6];
-    public Transform TCP;
+    public Transform Torch;
+    public Transform Tcp;
 
     private RobotModel robot;
 
@@ -18,7 +19,8 @@ public class RobotBinder : MonoBehaviour
     private Quaternion[] baseJointLocalRotations = new Quaternion[6];
     private Quaternion baseTCPRotation;
 
-    public BoxCollider[] BoxColliders = new BoxCollider[7];
+    public Transform[] Meshes = new Transform[7];
+    public List<BoxCollider[]> BoxColliders = new(7);
 
     // 碰撞箱可视化相关
     private List<int> colliderVisualIds = new();
@@ -55,7 +57,19 @@ public class RobotBinder : MonoBehaviour
 
     void Awake()
     {
-        
+        // 初始化碰撞体列表
+        for (int i = 0; i < Meshes.Length; i++)
+        {
+            if (Meshes[i] != null)
+            {
+                var colliders = Meshes[i].GetComponents<BoxCollider>();
+                BoxColliders.Add(colliders);
+            }
+            else
+            {
+                BoxColliders.Add(new BoxCollider[0]);
+            }
+        }
     }
 
     void Start()
@@ -74,13 +88,13 @@ public class RobotBinder : MonoBehaviour
             }
         }
 
-        if (TCP != null)
+        if (Tcp != null)
         {
             if (robot.Config != null)
             {
-                TCP.localPosition = robot.Config.TCPOffset / 100f;
+                Tcp.localPosition = robot.Config.TCPOffset / 100f;
             }
-            baseTCPRotation = TCP.rotation;
+            baseTCPRotation = Tcp.rotation;
         }
 
         // 初始化基座
@@ -106,7 +120,7 @@ public class RobotBinder : MonoBehaviour
                 robot.Joints[i].UPosition = GetUJointPosition(i);
             }
         }
-        if (TCP != null)
+        if (Tcp != null)
         {
             robot.UTCPPosition = GetUTCPPosition();
             robot.UTCPRotation = GetUTCPRotation();
@@ -115,9 +129,9 @@ public class RobotBinder : MonoBehaviour
 
     public Vector3 GetUTCPPosition()
     {
-        if (TCP == null) return Vector3.zero;
+        if (Tcp == null) return Vector3.zero;
         // 获取 TCP 在 Unity 机器人坐标系中的位置
-        return Quaternion.Inverse(RobotBaseRotation) * (TCP.position - RobotBasePosition);
+        return Quaternion.Inverse(RobotBaseRotation) * (Tcp.position - RobotBasePosition);
     }
 
     public Vector3 GetUJointPosition(int i)
@@ -129,13 +143,13 @@ public class RobotBinder : MonoBehaviour
 
     public Quaternion GetUTCPRotation()
     {
-        if (TCP == null) return Quaternion.identity;
+        if (Tcp == null) return Quaternion.identity;
         // 获取 TCP 在 Unity 机器人坐标系中的旋转（相对于初始 baseTCPRotation）
-        return Quaternion.Inverse(RobotBaseRotation) * Quaternion.Inverse(baseTCPRotation) * TCP.rotation;
+        return Quaternion.Inverse(RobotBaseRotation) * Quaternion.Inverse(baseTCPRotation) * Tcp.rotation;
     }
 
     /// <summary>
-    /// 添加所有碰撞箱到可视化器（机械臂 7 个碰撞箱）
+    /// 添加所有碰撞箱到可视化器
     /// </summary>
     public void AddCollidersToVisualizer(ColliderVisualizer visualizer)
     {
@@ -147,14 +161,17 @@ public class RobotBinder : MonoBehaviour
         // 机械臂碰撞箱用黄色
         Color armColor = Color.yellow;
 
-        for (int i = 0; i < BoxColliders.Length; i++)
+        for (int i = 0; i < BoxColliders.Count; i++)
         {
-            var collider = BoxColliders[i];
-            if (collider == null) continue;
+            var colliders = BoxColliders[i];
+            if (colliders == null) continue;
 
             // 使用 AddTracked 实现自动跟随（机械臂会运动）
-            int id = visualizer.AddTracked(collider, armColor);
-            colliderVisualIds.Add(id);
+            foreach (var boxCollider in colliders)
+            {
+                int id = visualizer.AddTracked(boxCollider, armColor);
+                colliderVisualIds.Add(id);
+            }
         }
     }
 

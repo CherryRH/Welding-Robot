@@ -47,7 +47,7 @@ public class TrajectoryPlanner
         List<float> timeList = new();
         List<float[]> jointsList = new();
 
-        bool isTrajectoryEmpty = !trajectory.HasSegment;
+        bool isTrajectoryEmpty = !trajectory.HasActiveSegment;
         float time = isTrajectoryEmpty ? currentTime : trajectory.LastSegment.EndTime;
         float[] joints = isTrajectoryEmpty ? robot.JointAngles : trajectory.LastSegment.QEnd;
         timeList.Add(time);
@@ -88,11 +88,11 @@ public class TrajectoryPlanner
             switch (InterpolationMethod)
             {
                 case InterpolationMethodType.Linear:
-                    BuildLinearTrajectory(timeList, jointsList, segmentType);
+                    BuildLinearTrajectory(points, timeList, jointsList, segmentType);
                     break;
                 case InterpolationMethodType.CubicHermite:
                     List<float[]> velocities = PlanJointVelocities(timeList, jointsList);
-                    BuildCubicHermiteTrajectory(timeList, jointsList, velocities, segmentType);
+                    BuildCubicHermiteTrajectory(points, timeList, jointsList, velocities, segmentType);
                     break;
             }
         }
@@ -100,7 +100,7 @@ public class TrajectoryPlanner
         return result;
     }
 
-    private void BuildLinearTrajectory(List<float> timeList, List<float[]> jointsList, TrajectorySegmentType segmentType)
+    private void BuildLinearTrajectory(List<TcpPathPoint> points, List<float> timeList, List<float[]> jointsList, TrajectorySegmentType segmentType)
     {
         // 构造关节空间线性插值下的轨迹
         for (int i = 0; i < timeList.Count-1; i++)
@@ -112,13 +112,14 @@ public class TrajectoryPlanner
             // 生成移动轨迹段
             trajectory.Add(new TrajectorySegment(
                 segmentType,
+                points[i], points[i + 1],
                 timeList[i], timeList[i + 1],
                 jointsList[i], jointsList[i + 1],
                 inter));
         }
     }
 
-    private void BuildCubicHermiteTrajectory(List<float> timeList, List<float[]> jointsList, List<float[]> velocities, TrajectorySegmentType segmentType)
+    private void BuildCubicHermiteTrajectory(List<TcpPathPoint> points, List<float> timeList, List<float[]> jointsList, List<float[]> velocities, TrajectorySegmentType segmentType)
     {
         // 构造关节空间三次Hermite样条插值下的轨迹段
         for (int i = 0; i < timeList.Count-1; i++)
@@ -130,6 +131,7 @@ public class TrajectoryPlanner
             // 生成移动轨迹段
             trajectory.Add(new TrajectorySegment(
                 segmentType,
+                points[i], points[i + 1],
                 timeList[i], timeList[i + 1],
                 jointsList[i], jointsList[i + 1],
                 inter));

@@ -16,10 +16,10 @@ public class WorkbenchBinder : MonoBehaviour
     public Material WorkpieceMaterial;
 
     // 工作台碰撞箱
-    private BoxCollider workbenchCollider;
+    public BoxCollider WorkbenchCollider;
 
-    // 工件碰撞箱组件引用（动态加载后填充）
-    private List<BoxCollider> workpieceColliders = new();
+    // 工件碰撞箱（动态加载后填充）
+    public List<BoxCollider> WorkpieceColliders = new();
 
     private GlbLoader glbLoader;
 
@@ -30,7 +30,7 @@ public class WorkbenchBinder : MonoBehaviour
     void Awake()
     {
         glbLoader = GetComponent<GlbLoader>();
-        workbenchCollider = GetComponent<BoxCollider>();
+        WorkbenchCollider = GetComponent<BoxCollider>();
     }
 
     void Start()
@@ -58,7 +58,7 @@ public class WorkbenchBinder : MonoBehaviour
             Workpiece.transform.localScale = w.Scale;
 
             // 清空旧的工件碰撞箱引用
-            workpieceColliders.Clear();
+            WorkpieceColliders.Clear();
 
             foreach (var c in w.Colliders)
             {
@@ -81,7 +81,7 @@ public class WorkbenchBinder : MonoBehaviour
                 box.size = MathUtil.Abs(startLocal - endLocal);
 
                 // 保存引用
-                workpieceColliders.Add(box);
+                WorkpieceColliders.Add(box);
             }
         }
         else
@@ -107,15 +107,15 @@ public class WorkbenchBinder : MonoBehaviour
         colliderVisualIds.Clear();
 
         // 工作台碰撞箱（青色，静态）
-        if (workbenchCollider != null)
+        if (WorkbenchCollider != null)
         {
-            int id = visualizer.Add(workbenchCollider, Color.cyan);
+            int id = visualizer.Add(WorkbenchCollider, Color.cyan);
             colliderVisualIds.Add(id);
         }
 
         // 工件碰撞箱（绿色，静态）
         Color workpieceColor = Color.green;
-        foreach (var collider in workpieceColliders)
+        foreach (var collider in WorkpieceColliders)
         {
             if (collider == null) continue;
             int id = visualizer.Add(collider, workpieceColor);

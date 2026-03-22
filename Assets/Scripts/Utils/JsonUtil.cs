@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
@@ -19,6 +20,8 @@ public static class JsonUtil
         settings.Converters.Add(new Vector3Converter());
         settings.Converters.Add(new WeldSeamConverter());
         settings.Converters.Add(new PoseConverter());
+        settings.Converters.Add(new StringEnumConverter());
+        settings.Converters.Add(new FloatArrayConverter(3));
         return settings;
     }
 
@@ -34,6 +37,15 @@ public static class JsonUtil
 
     private class Vector3Converter : JsonConverter
     {
+        private readonly int decimals;
+
+        public Vector3Converter() : this(3) { }
+
+        public Vector3Converter(int decimals)
+        {
+            this.decimals = decimals;
+        }
+
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(Vector3);
@@ -65,15 +77,24 @@ public static class JsonUtil
         {
             var v = (Vector3)value;
             writer.WriteStartObject();
-            writer.WritePropertyName("x"); writer.WriteValue(v.x);
-            writer.WritePropertyName("y"); writer.WriteValue(v.y);
-            writer.WritePropertyName("z"); writer.WriteValue(v.z);
+            writer.WritePropertyName("x"); writer.WriteValue(Math.Round(v.x, 3));
+            writer.WritePropertyName("y"); writer.WriteValue(Math.Round(v.y, 3));
+            writer.WritePropertyName("z"); writer.WriteValue(Math.Round(v.z, 3));
             writer.WriteEndObject();
         }
     }
 
     private class PoseConverter : JsonConverter
     {
+        private readonly int decimals;
+
+        public PoseConverter() : this(3) { }
+
+        public PoseConverter(int decimals)
+        {
+            this.decimals = decimals;
+        }
+
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(Pose);
@@ -129,12 +150,12 @@ public static class JsonUtil
             Vector3 eulerAngles = rotation.eulerAngles;
 
             writer.WriteStartObject();
-            writer.WritePropertyName("x"); writer.WriteValue(position.x);
-            writer.WritePropertyName("y"); writer.WriteValue(position.y);
-            writer.WritePropertyName("z"); writer.WriteValue(position.z);
-            writer.WritePropertyName("roll"); writer.WriteValue(eulerAngles.x);
-            writer.WritePropertyName("pitch"); writer.WriteValue(eulerAngles.y);
-            writer.WritePropertyName("yaw"); writer.WriteValue(eulerAngles.z);
+            writer.WritePropertyName("x"); writer.WriteValue(Math.Round(position.x, 3));
+            writer.WritePropertyName("y"); writer.WriteValue(Math.Round(position.y, 3));
+            writer.WritePropertyName("z"); writer.WriteValue(Math.Round(position.z, 3));
+            writer.WritePropertyName("roll"); writer.WriteValue(Math.Round(eulerAngles.x, 3));
+            writer.WritePropertyName("pitch"); writer.WriteValue(Math.Round(eulerAngles.y, 3));
+            writer.WritePropertyName("yaw"); writer.WriteValue(Math.Round(eulerAngles.z, 3));
             writer.WritePropertyName("qx"); writer.WriteValue(rotation.x);
             writer.WritePropertyName("qy"); writer.WriteValue(rotation.y);
             writer.WritePropertyName("qz"); writer.WriteValue(rotation.z);
@@ -164,6 +185,54 @@ public static class JsonUtil
             // 采用默认序列化（包含嵌套字段）
             JObject jo = JObject.FromObject(value, JsonSerializer.Create(CreateSettings()));
             jo.WriteTo(writer);
+        }
+    }
+
+    // ============================================================
+    // float[] 保留指定小数位
+    // ============================================================
+    private class FloatArrayConverter : JsonConverter
+    {
+        private readonly int decimals;
+
+        public FloatArrayConverter() : this(3) { }
+
+        public FloatArrayConverter(int decimals)
+        {
+            this.decimals = decimals;
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(float[]);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.StartArray)
+            {
+                var list = new List<float>();
+                while (reader.Read())
+                {
+                    if (reader.TokenType == JsonToken.EndArray)
+                        break;
+                    if (reader.TokenType == JsonToken.Float || reader.TokenType == JsonToken.Integer)
+                        list.Add(Convert.ToSingle(reader.Value));
+                }
+                return list.ToArray();
+            }
+            return Array.Empty<float>();
+        }
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            var arr = (float[])value;
+            writer.WriteStartArray();
+            foreach (var item in arr)
+            {
+                writer.WriteValue(Math.Round(item, decimals));
+            }
+            writer.WriteEndArray();
         }
     }
 }

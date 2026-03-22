@@ -50,6 +50,9 @@ class WorkState : SimulationStateBase
         ctx.TcpPathPlanner.Plan(ctx.Task);
         // 可视化路径
         ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner);
+        // 初始化结果记录器
+        ctx.ResultWriter.Init(ctx.Task?.TaskName ?? "UnknownTask");
+        // 启动时钟
         ctx.Clock.Start();
     }
 
@@ -78,14 +81,14 @@ class WorkState : SimulationStateBase
                 break;
             case WeldTaskPlanState.PlanStatus.Suceeded:
                 // 等待轨迹执行结束
-                if (!ctx.Trajectory.HasSegment)
+                if (!ctx.Trajectory.HasActiveSegment)
                 {
                     ctx.TryChangeState(SimulationState.Succeed);
                 }
                 break;
             case WeldTaskPlanState.PlanStatus.Failed:
                 // 仿真失败，等待轨迹执行结束
-                if (!ctx.Trajectory.HasSegment)
+                if (!ctx.Trajectory.HasActiveSegment)
                 {
                     ctx.TryChangeState(SimulationState.Fail);
                 }
@@ -93,10 +96,16 @@ class WorkState : SimulationStateBase
         }
 
         // 执行轨迹
-        float[] joints = ctx.Trajectory.Evaluate(ctx.Clock.Time);
+        float[] joints = ctx.Trajectory.Evaluate(ctx.Clock.Time, out TrajectorySegment finishedSegment);
         if (joints != null)
         {
             ctx.RobotModel.SetJointAngles(joints);
+        }
+
+        // 记录已完成的焊接路径点数据
+        if (finishedSegment != null)
+        {
+            ctx.ResultWriter.RecordSegment(finishedSegment);
         }
 
         // 更新焊接特效
@@ -140,6 +149,8 @@ class SucceedState: SimulationStateBase
     public override void Enter(SimulationContext ctx)
     {
         ctx.Clock.Stop();
+        ctx.ResultWriter.SetPlanStatus(WeldTaskPlanState.PlanStatus.Suceeded);
+        ctx.ResultWriter.SaveToJson();
     }
 
     public override void Exit(SimulationContext ctx)
@@ -161,6 +172,8 @@ class FailState : SimulationStateBase
     public override void Enter(SimulationContext ctx)
     {
         ctx.Clock.Stop();
+        ctx.ResultWriter.SetPlanStatus(WeldTaskPlanState.PlanStatus.Failed);
+        ctx.ResultWriter.SaveToJson();
     }
     public override void Exit(SimulationContext ctx)
     {

@@ -3,12 +3,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// 关节角插值算法接口
-/// </summary>
 public interface IJointInterpolator
 {
-    public float[] Evaluate(float t);
+    /// <summary>
+    /// 关节角
+    /// </summary>
+    float[] Evaluate(float t);
+
+    /// <summary>
+    /// 关节角速度
+    /// </summary>
+    float[] EvaluateVelocity(float t);
+
+    /// <summary>
+    /// 关节角加速度
+    /// </summary>
+    float[] EvaluateAcceleration(float t);
 }
 
 /// <summary>
@@ -39,6 +49,23 @@ public class LinearJointInterpolator : IJointInterpolator
             result[i] = Mathf.Lerp(start[i], end[i], alpha);
         }
         return result;
+    }
+
+    public float[] EvaluateVelocity(float t)
+    {
+        // 线性插值的速度是常数：v = (q1 - q0) / duration
+        float[] result = new float[dof];
+        for (int i = 0; i < dof; i++)
+        {
+            result[i] = (end[i] - start[i]) / duration;
+        }
+        return result;
+    }
+
+    public float[] EvaluateAcceleration(float t)
+    {
+        // 线性插值的加速度恒为零
+        return new float[dof];
     }
 }
 
@@ -81,17 +108,41 @@ public class CubicHermiteSegmentInterpolator : IJointInterpolator
     public float[] Evaluate(float t)
     {
         t = Mathf.Clamp(t, 0f, duration);
-
         float t2 = t * t;
         float t3 = t2 * t;
 
         float[] result = new float[dof];
-
         for (int i = 0; i < dof; i++)
         {
             result[i] = a0[i] + a1[i] * t + a2[i] * t2 + a3[i] * t3;
         }
+        return result;
+    }
 
+    public float[] EvaluateVelocity(float t)
+    {
+        // q'(t) = a1 + 2*a2*t + 3*a3*t²
+        t = Mathf.Clamp(t, 0f, duration);
+        float t2 = t * t;
+
+        float[] result = new float[dof];
+        for (int i = 0; i < dof; i++)
+        {
+            result[i] = a1[i] + 2f * a2[i] * t + 3f * a3[i] * t2;
+        }
+        return result;
+    }
+
+    public float[] EvaluateAcceleration(float t)
+    {
+        // q''(t) = 2*a2 + 6*a3*t
+        t = Mathf.Clamp(t, 0f, duration);
+
+        float[] result = new float[dof];
+        for (int i = 0; i < dof; i++)
+        {
+            result[i] = 2f * a2[i] + 6f * a3[i] * t;
+        }
         return result;
     }
 }
