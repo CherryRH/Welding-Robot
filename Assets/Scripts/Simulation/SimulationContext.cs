@@ -30,7 +30,7 @@ public class SimulationContext : MonoBehaviour
     public Trajectory Trajectory = new();
 
     // Åö×²¼à²â²ã
-
+    public CollisionMonitor CollisionMonitor = new();
 
     // °ó¶¨²ã
     public RobotBinder RobotBinder;
@@ -137,6 +137,8 @@ public class SimulationContext : MonoBehaviour
         WeldSeamVisualizer.ShowSeams(Task, 1e10f);
         // Åö×²Ïä¿ÉÊÓ»¯
         ShowColliders();
+        // ³õÊ¼»¯Åö×²¼à²âÆ÷
+        CollisionMonitor.Init(RobotBinder, WorkbenchBinder);
     }
 
     public void Clear()

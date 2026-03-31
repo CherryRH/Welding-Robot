@@ -12,6 +12,7 @@ public class SimulationView : MonoBehaviour
     public TMP_Text[] JointPosText = new TMP_Text[18];
     public TMP_Text[] TCPPosText = new TMP_Text[3];
     public TMP_Text[] ToolEulerAnglesText = new TMP_Text[3];
+    public TMP_Text[] CollisionText = new TMP_Text[4];
 
     public void OnSimulationUpdate(SimulationContext context)
     {
@@ -37,6 +38,17 @@ public class SimulationView : MonoBehaviour
         ToolEulerAnglesText[0].text = toolEuler.x.ToString("F0");
         ToolEulerAnglesText[1].text = toolEuler.y.ToString("F0");
         ToolEulerAnglesText[2].text = toolEuler.z.ToString("F0");
+
+        if (context.CollisionMonitor.IsInitialized)
+        {
+            CollisionText[0].text = context.CollisionMonitor.EnvCollision.WorstLevel.ToString();
+            CollisionText[0].color = GetCollisionLevelColor(context.CollisionMonitor.EnvCollision.WorstLevel);
+            CollisionText[1].text = context.CollisionMonitor.EnvCollision.MinDistance.ToString("F2");
+
+            CollisionText[2].text = context.CollisionMonitor.SelfCollision.WorstLevel.ToString();
+            CollisionText[2].color = GetCollisionLevelColor(context.CollisionMonitor.SelfCollision.WorstLevel);
+            CollisionText[3].text = context.CollisionMonitor.SelfCollision.MinDistance.ToString("F2");
+        }
     }
 
     void Start()
@@ -47,5 +59,17 @@ public class SimulationView : MonoBehaviour
     void Update()
     {
         
+    }
+
+    private Color GetCollisionLevelColor(CollisionMonitor.CollisionLevel level)
+    {
+        return level switch
+        {
+            CollisionMonitor.CollisionLevel.Safe => Color.green,
+            CollisionMonitor.CollisionLevel.Warning => Color.yellow,
+            CollisionMonitor.CollisionLevel.Blocked => Color.magenta,
+            CollisionMonitor.CollisionLevel.Collision => Color.red,
+            _ => Color.white,
+        };
     }
 }

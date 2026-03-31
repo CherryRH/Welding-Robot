@@ -21,6 +21,7 @@ public class RobotBinder : MonoBehaviour
 
     public Transform[] Meshes = new Transform[7];
     public List<BoxCollider[]> BoxColliders = new(7);
+    public CapsuleCollider TorchCollider;
 
     // 碰撞箱可视化相关
     private List<int> colliderVisualIds = new();
@@ -70,6 +71,7 @@ public class RobotBinder : MonoBehaviour
                 BoxColliders.Add(new BoxCollider[0]);
             }
         }
+        TorchCollider = Torch != null ? Torch.GetComponent<CapsuleCollider>() : null;
     }
 
     void Start()

@@ -60,6 +60,8 @@ public class SimulationStateMachine
             try { s.Update(ctx, dt); }
             catch (Exception ex) { Debug.LogError($"State Update error: {ex}"); }
         }
+        // 常驻碰撞距离检测（所有状态下均运行）
+        ctx.CollisionMonitor.Update();
     }
 
     public void HandleInput(SimulationContext ctx, KeyCode key, int num)

@@ -117,6 +117,24 @@ class WorkState : SimulationStateBase
         {
             ctx.EffectBinder.StopWeldingEffect();
         }
+
+        // 检查碰撞情况
+        if (ctx.CollisionMonitor != null)
+        {
+            switch (ctx.CollisionMonitor.OverallLevel)
+            {
+                case CollisionMonitor.CollisionLevel.Safe:
+                    break;
+                case CollisionMonitor.CollisionLevel.Warning:
+                    break;
+                case CollisionMonitor.CollisionLevel.Blocked:
+                    break;
+                case CollisionMonitor.CollisionLevel.Collision:
+                    // 碰撞发生，仿真失败
+                    ctx.TryChangeState(SimulationState.Fail);
+                    break;
+            }
+        }
     }
 
     public override void Exit(SimulationContext ctx)
