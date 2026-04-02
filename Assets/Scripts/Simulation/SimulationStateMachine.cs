@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ·ÂÕæ×´Ì¬»ú
+/// ä»¿çœŸçŠ¶æ€æœº
 /// </summary>
 public class SimulationStateMachine
 {
@@ -15,6 +15,20 @@ public class SimulationStateMachine
     public event Action<SimulationState, SimulationState> OnStateChange;
 
     private readonly Dictionary<SimulationState, SimulationStateBase> states;
+
+    // ========== ç¢°æ’å›æ»šæ”¯æŒ ==========
+
+    /// <summary>ä¸Šä¸€å¸§çš„å…³èŠ‚è§’åº¦å¤‡ä»½ï¼ˆç”¨äºç¢°æ’å›æ»šï¼‰</summary>
+    private float[] lastJointAngles = new float[6];
+
+    /// <summary>ä¸Šä¸€å¸§ç¢°æ’æ£€æµ‹çš„æœ€å°è·ç¦»ï¼ˆç”¨äºåˆ¤æ–­ç§»åŠ¨æ–¹å‘ï¼‰</summary>
+    public float LastMinDistance { get; private set; } = float.MaxValue;
+
+    /// <summary>å½“å‰å¸§æ˜¯å¦å‘ç”Ÿäº†ç¢°æ’å›æ»š</summary>
+    public bool WasRollback { get; private set; } = false;
+
+    /// <summary>ç¢°æ’å›æ»šäº‹ä»¶ï¼ˆä¾› UI æ˜¾ç¤ºï¼‰</summary>
+    public event Action OnRollback;
 
     public SimulationStateMachine()
     {
@@ -53,6 +67,16 @@ public class SimulationStateMachine
         return true;
     }
 
+    /// <summary>
+    /// çŠ¶æ€æ›´æ–°å‰ï¼šå¤‡ä»½å…³èŠ‚è§’åº¦
+    /// </summary>
+    public void BackupJointAngles(SimulationContext ctx)
+    {
+        WasRollback = false;
+        for (int i = 0; i < ctx.RobotModel.JointsCount; i++)
+            lastJointAngles[i] = ctx.RobotModel.Joints[i].Angle;
+    }
+
     public void Update(SimulationContext ctx, float dt)
     {
         if (states.TryGetValue(CurrentState, out var s))
@@ -60,8 +84,6 @@ public class SimulationStateMachine
             try { s.Update(ctx, dt); }
             catch (Exception ex) { Debug.LogError($"State Update error: {ex}"); }
         }
-        // ³£×¤Åö×²¾àÀë¼ì²â£¨ËùÓĞ×´Ì¬ÏÂ¾ùÔËĞĞ£©
-        ctx.CollisionMonitor.Update();
     }
 
     public void HandleInput(SimulationContext ctx, KeyCode key, int num)
@@ -71,6 +93,24 @@ public class SimulationStateMachine
             try { s.HandleInput(ctx, key, num); }
             catch (Exception ex) { Debug.LogError($"State HandleInput error: {ex}"); }
         }
+    }
+
+    /// <summary>
+    /// å›æ»šä¸Šä¸€æ¬¡å…³èŠ‚ç§»åŠ¨ï¼ˆç¢°æ’ç©¿é€æ—¶è°ƒç”¨ï¼‰
+    /// </summary>
+    public void RollbackLastMove(SimulationContext ctx)
+    {
+        ctx.RobotModel.SetJointAngles(lastJointAngles);
+        WasRollback = true;
+        OnRollback?.Invoke();
+    }
+
+    /// <summary>
+    /// æ›´æ–°ä¸Šä¸€å¸§è·ç¦»è®°å½•
+    /// </summary>
+    public void UpdateLastDistance(float minDistance)
+    {
+        LastMinDistance = minDistance;
     }
 
     public SimulationStateBase GetCurrentStateInstance()
@@ -92,20 +132,20 @@ public class SimulationStateMachine
 }
 
 /// <summary>
-/// ·ÂÕæ×´Ì¬
+/// ä»¿çœŸçŠ¶æ€
 /// </summary>
 public enum SimulationState
 {
-    // ´ı»ú£¨Í£Ö¹ÈÎºÎ¶¯×÷£©
+    // ç©ºé—²ï¼Œåœæ­¢ä»»ä½•åŠ¨ä½œ
     Idle = 1,
-    // ¹¤×÷£¨Ö´ĞĞº¸½ÓÈÎÎñ£©
+    // å·¥ä½œï¼Œæ‰§è¡Œç„Šæ¥ä»»åŠ¡
     Work = 2,
-    // ³É¹¦£¨º¸½ÓÈÎÎñ·ÂÕæ³É¹¦£©
+    // æˆåŠŸï¼Œç„Šæ¥ä»»åŠ¡æˆåŠŸ
     Succeed = 4,
-    // Ê§°Ü£¨º¸½ÓÈÎÎñ·ÂÕæÊ§°Ü£©
+    // å¤±è´¥ï¼Œç„Šæ¥ä»»åŠ¡å¤±è´¥
     Fail = 5,
-    // ¹Ø½Ú¿ØÖÆ£¨Ö±½Ó¿ØÖÆ¹Ø½ÚĞı×ª£©
+    // å…³èŠ‚æ§åˆ¶ï¼Œç›´æ¥æ§åˆ¶å…³èŠ‚æ—‹è½¬
     Joint = 9,
-    // TCP ¿ØÖÆ£¨Ö±½Ó¿ØÖÆ TCP Æ½ÒÆ£©
+    // TCP æ§åˆ¶ï¼Œç›´æ¥æ§åˆ¶ TCP å¹³ç§»
     TCP = 10
 }

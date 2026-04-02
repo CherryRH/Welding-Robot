@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ·ÂÕæ×´Ì¬»ùÀà
+/// ä»¿çœŸçŠ¶æ€åŸºç±»
 /// </summary>
 public abstract class SimulationStateBase
 {
@@ -16,21 +16,19 @@ public abstract class SimulationStateBase
     public virtual void HandleInput(SimulationContext ctx, KeyCode key, int num) { }
 }
 
+/// <summary>
+/// ç©ºé—²çŠ¶æ€ï¼šå¾…å‘½ï¼Œç­‰å¾…ç”¨æˆ·å¯åŠ¨ä»»åŠ¡æˆ–è¿›å…¥é¥æ“ä½œæ¨¡å¼
+/// </summary>
 class IdleState : SimulationStateBase
 {
     public IdleState(SimulationStateMachine m) : base(m) { }
-    public override void Enter(SimulationContext ctx)
-    {
-        // ÖØÖÃÊ±ÖÓ
-        ctx.Clock.Reset();
-        // Ë¢ĞÂUI
-        ctx.OnClockUpdate?.Invoke(ctx.Clock);
-    }
 
-    public override void Exit(SimulationContext ctx)
+    public override void Enter(SimulationContext ctx)
     {
         
     }
+
+    public override void Exit(SimulationContext ctx) { }
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
@@ -40,106 +38,77 @@ class IdleState : SimulationStateBase
     }
 }
 
+/// <summary>
+/// å·¥ä½œçŠ¶æ€ï¼šæ‰§è¡Œç„Šæ¥ä»»åŠ¡
+/// </summary>
 class WorkState : SimulationStateBase
 {
     public WorkState(SimulationStateMachine m) : base(m) { }
 
     public override void Enter(SimulationContext ctx)
     {
-        // ¹æ»®Â·¾¶
+        // è§„åˆ’ TCP è·¯å¾„
         ctx.TcpPathPlanner.Plan(ctx.Task);
-        // ¿ÉÊÓ»¯Â·¾¶
+
+        // æ˜¾ç¤ºè·¯å¾„å¯è§†åŒ–
         ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner);
-        // ³õÊ¼»¯½á¹û¼ÇÂ¼Æ÷
+
+        // åˆå§‹åŒ–ç»“æœè®°å½•å™¨
         ctx.ResultWriter.Init(ctx.Task?.TaskName ?? "UnknownTask");
-        // Æô¶¯Ê±ÖÓ
+
+        // å¯åŠ¨ä»¿çœŸæ—¶é’Ÿ
         ctx.Clock.Start();
     }
 
     public override void Update(SimulationContext ctx, float dt)
     {
-        // ÉêÇë¹æ»®¹ì¼£
+        // æŒç»­è§„åˆ’è½¨è¿¹ï¼ˆä¿æŒè½¨è¿¹ç¼“å†²åŒºæ°´ä½ï¼‰
         if (ctx.Trajectory.UnderHighWaterMark && ctx.TaskState.Status != WeldTaskPlanState.PlanStatus.Failed)
         {
-            // È¡Ò»¶ÎÂ·¾¶µã
             List<TcpPathPoint> points = ctx.TcpPathPlanner.GetPathPart();
             TrajectoryPlanResult result = ctx.TrajectoryPlanner.Plan(points, ctx.Clock.Time);
-
-            // ´¦Àí¹æ»®½á¹û
             ctx.TcpPathPlanner.HandleTrajectoryPlanResult(result);
 
-            // ¸üĞÂ¿ÉÊÓ»¯Â·¾¶
+            // è§„åˆ’çŠ¶æ€å˜åŒ–æ—¶æ›´æ–°å¯è§†åŒ–
             if (result.PlanStatus != TrajectoryPlanResult.TrajectoryPlanStatus.Ok)
                 ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner);
         }
 
-        // ¼ì²é¹æ»®×´Ì¬
+        // æ£€æŸ¥ä»»åŠ¡è§„åˆ’çŠ¶æ€
         switch (ctx.TaskState.Status)
         {
             case WeldTaskPlanState.PlanStatus.Unfinished:
-                // ¼ÌĞø·ÂÕæ
                 break;
             case WeldTaskPlanState.PlanStatus.Suceeded:
-                // µÈ´ı¹ì¼£Ö´ĞĞ½áÊø
                 if (!ctx.Trajectory.HasActiveSegment)
-                {
                     ctx.TryChangeState(SimulationState.Succeed);
-                }
                 break;
             case WeldTaskPlanState.PlanStatus.Failed:
-                // ·ÂÕæÊ§°Ü£¬µÈ´ı¹ì¼£Ö´ĞĞ½áÊø
                 if (!ctx.Trajectory.HasActiveSegment)
-                {
                     ctx.TryChangeState(SimulationState.Fail);
-                }
                 break;
         }
 
-        // Ö´ĞĞ¹ì¼£
+        // æ‰§è¡Œè½¨è¿¹
         float[] joints = ctx.Trajectory.Evaluate(ctx.Clock.Time, out TrajectorySegment finishedSegment);
         if (joints != null)
-        {
             ctx.RobotModel.SetJointAngles(joints);
-        }
 
-        // ¼ÇÂ¼ÒÑÍê³ÉµÄº¸½ÓÂ·¾¶µãÊı¾İ
+        // è®°å½•å®Œæˆçš„ç„Šæ¥è·¯å¾„æ®µ
         if (finishedSegment != null)
-        {
             ctx.ResultWriter.RecordSegment(finishedSegment);
-        }
 
-        // ¸üĞÂº¸½ÓÌØĞ§
+        // ç„Šæ¥ç‰¹æ•ˆ
         if (ctx.Trajectory.CurrentSegment != null && ctx.Trajectory.CurrentSegment.Type == TrajectorySegment.TrajectorySegmentType.Weld)
-        {
             ctx.EffectBinder.PlayWeldingEffect();
-        }
         else
-        {
             ctx.EffectBinder.StopWeldingEffect();
-        }
-
-        // ¼ì²éÅö×²Çé¿ö
-        if (ctx.CollisionMonitor != null)
-        {
-            switch (ctx.CollisionMonitor.OverallLevel)
-            {
-                case CollisionMonitor.CollisionLevel.Safe:
-                    break;
-                case CollisionMonitor.CollisionLevel.Warning:
-                    break;
-                case CollisionMonitor.CollisionLevel.Blocked:
-                    break;
-                case CollisionMonitor.CollisionLevel.Collision:
-                    // Åö×²·¢Éú£¬·ÂÕæÊ§°Ü
-                    ctx.TryChangeState(SimulationState.Fail);
-                    break;
-            }
-        }
     }
 
     public override void Exit(SimulationContext ctx)
     {
-        
+        // åœæ­¢ç„Šæ¥ç‰¹æ•ˆ
+        ctx.EffectBinder.StopWeldingEffect();
     }
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
@@ -147,20 +116,23 @@ class WorkState : SimulationStateBase
         if (ctx == null) return;
         if (key == KeyCode.Space)
         {
+            // æš‚åœ/ç»§ç»­
             if (ctx.Clock.IsRunning) ctx.Clock.Stop();
             else ctx.Clock.Start();
         }
         if (key == KeyCode.Escape)
         {
-            // Ç¿ÖÆÍË³ö
+            // å¼ºåˆ¶é€€å‡ºåˆ° Idle
             ctx.Clock.Stop();
             ctx.TryChangeState(SimulationState.Idle);
-            ctx.Clear();
         }
     }
 }
 
-class SucceedState: SimulationStateBase
+/// <summary>
+/// æˆåŠŸçŠ¶æ€ï¼šç„Šæ¥ä»»åŠ¡æˆåŠŸå®Œæˆ
+/// </summary>
+class SucceedState : SimulationStateBase
 {
     public SucceedState(SimulationStateMachine m) : base(m) { }
 
@@ -173,53 +145,67 @@ class SucceedState: SimulationStateBase
 
     public override void Exit(SimulationContext ctx)
     {
-        // ÖØÖÃ
+        // æ¸…ç©ºè§„åˆ’æ•°æ®
         ctx.Clear();
     }
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
         if (ctx == null) return;
-        if (key == KeyCode.Escape || key == KeyCode.Space) ctx.TryChangeState(SimulationState.Idle);
+        if (key == KeyCode.Escape || key == KeyCode.Space)
+        {
+            ctx.TryChangeState(SimulationState.Idle);
+            ctx.Reset();
+        }
     }
 }
 
+/// <summary>
+/// å¤±è´¥çŠ¶æ€ï¼šç„Šæ¥ä»»åŠ¡å¤±è´¥ï¼ˆç¢°æ’ã€è§„åˆ’å¤±è´¥ç­‰ï¼‰
+/// </summary>
 class FailState : SimulationStateBase
 {
     public FailState(SimulationStateMachine m) : base(m) { }
+
     public override void Enter(SimulationContext ctx)
     {
         ctx.Clock.Stop();
         ctx.ResultWriter.SetPlanStatus(WeldTaskPlanState.PlanStatus.Failed);
         ctx.ResultWriter.SaveToJson();
     }
+
     public override void Exit(SimulationContext ctx)
     {
-        // ÖØÖÃ
+        // æ¸…ç©ºè§„åˆ’æ•°æ®
         ctx.Clear();
     }
+
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
         if (ctx == null) return;
-        if (key == KeyCode.Escape) ctx.TryChangeState(SimulationState.Idle);
+        if (key == KeyCode.Escape || key == KeyCode.Space)
+        {
+            ctx.TryChangeState(SimulationState.Idle);
+            ctx.Reset();
+        }
     }
 }
 
+/// <summary>
+/// å…³èŠ‚é¥æ“ä½œçŠ¶æ€ï¼šç›´æ¥æ§åˆ¶å•ä¸ªå…³èŠ‚æ—‹è½¬
+/// </summary>
 class JointState : SimulationStateBase
 {
     public DataChangeSymbol Symbol { get; private set; } = DataChangeSymbol.Stay;
-
     public int ControlledJoint { get; private set; } = 0;
 
     public JointState(SimulationStateMachine m) : base(m) { }
 
-    public override void Enter(SimulationContext ctx)
-    {
-        // ½øÈëÊÖ¶¯¹Ø½Ú¿ØÖÆ£¨¿ÉÄÜĞèÒª UI ÌáÊ¾µÈ£©
-    }
+    public override void Enter(SimulationContext ctx) { }
 
     public override void Update(SimulationContext ctx, float dt)
     {
+        // ç¢°æ’æ£€æµ‹ç”± SimulationContext ç»Ÿä¸€å¤„ç†
         switch (Symbol)
         {
             case DataChangeSymbol.Increase:
@@ -232,7 +218,6 @@ class JointState : SimulationStateBase
             default:
                 break;
         }
-        // ÖØÖÃĞı×ª·½Ïò
         Symbol = DataChangeSymbol.Stay;
     }
 
@@ -241,27 +226,25 @@ class JointState : SimulationStateBase
         if (key == KeyCode.LeftArrow) Symbol = DataChangeSymbol.Decrease;
         else if (key == KeyCode.RightArrow) Symbol = DataChangeSymbol.Increase;
         if (num >= 1 && num <= ctx.RobotConfig.JointsParameters.Length)
-        {
             ControlledJoint = num - 1;
-        }
     }
 }
 
+/// <summary>
+/// TCP é¥æ“ä½œçŠ¶æ€ï¼šç›´æ¥æ§åˆ¶ TCP å¹³ç§»/æ—‹è½¬
+/// </summary>
 class TCPState : SimulationStateBase
 {
     public DataChangeSymbol Symbol { get; private set; } = DataChangeSymbol.Stay;
-
     public int ControlledData { get; private set; } = 1;
 
     public TCPState(SimulationStateMachine m) : base(m) { }
 
-    public override void Enter(SimulationContext ctx)
-    {
-        // ½øÈë TCP ¿ØÖÆ£¨¿ÉÄÜĞèÒª UI ÌáÊ¾µÈ£©
-    }
+    public override void Enter(SimulationContext ctx) { }
 
     public override void Update(SimulationContext ctx, float dt)
     {
+        // ç¢°æ’æ£€æµ‹ç”± SimulationContext ç»Ÿä¸€å¤„ç†
         switch (Symbol)
         {
             case DataChangeSymbol.Increase:
@@ -273,7 +256,6 @@ class TCPState : SimulationStateBase
                     case 4: ctx.RobotModel.TCPMoveStep(dt, new(0, 0, 0), new(1f, 0, 0)); break;
                     case 5: ctx.RobotModel.TCPMoveStep(dt, new(0, 0, 0), new(0, 1f, 0)); break;
                     case 6: ctx.RobotModel.TCPMoveStep(dt, new(0, 0, 0), new(0, 0, 1f)); break;
-                    default: break;
                 }
                 break;
             case DataChangeSymbol.Decrease:
@@ -285,7 +267,6 @@ class TCPState : SimulationStateBase
                     case 4: ctx.RobotModel.TCPMoveStep(dt, new(0, 0, 0), new(-1f, 0, 0)); break;
                     case 5: ctx.RobotModel.TCPMoveStep(dt, new(0, 0, 0), new(0, -1f, 0)); break;
                     case 6: ctx.RobotModel.TCPMoveStep(dt, new(0, 0, 0), new(0, 0, -1f)); break;
-                    default: break;
                 }
                 break;
             case DataChangeSymbol.Stay:
@@ -300,13 +281,14 @@ class TCPState : SimulationStateBase
         if (key == KeyCode.LeftArrow) Symbol = DataChangeSymbol.Decrease;
         else if (key == KeyCode.RightArrow) Symbol = DataChangeSymbol.Increase;
         if (num >= 1 && num <= 6)
-        {
             ControlledData = num;
-        }
         if (key == KeyCode.LeftShift || key == KeyCode.RightShift) ctx.TryChangeIKMethod();
     }
 }
 
+/// <summary>
+/// ç§»åŠ¨æ–¹å‘ç¬¦å·
+/// </summary>
 public enum DataChangeSymbol
 {
     Stay,

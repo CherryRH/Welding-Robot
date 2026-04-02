@@ -6,51 +6,89 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// ���滷��
+/// 仿真上下文 — 核心调度器
+/// 
+/// 生命周期流程：
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │  Awake()  →  Init()      初始化模型、绑定、规划器           │
+/// │  Start()  →  Load()      异步加载工件模型                  │
+/// │            →  Build()    优化任务、初始化可视化、碰撞检测    │
+/// │                                                             │
+/// │  运行时循环（每固定步长）：                                  │
+/// │    备份关节 → 状态Update → FK → Apply → 碰撞检测 → 响应     │
+/// │                                                             │
+/// │  Reset()  →  重置到初始状态（关节归零、时钟归零）           │
+/// │  Clear()  →  清空规划数据（路径、轨迹、状态）               │
+/// └─────────────────────────────────────────────────────────────┘
 /// </summary>
 public class SimulationContext : MonoBehaviour
 {
-    // ģ�����ݲ�
+    // ============================================================
+    // 模型数据层
+    // ============================================================
     public RobotConfig RobotConfig;
     public RobotModel RobotModel = new();
+    public RobotModel ShadowRobotModel = new();
 
-    // ������Ʋ�
+    // ============================================================
+    // 仿真控制层
+    // ============================================================
     public SimulationStateMachine StateMachine = new();
     public SimulationClock Clock = new(0.01f);
 
-    // ���ӹ滮��
+    // ============================================================
+    // 焊接规划层
+    // ============================================================
     public string WeldTaskDirectory;
     public string WeldTaskFileName;
     public WeldTask Task;
     public WeldTaskPlanState TaskState = new();
     public TcpPathPlanner TcpPathPlanner = new();
 
-    // ·���滮��
+    // ============================================================
+    // 轨迹规划层
+    // ============================================================
     public TrajectoryPlanner TrajectoryPlanner = new();
     public Trajectory Trajectory = new();
 
-    // ��ײ����
+    // ============================================================
+    // 碰撞检测层
+    // ============================================================
     public CollisionMonitor CollisionMonitor = new();
+    public CollisionMonitor ShadowCollisionMonitor = new();
 
-    // �󶨲�
+    // ============================================================
+    // 绑定层（Unity ↔ 数据模型）
+    // ============================================================
     public RobotBinder RobotBinder;
+    public RobotBinder ShadowRobotBinder;
     public WorkbenchBinder WorkbenchBinder;
     public EffectBinder EffectBinder;
 
-    // ���ӻ���
+    // ============================================================
+    // 可视化层
+    // ============================================================
     public WeldSeamVisualizer WeldSeamVisualizer;
     public TcpPathVisualizer TcpPathVisualizer;
     public ColliderVisualizer ColliderVisualizer;
 
-    // ���������
+    // ============================================================
+    // 结果数据
+    // ============================================================
     public WeldResultDataWriter ResultWriter = new();
 
-    // ���¼�
+    // ============================================================
+    // 事件
+    // ============================================================
     public UnityEvent<SimulationContext> BeforeSimulationUpdate;
     public UnityEvent<SimulationContext> OnSimulationUpdate;
     public UnityEvent<SimulationClock> OnClockUpdate;
 
     public bool Success = false;
+
+    // ============================================================
+    // Unity 生命周期
+    // ============================================================
 
     void Awake()
     {
@@ -67,30 +105,221 @@ public class SimulationContext : MonoBehaviour
     {
         if (Clock.Tick(Time.deltaTime))
         {
-            // ���÷������ǰ�Ļص�����
             BeforeSimulationUpdate?.Invoke(this);
-            // ʱ�Ӹ��»ص�
-            if (Clock.IsRunning)
-            {
-                OnClockUpdate?.Invoke(Clock);
-            }
-            // ���沽��
+            if (Clock.IsRunning) OnClockUpdate?.Invoke(Clock);
+
+            // 1. 备份关节角度（用于碰撞回滚）
+            StateMachine.BackupJointAngles(this);
+
+            // 2. 状态 Update（可能修改关节角度）
             StateMachine.Update(this, Clock.FixedDeltaTime);
 
-            // �����˶�ѧ���㣬���»�е����̬���任����
+            // 3. 运动学计算 + Transform 更新
             FK.Compute(RobotModel);
-            // Ӧ�� Unity ��е����̬������ Unity �������̬
             RobotBinder.Apply();
-            // ���÷�����»ص����������� UI ��
+
+            // 4. 碰撞检测（此时 Transform 已更新）
+            CollisionMonitor.Update();
+
+            // 5. 碰撞响应处理
+            HandleCollisionResponse();
+
             OnSimulationUpdate?.Invoke(this);
         }
 
         // Debug
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            Debug.Log(RobotModel.Joints[2].WorldTransform.transpose * Matrix4x4.Rotate(RobotModel.TCPRotation));
+
         }
     }
+
+    // ============================================================
+    // 碰撞响应
+    // ============================================================
+
+    /// <summary>
+    /// 碰撞响应处理：回滚或状态切换
+    /// </summary>
+    private void HandleCollisionResponse()
+    {
+        var level = CollisionMonitor.OverallLevel;
+        float currentDist = CollisionMonitor.SelfCollision.MinDistance;
+        bool isTeleop = StateMachine.CurrentState == SimulationState.Joint ||
+                        StateMachine.CurrentState == SimulationState.TCP;
+
+        StateMachine.UpdateLastDistance(currentDist);
+
+        switch (level)
+        {
+            case CollisionMonitor.CollisionLevel.Safe:
+                break;
+
+            case CollisionMonitor.CollisionLevel.Warning:
+                // 预警：可在此添加 UI 提示
+                break;
+
+            case CollisionMonitor.CollisionLevel.Blocked:
+                if (isTeleop)
+                {
+                    bool movingAway = currentDist > StateMachine.LastMinDistance;
+                    if (!movingAway) RollbackAndRefresh();
+                }
+                break;
+
+            case CollisionMonitor.CollisionLevel.Collision:
+                if (isTeleop)
+                {
+                    RollbackAndRefresh();
+                }
+                else if (StateMachine.CurrentState == SimulationState.Work)
+                {
+                    StateMachine.TryChangeState(SimulationState.Fail, this);
+                }
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 回滚并刷新姿态
+    /// </summary>
+    private void RollbackAndRefresh()
+    {
+        StateMachine.RollbackLastMove(this);
+        FK.Compute(RobotModel);
+        RobotBinder.Apply();
+        CollisionMonitor.Update();
+    }
+
+    // ============================================================
+    // 初始化 / 加载 / 构建 / 重置 / 清空
+    // ============================================================
+
+    /// <summary>
+    /// 初始化：绑定模型、规划器，加载任务数据
+    /// 在 Awake() 中调用，也可在外部调用以重新初始化
+    /// </summary>
+    public void Init()
+    {
+        // 初始化机器人模型
+        RobotModel.Init(RobotConfig);
+        RobotModel.SetUserOffset(WorkbenchBinder.GetOriginPoint());
+        ShadowRobotModel.Init(RobotConfig);
+        ShadowRobotModel.SetUserOffset(WorkbenchBinder.GetOriginPoint());
+
+        // 计算初始运动学
+        FK.Compute(RobotModel);
+        FK.Compute(ShadowRobotModel);
+
+        // 绑定到 Unity
+        RobotBinder.Bind(RobotModel);
+        ShadowRobotBinder.Bind(ShadowRobotModel);
+
+        // 初始化规划器
+        TcpPathPlanner.Init(RobotModel, TaskState);
+        TrajectoryPlanner.Init(RobotModel, Trajectory);
+
+        // 加载焊接任务数据
+        string weldTaskFile = Path.Combine(WeldTaskDirectory, WeldTaskFileName);
+        WeldTaskData data = WeldTaskDataLoader.LoadFromFile(weldTaskFile);
+        Task = new(data);
+    }
+
+    /// <summary>
+    /// 异步加载：加载工件模型
+    /// 在 Start() 中调用
+    /// </summary>
+    public async Task Load()
+    {
+        await WorkbenchBinder.LoadWorkpiece(Task.Workpiece, WeldTaskDirectory);
+    }
+
+    /// <summary>
+    /// 构建：优化任务、初始化可视化和碰撞检测
+    /// 在 Load() 之后调用
+    /// </summary>
+    public void Build()
+    {
+        // 优化焊缝顺序
+        Task.Optimize();
+
+        // 显示焊缝可视化
+        WeldSeamVisualizer.ShowSeams(Task, 1e10f);
+
+        // 初始化碰撞可视化
+        ShowColliders();
+
+        // 初始化碰撞检测器
+        CollisionMonitor.Init(RobotBinder, WorkbenchBinder);
+        ShadowCollisionMonitor.Init(ShadowRobotBinder, WorkbenchBinder);
+    }
+
+    /// <summary>
+    /// 重置：将仿真恢复到初始状态
+    /// - 关节角度归零
+    /// - 时钟归零
+    /// - 刷新运动学和 Transform
+    /// - 清空规划数据
+    /// 
+    /// 在进入 Idle 状态时调用，确保每次开始都是干净状态
+    /// </summary>
+    public void Reset()
+    {
+        // 关节角度归零
+        RobotModel.SetJointAngles(new float[RobotModel.JointsCount]);
+        ShadowRobotModel.SetJointAngles(new float[ShadowRobotModel.JointsCount]);
+
+        // 时钟归零
+        Clock.Reset();
+
+        // 刷新运动学和 Transform
+        FK.Compute(RobotModel);
+        RobotBinder.Apply();
+        ShadowRobotBinder.Apply();
+
+        // 清空规划数据
+        Clear();
+
+        // 刷新 UI
+        OnClockUpdate?.Invoke(Clock);
+    }
+
+    /// <summary>
+    /// 清空：清除规划相关的临时数据
+    /// - TCP 路径规划器
+    /// - 轨迹
+    /// - 任务规划状态
+    /// - TCP 路径可视化
+    /// </summary>
+    public void Clear()
+    {
+        TcpPathPlanner.Clear();
+        Trajectory.Clear();
+        TaskState.Reset();
+        TcpPathVisualizer.Clear();
+    }
+
+    // ============================================================
+    // 碰撞可视化
+    // ============================================================
+
+    public void ShowColliders()
+    {
+        if (ColliderVisualizer == null) return;
+        WorkbenchBinder.AddCollidersToVisualizer(ColliderVisualizer);
+        RobotBinder.AddCollidersToVisualizer(ColliderVisualizer);
+    }
+
+    public void HideColliders()
+    {
+        if (ColliderVisualizer == null) return;
+        WorkbenchBinder.RemoveCollidersFromVisualizer();
+        RobotBinder.RemoveCollidersFromVisualizer();
+    }
+
+    // ============================================================
+    // 公共接口
+    // ============================================================
 
     public bool TryChangeState(SimulationState target)
     {
@@ -105,69 +334,5 @@ public class SimulationContext : MonoBehaviour
     public void TryChangeIKMethod()
     {
         RobotModel.IK.SwitchMethod();
-    }
-
-    private void Init()
-    {
-        // ��ʼ������
-        RobotModel.Init(RobotConfig);
-        RobotModel.SetUserOffset(WorkbenchBinder.GetOriginPoint());
-        FK.Compute(RobotModel);
-        RobotBinder.Bind(RobotModel);
-        TcpPathPlanner.Init(RobotModel, TaskState);
-        TrajectoryPlanner.Init(RobotModel, Trajectory);
-        // ��ȡ���������ļ�
-        string weldTaskFile = Path.Combine(WeldTaskDirectory, WeldTaskFileName);
-        WeldTaskData data = WeldTaskDataLoader.LoadFromFile(weldTaskFile);
-        // ������������
-        Task = new(data);
-    }
-
-    public async Task Load()
-    {
-        // ���ع���ģ��
-        await WorkbenchBinder.LoadWorkpiece(Task.Workpiece, WeldTaskDirectory);
-    }
-
-    public void Build()
-    {
-        // �Ż���������
-        Task.Optimize();
-        // ���ӻ�����
-        WeldSeamVisualizer.ShowSeams(Task, 1e10f);
-        // ��ײ����ӻ�
-        ShowColliders();
-        // ��ʼ����ײ�����
-        CollisionMonitor.Init(RobotBinder, WorkbenchBinder);
-    }
-
-    public void Clear()
-    {
-        // ����滮����
-        TcpPathPlanner.Clear();
-        Trajectory.Clear();
-        TaskState.Reset();
-        // ������ӻ�
-        TcpPathVisualizer.Clear();
-    }
-
-    /// <summary>
-    /// ��ʾ������ײ��
-    /// </summary>
-    public void ShowColliders()
-    {
-        if (ColliderVisualizer == null) return;
-        WorkbenchBinder.AddCollidersToVisualizer(ColliderVisualizer);
-        RobotBinder.AddCollidersToVisualizer(ColliderVisualizer);
-    }
-
-    /// <summary>
-    /// ����������ײ��
-    /// </summary>
-    public void HideColliders()
-    {
-        if (ColliderVisualizer == null) return;
-        WorkbenchBinder.RemoveCollidersFromVisualizer();
-        RobotBinder.RemoveCollidersFromVisualizer();
     }
 }

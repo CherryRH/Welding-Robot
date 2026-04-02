@@ -39,15 +39,16 @@ public class SimulationView : MonoBehaviour
         ToolEulerAnglesText[1].text = toolEuler.y.ToString("F0");
         ToolEulerAnglesText[2].text = toolEuler.z.ToString("F0");
 
-        if (context.CollisionMonitor.IsInitialized)
+        CollisionMonitor collisionMonitor = context.CollisionMonitor;
+        if (collisionMonitor.IsInitialized)
         {
-            CollisionText[0].text = context.CollisionMonitor.EnvCollision.WorstLevel.ToString();
-            CollisionText[0].color = GetCollisionLevelColor(context.CollisionMonitor.EnvCollision.WorstLevel);
-            CollisionText[1].text = context.CollisionMonitor.EnvCollision.MinDistance.ToString("F2");
+            CollisionText[0].text = collisionMonitor.EnvCollision.WorstLevel.ToString();
+            CollisionText[0].color = GetCollisionLevelColor(collisionMonitor.EnvCollision.WorstLevel);
+            CollisionText[1].text = collisionMonitor.EnvCollision.MinDistance.ToString("F2");
 
-            CollisionText[2].text = context.CollisionMonitor.SelfCollision.WorstLevel.ToString();
-            CollisionText[2].color = GetCollisionLevelColor(context.CollisionMonitor.SelfCollision.WorstLevel);
-            CollisionText[3].text = context.CollisionMonitor.SelfCollision.MinDistance.ToString("F2");
+            CollisionText[2].text = collisionMonitor.SelfCollision.WorstLevel.ToString();
+            CollisionText[2].color = GetCollisionLevelColor(collisionMonitor.SelfCollision.WorstLevel);
+            CollisionText[3].text = collisionMonitor.SelfCollision.MinDistance.ToString("F2");
         }
     }
 
