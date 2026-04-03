@@ -3,17 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// �ӽ�·���滮��
+/// 接近路径规划器
 /// </summary>
 public class ApproachPathPlanner
 {
+    /// <summary>
+    /// 接近策略枚举
+    /// </summary>
     public enum ApproachStrategy
     {
-        Safe,
-        Direct,
-        ObstacleAvoidance
+        Safe,   // 经安全高度（Z轴上方）绕行
+        Direct, // 直线插值
+        APF,    // 人工势场法（梯度下降，易局部极小）
+        RRT     // 快速随机树（概率完备，不易失败）
     }
-    public ApproachStrategy Strategy { get; private set; } = ApproachStrategy.Direct;
+
+    /// <summary>当前使用的接近策略</summary>
+    public ApproachStrategy Strategy { get; private set; } = ApproachStrategy.RRT;
 
     private RobotModel robot;
 
@@ -22,9 +28,22 @@ public class ApproachPathPlanner
         this.robot = robot;
     }
 
-    public List<TcpPathPoint> Plan(Pose start, Pose end, WeldSeam seam = null)
+    /// <summary>
+    /// 规划接近路径（外部调用入口，自动适配策略）
+    /// </summary>
+    /// <param name="start">起点（Data 坐标系）</param>
+    /// <param name="end">终点（Data 坐标系）</param>
+    /// <param name="shadowCollisionMonitor">影子机械臂碰撞监测器</param>
+    /// <param name="shadowRobotBinder">影子机械臂绑定器</param>
+    /// <param name="seam">焊缝信息</param>
+    public List<TcpPathPoint> Plan(
+        Pose start, Pose end,
+        CollisionMonitor shadowCollisionMonitor,
+        RobotBinder shadowRobotBinder,
+        WeldSeam seam = null)
     {
-        if (start == null || end == null || MathUtil.IsPoseEqual(start, end)) return new();
+        if (start == null || end == null || MathUtil.IsPoseEqual(start, end))
+            return new List<TcpPathPoint>();
 
         switch (Strategy)
         {
@@ -32,36 +51,87 @@ public class ApproachPathPlanner
                 return PlanSafePath(start, end, seam);
             case ApproachStrategy.Direct:
                 return PlanDirectPath(start, end, seam);
+            case ApproachStrategy.APF:
+                return PlanApfPath(start, end, shadowRobotBinder, shadowCollisionMonitor, seam);
+            case ApproachStrategy.RRT:
+                return PlanRrtPath(start, end, shadowRobotBinder, shadowCollisionMonitor, seam);
             default:
                 return PlanSafePath(start, end, seam);
         }
     }
 
+    /// <summary>
+    /// 安全高度路径：经安全高度绕行，避免直接穿越障碍
+    /// </summary>
     private List<TcpPathPoint> PlanSafePath(Pose start, Pose end, WeldSeam seam = null)
     {
         List<TcpPathPoint> points = new();
-        // ���
         points.Add(new(start, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
-        // ��ȫ�߶ȣ�ʹ���յ����ת
+
         Pose safePose = robot.GetSafePose(start);
         safePose.rotation = end.rotation;
         points.Add(new(safePose, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
-        // �յ��Ϸ�
-        points.Add(new(robot.GetSafePose(end), TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
-        // �յ�
-        points.Add(new(end, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
 
+        Pose endSafe = robot.GetSafePose(end);
+        points.Add(new(endSafe, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
+        points.Add(new(end, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
         return points;
     }
 
+    /// <summary>
+    /// 直线路径：起点 + 终点，无中间点
+    /// </summary>
     private List<TcpPathPoint> PlanDirectPath(Pose start, Pose end, WeldSeam seam = null)
     {
         List<TcpPathPoint> points = new();
-        // ���
         points.Add(new(start, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
-        // �յ�
         points.Add(new(end, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
-
         return points;
+    }
+
+    /// <summary>
+    /// APF 路径：委托给 ApfPathPlanner
+    /// </summary>
+    private List<TcpPathPoint> PlanApfPath(
+        Pose start, Pose end,
+        RobotBinder shadowRobotBinder,
+        CollisionMonitor shadowCollisionMonitor,
+        WeldSeam seam = null)
+    {
+        List<TcpPathPoint> path = ApfPathPlanner.Plan(
+            start, end, robot, shadowCollisionMonitor, shadowRobotBinder, seam);
+
+        if (path != null && path.Count > 0)
+            return path;
+
+        Debug.LogWarning($"[ApproachPathPlanner] APF failed, falling back to Safe.");
+        return PlanSafePath(start, end, seam);
+    }
+
+    /// <summary>
+    /// RRT 路径：委托给 RrtPathPlanner
+    /// </summary>
+    private List<TcpPathPoint> PlanRrtPath(
+        Pose start, Pose end,
+        RobotBinder shadowRobotBinder,
+        CollisionMonitor shadowCollisionMonitor,
+        WeldSeam seam = null)
+    {
+        var result = RrtPathPlanner.Plan(
+            start, end, robot, shadowCollisionMonitor, shadowRobotBinder, seam,
+            maxIterations: 2000,
+            stepSize: 0.015f,
+            goalBias: 0.1f,
+            maxDistanceToGoal: 0.015f);
+
+        if (result.Success)
+        {
+            Debug.Log($"[ApproachPathPlanner] RRT succeeded: {result.Iterations} iters, {result.NodesGenerated} nodes, " +
+                $"path {result.PathNodesBeforeSmooth} → {result.PathNodesAfterSmooth} after smoothing.");
+            return result.Path;
+        }
+
+        Debug.LogWarning($"[ApproachPathPlanner] RRT failed ({result.NodesGenerated} nodes generated), falling back to Safe.");
+        return PlanSafePath(start, end, seam);
     }
 }

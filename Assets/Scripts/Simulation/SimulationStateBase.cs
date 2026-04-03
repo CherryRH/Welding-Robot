@@ -48,7 +48,7 @@ class WorkState : SimulationStateBase
     public override void Enter(SimulationContext ctx)
     {
         // 规划 TCP 路径
-        ctx.TcpPathPlanner.Plan(ctx.Task);
+        ctx.TcpPathPlanner.Plan(ctx.Task, ctx.ShadowCollisionMonitor, ctx.ShadowRobotBinder);
 
         // 显示路径可视化
         ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner);

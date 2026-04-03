@@ -364,7 +364,49 @@ public class CollisionMonitor
         return CollisionLevel.Safe;
     }
 
-    // ========== 便捷查询 ==========
+    // ============================================================
+    // 点到环境最近距离查询（供 APF 等规划算法使用）
+    // ============================================================
+
+    /// <summary>
+    /// 查询空间中某点到所有环境碰撞体（工作台+工件）的最近距离及最近点
+    /// 返回值：正数 = 分离距离；0 = 恰好接触；负数 = 穿透深度
+    /// </summary>
+    /// <param name="worldPos">世界坐标系中的查询点</param>
+    /// <param name="closestPoint">最近点位置（世界坐标）</param>
+    /// <returns>最近距离（米）</returns>
+    public float DistancePointToEnvironment(Vector3 worldPos, out Vector3 closestPoint)
+    {
+        closestPoint = worldPos;
+        float minDist = float.MaxValue;
+
+        foreach (var envPair in envPairs)
+        {
+            foreach (var shapeB in envPair.B)
+            {
+                // 用双向 ClosestPoint 估算点到碰撞体的最近距离
+                Vector3 onB = shapeB.ClosestPoint(worldPos);
+                Vector3 onQuery = shapeB.ClosestPoint(onB);
+                float d = Vector3.Distance(worldPos, onQuery);
+
+                if (d < minDist)
+                {
+                    minDist = d;
+                    closestPoint = onQuery;
+                }
+            }
+        }
+
+        // 如果没有环境碰撞对，返回安全距离
+        if (minDist == float.MaxValue)
+            return SafeDistance + 1f;
+
+        return minDist;
+    }
+
+    // ============================================================
+    // 便捷查询
+    // ============================================================
 
     /// <summary>当前是否存在任何碰撞（穿透）</summary>
     public bool HasCollision =>

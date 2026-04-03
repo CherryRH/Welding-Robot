@@ -291,4 +291,19 @@ public static class MathUtil
 
         return Quaternion.LookRotation(uForward, uUp);
     }
+
+    // ------------------------
+    // 方向向量转换（不含平移，仅旋转）
+    // 与 D2UPosition / U2DPosition 相同的坐标轴映射，但不取反
+    // D → U: U.x = -D.y, U.y = D.z, U.z = D.x
+    // ------------------------
+    public static Vector3 D2UDirection(Vector3 d)
+    {
+        return new Vector3(-d.y, d.z, d.x);
+    }
+
+    public static Vector3 U2DDirection(Vector3 u)
+    {
+        return new Vector3(u.z, -u.x, u.y);
+    }
 }

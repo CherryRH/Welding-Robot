@@ -3,24 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// TCPÂ·¾¶¹æ»®Æ÷
+/// TCPè·¯å¾„è§„åˆ’å™¨
 /// </summary>
 public class TcpPathPlanner
 {
     /// <summary>
-    /// TCPÂ·¾¶µãÁĞ±í
+    /// TCPè·¯å¾„ç‚¹åˆ—è¡¨
     /// </summary>
     public LinkedList<TcpPathPoint> Points = new();
 
     /// <summary>
-    /// Â·¾¶¹æ»®Æ÷
+    /// å­è§„åˆ’å™¨
     /// </summary>
     private ApproachPathPlanner approachPlanner = new();
     private WeldPathPlanner weldPlanner = new();
     private AdjustPathPlanner adjustPlanner = new();
 
     private RobotModel robot;
-
     private WeldTaskPlanState TaskState;
 
     public void Init(RobotModel robot, WeldTaskPlanState taskState)
@@ -32,40 +31,41 @@ public class TcpPathPlanner
         adjustPlanner.Init(robot);
     }
 
-    public void Plan(WeldTask task)
+    public void Plan(WeldTask task, CollisionMonitor shadowCollisionMonitor, RobotBinder shadowRobotBinder)
     {
-        // ´Ó»úĞµ±ÛÎ»ÖÃ¿ªÊ¼£¬°´ÕÕº¸·ìË³Ğò¹æ»®TCPÂ·¾¶µã
+        // ä»æœºæ¢°è‡‚å½“å‰ä½ç½®å¼€å§‹ï¼ŒæŒ‰ç„Šç¼é¡ºåºè§„åˆ’TCPè·¯å¾„
         Clear();
         Pose currentPose = robot.TCPPose;
         foreach (var seam in task.WeldSeams)
         {
-            // ¹æ»®º¸·ìÂ·¾¶µã
+            // è§„åˆ’ç„Šæ¥è·¯å¾„ç‚¹
             List<TcpPathPoint> weldSeamPoints = weldPlanner.Plan(seam);
-            // Â·¾¶µã¹ıÉÙ£¬Ìø¹ıº¸·ì
+            // è·¯å¾„ç‚¹æ•°é‡ä¸è¶³ï¼Œè·³è¿‡
             if (weldSeamPoints == null || weldSeamPoints.Count < 2)
                 continue;
-            // ¹æ»®½Ó½üÂ·¾¶µã£¬È¡º¸·ìµÄÆğµã×ËÌ¬
+            // è§„åˆ’æ¥è¿‘è·¯å¾„ï¼Œå–é¦–ä¸ªç„Šæ¥ç‚¹å§¿æ€
             Pose targetPose = weldSeamPoints[0].Pose;
-            List<TcpPathPoint> approachPoints = approachPlanner.Plan(currentPose, targetPose, seam);
-            // ²åÈëÂ·¾¶
+            List<TcpPathPoint> approachPoints = approachPlanner.Plan(
+                currentPose, targetPose,
+                shadowCollisionMonitor, shadowRobotBinder, 
+                seam);
+
+            // è¿½åŠ è·¯å¾„
             foreach (var item in approachPoints)
-            {
                 Points.AddLast(item);
-            }
             foreach (var item in weldSeamPoints)
-            {
                 Points.AddLast(item);
-            }
-            // ¸üĞÂµ±Ç°×ËÌ¬
-            currentPose = weldSeamPoints[weldSeamPoints.Count-1].Pose;
+
+            // æ›´æ–°å½“å‰å§¿æ€
+            currentPose = weldSeamPoints[weldSeamPoints.Count - 1].Pose;
         }
-        // ÉèÖÃµ±Ç°½Úµã
+        // ç½®ä½å½“å‰èŠ‚ç‚¹
         TaskState.CurrentNode = Points.First;
     }
 
     public List<TcpPathPoint> GetPathPart()
     {
-        // »ñÈ¡ÏÂÒ»²¿·ÖÂ·¾¶µã
+        // è·å–ä¸‹ä¸€æ®µè·¯å¾„ç‚¹
         List<TcpPathPoint> result = new();
         LinkedListNode<TcpPathPoint> node = TaskState.CurrentNode;
         while (node != null)
@@ -74,34 +74,29 @@ public class TcpPathPlanner
             result.Add(point);
             node = node.Next;
             if (point.Flag == TcpPathPoint.PointFlag.End)
-            {
                 break;
-            }
         }
         return result;
     }
 
     public void HandleTrajectoryPlanResult(TrajectoryPlanResult result)
     {
-        if (result == null)
-            return;
+        if (result == null) return;
 
-        // ´¦Àí¹ì¼£¹æ»®½á¹û
         switch (result.PlanStatus)
         {
             case TrajectoryPlanResult.TrajectoryPlanStatus.Ok:
-                // ÍÆ½øµ±Ç°¹æ»®½Úµãµ½ÏÂÒ»¶ÎÂ·¾¶
                 TaskState.ToNextPath();
                 break;
+
             case TrajectoryPlanResult.TrajectoryPlanStatus.JointSpeedLimitViolated:
-                // ÍÆ½øµ±Ç°¹æ»®½Úµãµ½µ÷×Ëµã£¬½Ø¶Ïµ±Ç°Â·¾¶£¬²¢²åÈëµ÷×ËÂ·¾¶
                 TaskState.ToPoint(result.CurrentPoint);
                 if (TaskState.CurrentNode != null && TaskState.CurrentNode.Value == result.CurrentPoint)
                 {
                     TcpPathPoint point = TaskState.CurrentNode.Value;
-                    // ½Ø¶Ïµ±Ç°Â·¾¶
+                    // æˆªæ–­å½“å‰è·¯å¾„
                     point.Flag = TcpPathPoint.PointFlag.End;
-                    // ¹æ»®µ÷×ËÂ·¾¶
+                    // è§„åˆ’è°ƒæ•´è·¯å¾„
                     List<TcpPathPoint> adjustPoints = adjustPlanner.Plan(point.Pose, point.Seam);
                     LinkedListNode<TcpPathPoint> insertNode = TaskState.CurrentNode;
                     foreach (var item in adjustPoints)
@@ -109,15 +104,12 @@ public class TcpPathPlanner
                         Points.AddAfter(insertNode, item);
                         insertNode = insertNode.Next;
                     }
-                    // ²åÈëÒ»¸öĞÂµÄÆğµã
+                    // æ’å…¥æ–°çš„èµ·ç‚¹
                     TcpPathPoint newStartPoint = new(
-                        point.Pose,
-                        point.Type,
+                        point.Pose, point.Type,
                         TcpPathPoint.PointFlag.Start,
-                        point.Seam,
-                        point.Speed);
+                        point.Seam, point.Speed);
                     Points.AddAfter(insertNode, newStartPoint);
-                    break;
                 }
                 break;
 
@@ -125,7 +117,6 @@ public class TcpPathPlanner
                 break;
         }
 
-        // ¼ì²éÖØ¹æ»®´ÎÊı
         TaskState.CheckReplanCount(result);
     }
 

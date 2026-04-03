@@ -11,7 +11,7 @@ public class RobotBinder : MonoBehaviour
     public Transform Torch;
     public Transform Tcp;
 
-    private RobotModel robot;
+    public RobotModel Robot;
 
     public Vector3 RobotBasePosition;
     public Quaternion RobotBaseRotation;
@@ -29,12 +29,12 @@ public class RobotBinder : MonoBehaviour
 
     public void Bind(RobotModel model)
     {
-        robot = model;
+        Robot = model;
     }
 
     public void Apply()
     {
-        if (robot == null) return;
+        if (Robot == null) return;
 
         // 在视觉节拍到达时更新基础位姿
         RobotBasePosition = transform.position;
@@ -47,7 +47,7 @@ public class RobotBinder : MonoBehaviour
             if (jt == null) continue;
 
             // 角度应用
-            float targetAngle = -robot.Joints[i].Angle; // Unity是左手系所以取反
+            float targetAngle = -Robot.Joints[i].Angle; // Unity是左手系所以取反
             Quaternion zRotation = Quaternion.Euler(0f, 0f, targetAngle);
             Quaternion baseLocal = (i < baseJointLocalRotations.Length) ? baseJointLocalRotations[i] : Quaternion.identity;
             jt.localRotation = baseLocal * zRotation;
@@ -76,7 +76,7 @@ public class RobotBinder : MonoBehaviour
 
     void Start()
     {
-        if (robot == null)
+        if (Robot == null)
         {
             Debug.LogWarning($"{nameof(RobotBinder)}: robot is not bound in Start()");
             return;
@@ -92,9 +92,9 @@ public class RobotBinder : MonoBehaviour
 
         if (Tcp != null)
         {
-            if (robot.Config != null)
+            if (Robot.Config != null)
             {
-                Tcp.localPosition = robot.Config.TCPOffset / 100f;
+                Tcp.localPosition = Robot.Config.TCPOffset / 100f;
             }
             baseTCPRotation = Tcp.rotation;
         }
@@ -119,13 +119,13 @@ public class RobotBinder : MonoBehaviour
         {
             if (JointTransforms[i] != null)
             {
-                robot.Joints[i].UPosition = GetUJointPosition(i);
+                Robot.Joints[i].UPosition = GetUJointPosition(i);
             }
         }
         if (Tcp != null)
         {
-            robot.UTCPPosition = GetUTCPPosition();
-            robot.UTCPRotation = GetUTCPRotation();
+            Robot.UTCPPosition = GetUTCPPosition();
+            Robot.UTCPRotation = GetUTCPRotation();
         }
     }
 
