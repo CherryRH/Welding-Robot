@@ -1,6 +1,7 @@
 {
   "TaskName": "测试直线焊缝任务",
   "WorkpieceFileName": "example_workpiece.fbx",
+  "UserOrigin": { "x": 1.0, "y": 0.0, "z": 0.3 },
   "WeldSeams": [
     {
       "Type": "Line",

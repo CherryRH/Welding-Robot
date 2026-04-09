@@ -201,11 +201,14 @@ public class SimulationContext : MonoBehaviour
     /// </summary>
     public void Init()
     {
+        // 加载焊接任务数据
+        string weldTaskFile = Path.Combine(WeldTaskDirectory, WeldTaskFileName);
+        WeldTaskData data = WeldTaskDataLoader.LoadFromFile(weldTaskFile);
+        Task = new(data);
+
         // 初始化机器人模型
         RobotModel.Init(RobotConfig);
-        RobotModel.SetUserOffset(WorkbenchBinder.GetOriginPoint());
         ShadowRobotModel.Init(RobotConfig);
-        ShadowRobotModel.SetUserOffset(WorkbenchBinder.GetOriginPoint());
 
         // 计算初始运动学
         FK.Compute(RobotModel);
@@ -214,15 +217,15 @@ public class SimulationContext : MonoBehaviour
         // 绑定到 Unity
         RobotBinder.Bind(RobotModel);
         ShadowRobotBinder.Bind(ShadowRobotModel);
+        WorkbenchBinder.Bind(Task);
+
+        // 设置用户坐标系
+        RobotModel.SetUserOffset(WorkbenchBinder.GetOriginPoint());
+        ShadowRobotModel.SetUserOffset(WorkbenchBinder.GetOriginPoint());
 
         // 初始化规划器
         TcpPathPlanner.Init(RobotModel, TaskState);
         TrajectoryPlanner.Init(RobotModel, Trajectory);
-
-        // 加载焊接任务数据
-        string weldTaskFile = Path.Combine(WeldTaskDirectory, WeldTaskFileName);
-        WeldTaskData data = WeldTaskDataLoader.LoadFromFile(weldTaskFile);
-        Task = new(data);
     }
 
     /// <summary>

@@ -43,6 +43,15 @@ public class WorkbenchBinder : MonoBehaviour
         
     }
 
+    public void Bind(WeldTask task)
+    {
+        if (task == null) return;
+        // 设置工作台位置
+        Vector3 originPos = MathUtil.D2UPosition(task.UserOrigin);
+        originPos.y -= 0.5f;
+        transform.position = originPos;
+    }
+
     public async Task LoadWorkpiece(Workpiece w, string directory)
     {
         // 加载工件到工作台上

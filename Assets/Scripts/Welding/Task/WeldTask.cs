@@ -13,6 +13,11 @@ public class WeldTask
     public string TaskName;
 
     /// <summary>
+    /// 用户坐标系原点（米）
+    /// </summary>
+    public Vector3 UserOrigin;
+
+    /// <summary>
     /// 工件
     /// </summary>
     public Workpiece Workpiece;
@@ -26,6 +31,7 @@ public class WeldTask
     {
         // 构建焊接任务
         TaskName = data.TaskName;
+        UserOrigin = data.UserOrigin;
         if (data.Workpiece != null)
         {
             Workpiece = new Workpiece(data.Workpiece);

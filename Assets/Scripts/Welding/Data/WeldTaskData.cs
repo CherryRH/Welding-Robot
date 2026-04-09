@@ -14,6 +14,11 @@ public class WeldTaskData
     public string TaskName;
 
     /// <summary>
+    /// 用户坐标系原点（米）
+    /// </summary>
+    public Vector3 UserOrigin;
+
+    /// <summary>
     /// 工件数据
     /// </summary>
     public WorkpieceData Workpiece;
