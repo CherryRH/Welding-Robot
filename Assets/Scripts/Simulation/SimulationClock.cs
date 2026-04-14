@@ -1,9 +1,9 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ·ÂÕæÊ±ÖÓ
+/// ä»¿çœŸæ—¶é’Ÿ
 /// </summary>
 public class SimulationClock
 {
@@ -11,7 +11,15 @@ public class SimulationClock
 
     public bool IsRunning { get; private set; } = false;
 
+    /// <summary>
+    /// å½“å‰ä»¿çœŸæ—¶é—´ï¼ˆç§’ï¼‰
+    /// </summary>
     public float Time { get; private set; } = 0f;
+
+    /// <summary>
+    /// æ˜¯å¦å·²å®Œæˆé¦–æ¬¡è§¦å‘ï¼ˆt=0 æ—¶çš„é¢„è§¦å‘ï¼Œç”¨äºå»ºç«‹å‚ç…§ï¼‰
+    /// </summary>
+    public bool HasTriggeredOnce { get; private set; } = false;
 
     private float accumulator = 0f;
 
@@ -37,14 +45,24 @@ public class SimulationClock
         IsRunning = false;
         Time = 0f;
         accumulator = 0f;
+        HasTriggeredOnce = false;
     }
 
     /// <summary>
-    /// ÊÓ¾õ/½ÚÁ÷ÓÃ Tick£ºÎŞÂÛÊ±ÖÓÊÇ·ñÔËĞĞ¶¼ÀÛ»ı²¢ÔÚ´ïµ½ FixedDeltaTime Ê±·µ»Ø true¡£
-    /// µ± IsRunning Îª true Ê±£¬»áÍ¬Ê±ÍÆ½ø Time£¨·ÂÕæÊ±¼ä£©£»·ñÔò½ö×÷ÎªÊÓ¾õ½ÚÅÄÊ¹ÓÃ£¨²»¸Ä±ä Time£©¡£
+    /// å›ºå®šæ­¥é•¿ Tickã€‚å½“ç´¯è®¡æ—¶é—´è¾¾åˆ° FixedDeltaTime æ—¶è¿”å› trueï¼Œè¡¨ç¤ºéœ€è¦æ‰§è¡Œä¸€å¸§ä»¿çœŸã€‚
+    /// 
+    /// é¦–æ¬¡è§¦å‘ï¼ˆHasTriggeredOnce = falseï¼‰æ—¶ï¼Œä¼šæå‰åˆ° t=0 æ—¶è§¦å‘ä¸€æ¬¡ï¼Œ
+    /// ç”¨äºå»ºç«‹å‚ç…§å¸§ï¼ˆä¸ä¿å­˜ç»“æœï¼‰ï¼Œä¹‹åæ¢å¤æ­£å¸¸èŠ‚å¥ï¼ˆæ¯ FixedDeltaTime è§¦å‘ä¸€æ¬¡ï¼‰ã€‚
     /// </summary>
     public bool Tick(float deltaTime)
     {
+        // é¦–æ¬¡è§¦å‘ï¼šç«‹å³è§¦å‘ä¸€æ¬¡ï¼ˆt=0ï¼‰ï¼Œä½†ä¸æ¨è¿›æ—¶é—´
+        if (!HasTriggeredOnce && IsRunning)
+        {
+            HasTriggeredOnce = true;
+            return true;
+        }
+
         accumulator += deltaTime;
 
         if (accumulator >= FixedDeltaTime)

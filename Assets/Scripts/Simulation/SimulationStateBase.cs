@@ -56,6 +56,9 @@ class WorkState : SimulationStateBase
         // 初始化结果记录器
         ctx.ResultWriter.Init(ctx.Task?.TaskName ?? "UnknownTask");
 
+        // 重置实时数据状态（速度、加速度等）
+        ctx.RobotModel.ResetRealtimeData();
+
         // 启动仿真时钟
         ctx.Clock.Start();
     }

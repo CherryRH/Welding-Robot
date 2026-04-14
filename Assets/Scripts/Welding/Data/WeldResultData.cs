@@ -1,24 +1,37 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// º¸½Ó½á¹ûÊı¾İ£¬°üº¬ÈÎÎñ½á¹ûĞÅÏ¢ºÍËùÓĞº¸½ÓµãÊı¾İÁĞ±í
+/// ç„Šæ¥ç»“æœæ•°æ®ï¼šåŒ…å«è§„åˆ’è·¯å¾„ç‚¹å’Œä»¿çœŸè¿‡ç¨‹ä¸­çš„å®æ—¶å¸§æ•°æ®ã€‚
 /// </summary>
+[System.Serializable]
 public class WeldResultData
 {
     /// <summary>
-    /// ÈÎÎñÃû³Æ
+    /// ä»»åŠ¡åç§°
     /// </summary>
     public string TaskName;
 
     /// <summary>
-    /// ¹æ»®×´Ì¬
+    /// è§„åˆ’çŠ¶æ€
     /// </summary>
     public WeldTaskPlanState.PlanStatus PlanStatus;
 
     /// <summary>
-    /// º¸½ÓµãÊı¾İÁĞ±í
+    /// è§„åˆ’è·¯å¾„ç‚¹åˆ—è¡¨
     /// </summary>
     public List<WeldPointData> Points = new();
+
+    /// <summary>
+    /// ä»¿çœŸå®æ—¶å¸§æ•°æ®ï¼šæ—¶é—´æˆ³ â†’ å¸§å¿«ç…§
+    /// </summary>
+    public SortedDictionary<float, WeldResultFrame> Frames = new();
+
+    /// <summary>
+    /// è®°å½•ä¸€å¸§å®æ—¶æ•°æ®
+    /// </summary>
+    public void AddFrame(WeldResultFrame frame)
+    {
+        Frames[frame.Timestamp] = frame;
+    }
 }

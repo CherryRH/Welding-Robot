@@ -1,17 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 /// <summary>
-/// º¸½Ó½á¹ûÊı¾İĞ´ÈëÆ÷£º¹ÜÀíÊı¾İ¼ÇÂ¼ÓëÎÄ¼ş³Ö¾Ã»¯
+/// ç„Šæ¥ç»“æœæ•°æ®å†™å…¥å™¨ï¼šè´Ÿè´£è®°å½•ä»¿çœŸè¿‡ç¨‹ä¸­çš„è·¯å¾„æ•°æ®å’Œå®æ—¶å¸§æ•°æ®
 /// </summary>
 public class WeldResultDataWriter
 {
     private WeldResultData resultData = new();
 
     /// <summary>
-    /// ÈÎÎñ¿ªÊ¼Ê±µ÷ÓÃ£¬ÉèÖÃÈÎÎñÃû
+    /// ä»¿çœŸå¼€å§‹æ—¶è°ƒç”¨ï¼Œé‡ç½®æ‰€æœ‰æ•°æ®
     /// </summary>
     public void Init(string taskName)
     {
@@ -23,7 +22,32 @@ public class WeldResultDataWriter
     }
 
     /// <summary>
-    /// Ã¿¸ö¹ì¼£¶ÎÖ´ĞĞÍê±Ïºóµ÷ÓÃ£¬¼ÇÂ¼¸Ã¶ÎµÄÆğµãºÍÖÕµãÊı¾İ
+    /// è®°å½•ä»¿çœŸå¸§çš„å®æ—¶æ•°æ®
+    /// </summary>
+    public void RecordFrame(float timestamp, RobotModel robotModel)
+    {
+        // è·³è¿‡ t=0 çš„é¢„è§¦å‘å¸§ï¼ˆç”¨äºå»ºç«‹å‚ç…§ï¼Œä¸ä¿å­˜ï¼‰
+        if (timestamp <= 0f) return;
+
+        var frame = new WeldResultFrame(
+            timestamp,
+            robotModel.TCPPosition,
+            robotModel.SmoothedTcpVelocity,
+            robotModel.JointAngles,
+            robotModel.JointVelocities,
+            robotModel.JointAccelerations
+        );
+        resultData.AddFrame(frame);
+
+        // è¾“å‡ºå¸§è¯¦ç»†ä¿¡æ¯
+        if (resultData.Frames.Count <= 2)
+        {
+            Debug.Log(LogUtil.FormatWeldResultFrame(frame, resultData.Frames.Count));
+        }
+    }
+
+    /// <summary>
+    /// æ¯æ®µè½¨è¿¹æ‰§è¡Œå®Œæ¯•åï¼Œè®°å½•ç«¯ç‚¹çš„è§„åˆ’è·¯å¾„æ•°æ®
     /// </summary>
     public void RecordSegment(TrajectorySegment segment)
     {
@@ -32,7 +56,7 @@ public class WeldResultDataWriter
     }
 
     /// <summary>
-    /// ÈÎÎñ½áÊøÊ±µ÷ÓÃ£¬ÉèÖÃ×îÖÕ×´Ì¬
+    /// è®°å½•è§„åˆ’çŠ¶æ€ï¼ˆä»¿çœŸç»“æŸåè°ƒç”¨ï¼‰
     /// </summary>
     public void SetPlanStatus(WeldTaskPlanState.PlanStatus status)
     {
@@ -40,12 +64,12 @@ public class WeldResultDataWriter
     }
 
     /// <summary>
-    /// »ñÈ¡µ±Ç°½á¹ûÊı¾İ
+    /// è·å–å½“å‰ç»“æœæ•°æ®
     /// </summary>
     public WeldResultData GetResultData() => resultData;
 
     /// <summary>
-    /// ±£´æµ½ JSON ÎÄ¼ş£¨³Ö¾Ã»¯Â·¾¶/Results/£©
+    /// å­˜å‚¨åˆ° JSON æ–‡ä»¶
     /// </summary>
     public void SaveToJson()
     {
@@ -53,13 +77,12 @@ public class WeldResultDataWriter
         if (!Directory.Exists(resultsDir))
             Directory.CreateDirectory(resultsDir);
 
-        // ÎÄ¼şÃû£ºÈÎÎñÃû_Ê±¼ä´Á.json
         string timestamp = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
         string fileName = $"{resultData.TaskName}_{timestamp}.json";
         string filePath = Path.Combine(resultsDir, fileName);
 
         string json = JsonUtil.Serialize(resultData);
         File.WriteAllText(filePath, json);
-        Debug.Log($"[WeldResultDataWriter] ÒÑ±£´æº¸½Ó½á¹û£º{filePath}");
+        Debug.Log($"[ResultWriter] å·²ä¿å­˜ {resultData.Frames.Count} å¸§åˆ° {filePath}");
     }
 }

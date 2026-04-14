@@ -352,4 +352,44 @@ public static class LogUtil
         sb.AppendLine($"{prefix}[{m.m30:F3}, {m.m31:F3}, {m.m32:F3}, {m.m33:F3}]");
         return sb.ToString();
     }
+
+    // ============================================================
+    // 仿真帧日志
+    // ============================================================
+
+    /// <summary>
+    /// 将 WeldResultFrame 格式化为可读的多行日志字符串。
+    /// </summary>
+    /// <param name="frame">帧数据</param>
+    /// <param name="totalCount">累计帧数（用于序号显示）</param>
+    public static string FormatWeldResultFrame(WeldResultFrame frame, int totalCount)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"[ResultWriter] ── 第 {totalCount} 帧 | t={frame.Timestamp:F3}s ──");
+        sb.AppendLine($"  TCP 位置  = ({frame.TcpPosition.x:F4}, {frame.TcpPosition.y:F4}, {frame.TcpPosition.z:F4})");
+        sb.AppendLine($"  TCP 速度  = ({frame.TcpVelocity.x:F4}, {frame.TcpVelocity.y:F4}, {frame.TcpVelocity.z:F4})  |v|={frame.TcpSpeed:F4} m/s");
+
+        sb.Append("  关节角度  = ");
+        sb.AppendLine(FormatFloatArray(frame.JointAngles, "rad"));
+
+        sb.Append("  关节角速度 = ");
+        sb.AppendLine(FormatFloatArray(frame.JointVelocities, "rad/s"));
+
+        sb.Append("  关节角加速 = ");
+        sb.AppendLine(FormatFloatArray(frame.JointAccelerations, "rad/s²"));
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// 格式化浮点数组
+    /// </summary>
+    public static string FormatFloatArray(float[] arr, string unit)
+    {
+        if (arr == null) return "null";
+        var parts = new string[arr.Length];
+        for (int i = 0; i < arr.Length; i++)
+            parts[i] = $"J{i}={arr[i]:F3}";
+        return $"[{string.Join(", ", parts)}] {unit}";
+    }
 }

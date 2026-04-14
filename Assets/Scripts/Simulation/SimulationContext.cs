@@ -124,6 +124,13 @@ public class SimulationContext : MonoBehaviour
             // 5. 碰撞响应处理
             HandleCollisionResponse();
 
+            // 6. 更新实时数据（速度等）并记录仿真帧
+            RobotModel.UpdateRealtimeData(Clock.Time, Clock.FixedDeltaTime);
+            if (Clock.IsRunning)
+            {
+                ResultWriter.RecordFrame(Clock.Time, RobotModel);
+            }
+
             OnSimulationUpdate?.Invoke(this);
         }
 
@@ -266,6 +273,9 @@ public class SimulationContext : MonoBehaviour
 
         // 时钟归零
         Clock.Reset();
+
+        // 重置实时数据状态
+        RobotModel.ResetRealtimeData();
 
         // 刷新运动学和 Transform
         FK.Compute(RobotModel);
