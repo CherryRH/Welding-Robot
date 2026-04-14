@@ -1,31 +1,29 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 /// <summary>
-/// »¡Ïßº¸·ì
+/// åœ†å¼§ç„Šç¼
 /// </summary>
 public class ArcSeam : WeldSeam
 {
     /// <summary>
-    /// Ô²ĞÄÎ»ÖÃ£¨Ã×£©
+    /// åœ†å¿ƒä½ç½®ï¼ˆç±³ï¼‰
     /// </summary>
     public Vector3 Center;
 
     /// <summary>
-    /// °ë¾¶£¨Ã×£©
+    /// åŠå¾„ï¼ˆç±³ï¼‰
     /// </summary>
     public float Radius;
 
     /// <summary>
-    /// ½Ç¶È£¬´øÕı¸º£¨¶È£©
+    /// è§’åº¦ï¼ˆå¼§åº¦ï¼Œæ­£è´Ÿè¡¨ç¤ºæ–¹å‘ï¼‰
     /// </summary>
     public float Angle;
 
     /// <summary>
-    /// Ô²Æ½Ãæ»ùÏòÁ¿
+    /// åœ†å¹³é¢åŸºå‘é‡
     /// </summary>
     private Vector3 u;
     private Vector3 v;
@@ -33,7 +31,8 @@ public class ArcSeam : WeldSeam
     public ArcSeam(WeldSeamData data)
     {
         if (data == null || data.Type != WeldSeamData.WeldSeamType.Arc || data.MiddlePoints.Count < 1) return;
-        // ÉèÖÃ³ÉÔ±±äÁ¿
+
+        // å¤åˆ¶æˆå‘˜å±æ€§
         Id = data.ID;
         Name = data.Name;
         Speed = data.Speed;
@@ -43,7 +42,9 @@ public class ArcSeam : WeldSeam
         StartPoint = data.StartPoint;
         EndPoint = data.EndPoint;
         LengthDeviation = data.LengthDeviation;
-        // ¼ÆËãÔ²ĞÄ¡¢°ë¾¶¡¢½Ç¶È¡¢·¨ÏòÁ¿µÈ¼¸ºÎ²ÎÊı
+        CornerRadius = data.CornerRadius;
+
+        // ä»åœ†å¿ƒã€ä¸­é—´ç‚¹ã€ç»ˆç‚¹ä¸‰ç‚¹è®¡ç®—åœ†çš„å‚æ•°
         Vector3 middle = data.MiddlePoints[0];
         Center = MathUtil.CalculateCircleCenter(StartPoint, middle, EndPoint);
         Radius = Vector3.Distance(StartPoint, Center);
@@ -55,11 +56,11 @@ public class ArcSeam : WeldSeam
 
         if (Normal.sqrMagnitude < 1e-6f)
             Normal = Vector3.forward;
-        // ±£³Ö·¨ÏòÏòÉÏ
+        // ä¿è¯æ³•å‘æœå‘ç»Ÿä¸€
         if (Normal.z < 0)
             Normal.z = -Normal.z;
 
-        // ¹¹½¨Ô²Æ½Ãæ×ø±êÏµ
+        // å»ºç«‹åœ†å¹³é¢åæ ‡ç³»
         u = v1;
         v = Vector3.Cross(Normal, u).normalized;
 
@@ -68,13 +69,69 @@ public class ArcSeam : WeldSeam
             Vector3.Dot(v2, u)
         );
 
-        // ÓÃ middle µãÅĞ¶ÏÈ¡ÄÄÒ»¶Î»¡
+        // ç”¨ middle ç‚¹åˆ¤æ–­å–å“ªä¸€åˆ†æ”¯
         float midAngle = Mathf.Atan2(
             Vector3.Dot((middle - Center).normalized, v),
             Vector3.Dot((middle - Center).normalized, u)
         );
 
-        // È·±£ÖĞ¼äµãÂäÔÚ»¡¶ÎÉÏ
+        // ç¡®ä¿ä¸­é—´ç‚¹ä½äºå¼§çº¿ä¸Š
+        if (!MathUtil.IsAngleBetween(midAngle, 0f, rawAngle))
+        {
+            rawAngle = rawAngle > 0
+                ? rawAngle - 2 * Mathf.PI
+                : rawAngle + 2 * Mathf.PI;
+        }
+
+        Angle = rawAngle;
+        Length = Mathf.Abs(Radius * Angle);
+    }
+
+    public ArcSeam(LineSeam line, int id, float r, Vector3 t1, Vector3 t2, Vector3 o, Vector3 m)
+    {
+        Id = id;
+        Name = $"Arc_{id}";
+        Speed = line.Speed;
+        GunAngle = line.GunAngle;
+        GunDistance = line.GunDistance;
+        Normal = line.Normal;
+        StartPoint = t1;
+        EndPoint = t2;
+        LengthDeviation = 0f;
+        CornerRadius = 0f;
+
+        // ä»è¿‡æ¸¡åœ†å¼§è®¡ç®—åœ†çš„å‚æ•°
+        Vector3 middle = m;
+        Center = o;
+        Radius = r;
+
+        Vector3 v1 = (StartPoint - Center).normalized;
+        Vector3 v2 = (EndPoint - Center).normalized;
+
+        Normal = Vector3.Cross(middle - StartPoint, EndPoint - middle).normalized;
+
+        if (Normal.sqrMagnitude < 1e-6f)
+            Normal = Vector3.forward;
+        // ä¿è¯æ³•å‘æœå‘ç»Ÿä¸€
+        if (Normal.z < 0)
+            Normal.z = -Normal.z;
+
+        // å»ºç«‹åœ†å¹³é¢åæ ‡ç³»
+        u = v1;
+        v = Vector3.Cross(Normal, u).normalized;
+
+        float rawAngle = Mathf.Atan2(
+            Vector3.Dot(v2, v),
+            Vector3.Dot(v2, u)
+        );
+
+        // ç”¨ middle ç‚¹åˆ¤æ–­å–å“ªä¸€åˆ†æ”¯
+        float midAngle = Mathf.Atan2(
+            Vector3.Dot((middle - Center).normalized, v),
+            Vector3.Dot((middle - Center).normalized, u)
+        );
+
+        // ç¡®ä¿ä¸­é—´ç‚¹ä½äºå¼§çº¿ä¸Š
         if (!MathUtil.IsAngleBetween(midAngle, 0f, rawAngle))
         {
             rawAngle = rawAngle > 0
@@ -89,7 +146,6 @@ public class ArcSeam : WeldSeam
     public override Vector3 GetPoint(float s)
     {
         float angle = Angle * Mathf.Clamp01(s);
-
         return Center + Radius * (Mathf.Cos(angle) * u + Mathf.Sin(angle) * v);
     }
 
@@ -110,5 +166,24 @@ public class ArcSeam : WeldSeam
     public override float GetCurvature(float s)
     {
         return 1f / Radius;
+    }
+
+    public override bool ContainsPoint(Vector3 p, float tol = 1e-5f)
+    {
+        // 1. å¿…é¡»åœ¨åœ†å¼§ä¸Šï¼ˆè·åœ†å¿ƒ â‰ˆ Radiusï¼‰
+        if (Mathf.Abs(Vector3.Distance(p, Center) - Radius) > tol)
+            return false;
+
+        // 2. è§’åº¦å¿…é¡»åœ¨ [0, Angle] èŒƒå›´å†…ï¼ˆå…è®¸ç«¯ç‚¹å®¹å·®ï¼‰
+        Vector3 d = (p - Center).normalized;
+        float angle = Mathf.Atan2(Vector3.Dot(d, v), Vector3.Dot(d, u));
+
+        // è§’åº¦å®¹å·®ï¼ˆå¯¹åº”å¼§é•¿å®¹å·®ï¼‰
+        float angleTol = tol / Radius;
+
+        if (Angle >= 0f)
+            return angle >= -angleTol && angle <= Angle + angleTol;
+        else
+            return angle <= angleTol && angle >= Angle - angleTol;
     }
 }

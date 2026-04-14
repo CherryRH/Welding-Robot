@@ -159,14 +159,6 @@ public class SimulationContext : MonoBehaviour
                 // 预警：可在此添加 UI 提示
                 break;
 
-            case CollisionMonitor.CollisionLevel.Blocked:
-                if (isTeleop)
-                {
-                    bool movingAway = currentDist > StateMachine.LastMinDistance;
-                    if (!movingAway) RollbackAndRefresh();
-                }
-                break;
-
             case CollisionMonitor.CollisionLevel.Collision:
                 if (isTeleop)
                 {

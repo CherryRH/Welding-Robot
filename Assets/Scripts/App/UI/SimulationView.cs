@@ -12,7 +12,7 @@ public class SimulationView : MonoBehaviour
     public TMP_Text[] JointPosText = new TMP_Text[18];
     public TMP_Text[] TCPPosText = new TMP_Text[3];
     public TMP_Text[] ToolEulerAnglesText = new TMP_Text[3];
-    public TMP_Text[] CollisionText = new TMP_Text[4];
+    public TMP_Text[] CollisionText = new TMP_Text[6];
 
     public void OnSimulationUpdate(SimulationContext context)
     {
@@ -42,13 +42,17 @@ public class SimulationView : MonoBehaviour
         CollisionMonitor collisionMonitor = context.CollisionMonitor;
         if (collisionMonitor.IsInitialized)
         {
-            CollisionText[0].text = collisionMonitor.EnvCollision.WorstLevel.ToString();
-            CollisionText[0].color = GetCollisionLevelColor(collisionMonitor.EnvCollision.WorstLevel);
-            CollisionText[1].text = collisionMonitor.EnvCollision.MinDistance.ToString("F2");
+            CollisionText[0].text = collisionMonitor.BodyCollision.WorstLevel.ToString();
+            CollisionText[0].color = GetCollisionLevelColor(collisionMonitor.BodyCollision.WorstLevel);
+            CollisionText[1].text = collisionMonitor.BodyCollision.MinDistance.ToString("F2");
 
-            CollisionText[2].text = collisionMonitor.SelfCollision.WorstLevel.ToString();
-            CollisionText[2].color = GetCollisionLevelColor(collisionMonitor.SelfCollision.WorstLevel);
-            CollisionText[3].text = collisionMonitor.SelfCollision.MinDistance.ToString("F2");
+            CollisionText[2].text = collisionMonitor.GunCollision.WorstLevel.ToString();
+            CollisionText[2].color = GetCollisionLevelColor(collisionMonitor.GunCollision.WorstLevel);
+            CollisionText[3].text = collisionMonitor.GunCollision.MinDistance.ToString("F2");
+
+            CollisionText[4].text = collisionMonitor.SelfCollision.WorstLevel.ToString();
+            CollisionText[4].color = GetCollisionLevelColor(collisionMonitor.SelfCollision.WorstLevel);
+            CollisionText[5].text = collisionMonitor.SelfCollision.MinDistance.ToString("F2");
         }
     }
 
@@ -68,7 +72,6 @@ public class SimulationView : MonoBehaviour
         {
             CollisionMonitor.CollisionLevel.Safe => Color.green,
             CollisionMonitor.CollisionLevel.Warning => Color.yellow,
-            CollisionMonitor.CollisionLevel.Blocked => Color.magenta,
             CollisionMonitor.CollisionLevel.Collision => Color.red,
             _ => Color.white,
         };

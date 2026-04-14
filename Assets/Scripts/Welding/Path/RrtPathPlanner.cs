@@ -10,7 +10,13 @@ public static class RrtPathPlanner
     // ============================================================
     // 路径质量参数（规划时使用）
     // ============================================================
-    private const float SafetyMargin = 0.005f;    // 节点到障碍的最小安全距离（米）
+
+    /// <summary>
+    /// 规划时的额外安全裕度（米）
+    /// 节点到障碍的距离必须 >= 各组 WarningDistance + PlanningMargin
+    /// </summary>
+    private const float PlanningMargin = 0.005f;
+
     private const int TrajectoryWindow = 30;       // 绕圈检测窗口
 
     /// <summary>
@@ -18,9 +24,10 @@ public static class RrtPathPlanner
     /// </summary>
     public class SmoothConfig
     {
-        public int MaxIterations = 100;      // 平滑最大迭代次数
+        public int MaxIterations = 100;         // 平滑最大迭代次数
         public float SegmentCheckStep = 0.005f; // 线段碰撞检测采样步长（米）
-        public float SafetyMargin = 0.01f;    // 平滑时线段到障碍的最小距离（米）
+        /// <summary>平滑时的额外安全裕度，可比规划时更宽松</summary>
+        public float SmoothingMargin = 0.005f;
     }
 
     // ============================================================
@@ -135,7 +142,7 @@ public static class RrtPathPlanner
             // ---- 5. 有效性检验（含安全裕度）----
             Pose newPose = new Pose(newPos, newRot);
             if (!IsStateValid(newPose, nearest.Position, nearest.Rotation,
-                robot, shadowCollisionMonitor, shadowRobotBinder, SafetyMargin))
+                robot, shadowCollisionMonitor, shadowRobotBinder, PlanningMargin))
             {
                 continue;
             }
@@ -229,7 +236,7 @@ public static class RrtPathPlanner
 
             // 检查 i → j 线段是否无碰撞
             if (IsSegmentCollisionFree(path[i].Pose, path[j].Pose, config.SegmentCheckStep,
-                config.SafetyMargin, robot, shadowCollisionMonitor, shadowRobotBinder))
+                config.SmoothingMargin, robot, shadowCollisionMonitor, shadowRobotBinder))
             {
                 // 删去 i 和 j 之间的所有中间节点
                 path.RemoveRange(i + 1, j - i - 1);
@@ -249,7 +256,7 @@ public static class RrtPathPlanner
     private static bool IsSegmentCollisionFree(
         Pose from, Pose to,
         float sampleStep,          // 采样步长（米）
-        float safetyMargin,         // 安全裕度（米）
+        float margin,              // 安全裕度（米）
         RobotModel robot,
         CollisionMonitor shadowCollisionMonitor,
         RobotBinder shadowRobotBinder)
@@ -268,7 +275,7 @@ public static class RrtPathPlanner
             Pose samplePose = new Pose(pos, rot);
 
             if (!IsStateValid(samplePose, from.position, from.rotation,
-                robot, shadowCollisionMonitor, shadowRobotBinder, safetyMargin))
+                robot, shadowCollisionMonitor, shadowRobotBinder, margin))
             {
                 return false;
             }
@@ -326,14 +333,17 @@ public static class RrtPathPlanner
     }
 
     /// <summary>
-    /// 检验目标姿态是否有效：IK 可解 + 影子机械臂到障碍的距离 >= safetyMargin
+    /// 检验目标姿态是否有效：
+    /// ① IK 可解
+    /// ② 三组碰撞（Body/Gun/Self）均为 Safe
+    /// ③ 各组最近距离 >= 对应 WarningDistance + margin
     /// </summary>
     private static bool IsStateValid(
         Pose pose, Vector3 prevPos, Quaternion prevRot,
         RobotModel robot,
         CollisionMonitor shadowMonitor,
         RobotBinder shadowRobotBinder,
-        float safetyMargin = 0f)
+        float margin = 0f)
     {
         RobotModel shadowRobot = shadowRobotBinder.Robot;
 
@@ -352,10 +362,7 @@ public static class RrtPathPlanner
         Physics.SyncTransforms();
         shadowMonitor.Update();
 
-        // 双重检查：① 无穿透 + ② 距离 >= 安全裕度
-        if (shadowMonitor.HasCollision) return false;
-        if (safetyMargin > 0f && shadowMonitor.EnvCollision.MinDistance < safetyMargin) return false;
-
-        return true;
+        // 使用 CollisionMonitor 的统一安全检查接口
+        return shadowMonitor.IsSafeForPlanning(margin);
     }
 }

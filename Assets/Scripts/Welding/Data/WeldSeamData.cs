@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// º¸·ìÊı¾İ
+/// ç„Šç¼æ•°æ®
 /// </summary>
 [System.Serializable]
 public class WeldSeamData
 {
     /// <summary>
-    /// º¸·ìÀàĞÍ
+    /// ç„Šç¼ç±»å‹
     /// </summary>
     public enum WeldSeamType
     {
@@ -19,52 +19,58 @@ public class WeldSeamData
     public WeldSeamType Type;
 
     /// <summary>
-    /// º¸·ìID
+    /// ç„Šç¼ID
     /// </summary>
     public int ID;
 
     /// <summary>
-    /// º¸·ìÃû³Æ
+    /// ç„Šç¼åç§°
     /// </summary>
     public string Name;
 
     /// <summary>
-    /// º¸½ÓÏßËÙ¶È£¨Ã×/Ãë£©
+    /// ç„Šæ¥çº¿é€Ÿåº¦ï¼ˆç±³/ç§’ï¼‰
     /// </summary>
     public float Speed;
 
     /// <summary>
-    /// º¸Ç¹½Ç¶È£¨¶È£©
+    /// ç„Šæªè§’åº¦ï¼ˆåº¦ï¼‰
     /// </summary>
     public float GunAngle;
 
     /// <summary>
-    /// º¸Ç¹¾àº¸·ìµÄ¾àÀë£¨Ã×£©
+    /// ç„Šæªè·ç„Šç¼çš„è·ç¦»ï¼ˆç±³ï¼‰
     /// </summary>
     public float GunDistance;
 
     /// <summary>
-    /// ÆğÊ¼µã£¨Ã×£©
+    /// èµ·å§‹ç‚¹ï¼ˆç±³ï¼‰
     /// </summary>
     public Vector3 StartPoint;
 
     /// <summary>
-    /// ½áÊøµã£¨Ã×£©
+    /// ç»“æŸç‚¹ï¼ˆç±³ï¼‰
     /// </summary>
     public Vector3 EndPoint;
 
     /// <summary>
-    /// ÖĞ¼äµã£¬¿ÉÑ¡£¨Ã×£©
+    /// ä¸­é—´ç‚¹ï¼Œå¯é€‰ï¼ˆç±³ï¼‰
     /// </summary>
     public List<Vector3> MiddlePoints;
 
     /// <summary>
-    /// º¸½ÓÃæ·¨Ïò£¨µ¥Î»ÏòÁ¿£©
+    /// ç„Šç¼é¢æ³•å‘ï¼ˆå•ä½å‘é‡ï¼‰
     /// </summary>
     public Vector3 Normal;
 
     /// <summary>
-    /// Æ«²îÖµ£¨Ã×£©
+    /// åå·®å€¼ï¼ˆç±³ï¼‰
     /// </summary>
     public float LengthDeviation;
+
+    /// <summary>
+    /// åŒ…è§’åŠå¾„ï¼ˆç±³ï¼‰ï¼šè¯¥ç„Šç¼ç»“å°¾ä¸ä¸‹ä¸€æ¡ç„Šç¼ä¹‹é—´çš„åœ†è§’åŠå¾„
+    /// 0 æˆ–è´Ÿå€¼è¡¨ç¤ºä¸åšåŒ…è§’
+    /// </summary>
+    public float CornerRadius;
 }

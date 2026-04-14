@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,33 +6,65 @@ using UnityEngine;
 /// <summary>
 /// 碰撞距离检测模块
 /// 支持 BoxCollider 与 CapsuleCollider 的混合检测
-/// 在 SimulationStateMachine.Update 中作为常驻调用
+/// 
+/// 碰撞组：
+///   Body  — 机械臂本体（J0~J6，不含焊枪）vs 环境（工作台+工件）
+///   Gun   — 焊枪 vs 环境（焊枪靠近工件是正常工况，阈值更小）
+///   Self  — 机械臂末端（J4/J5/J6+焊枪）vs 基座侧（J0/J1/J2）
+/// 
+/// 等级：Safe / Warning / Collision（去除 Blocked）
 /// </summary>
 public class CollisionMonitor
 {
     // ============================================================
-    // 阈值配置（单位：米）
+    // 每组独立阈值配置（单位：米）
     // ============================================================
 
-    /// <summary>预警阈值：距离 ≤ 此值进入 Warning</summary>
-    public float SafeDistance = 0.05f;
+    /// <summary>机械臂本体与环境的碰撞阈值</summary>
+    public CollisionThresholds BodyThresholds = new CollisionThresholds(
+        warningDistance: 0.05f,
+        collisionDistance: 0.005f
+    );
 
-    /// <summary>阻滞阈值：距离 ≤ 此值进入 Blocked</summary>
-    public float BlockedDistance = 0.005f;
+    /// <summary>焊枪与环境的碰撞阈值（焊枪靠近工件是正常工况，阈值更小）</summary>
+    public CollisionThresholds GunThresholds = new CollisionThresholds(
+        warningDistance: 0.01f,
+        collisionDistance: 0.001f
+    );
 
-    /// <summary>碰撞阈值：距离 ≤ 此值（或穿透）判定为 Collision</summary>
-    public float CollisionDistance = 0.001f;
+    /// <summary>自体碰撞阈值</summary>
+    public CollisionThresholds SelfThresholds = new CollisionThresholds(
+        warningDistance: 0.05f,
+        collisionDistance: 0.005f
+    );
 
     // ============================================================
-    // 碰撞等级
+    // 阈值配置结构
+    // ============================================================
+
+    public class CollisionThresholds
+    {
+        /// <summary>预警阈值：距离 ≤ 此值进入 Warning</summary>
+        public float WarningDistance;
+        /// <summary>碰撞阈值：距离 ≤ 此值（或穿透）判定为 Collision</summary>
+        public float CollisionDistance;
+
+        public CollisionThresholds(float warningDistance, float collisionDistance)
+        {
+            WarningDistance = warningDistance;
+            CollisionDistance = collisionDistance;
+        }
+    }
+
+    // ============================================================
+    // 碰撞等级（简化：去除 Blocked）
     // ============================================================
 
     public enum CollisionLevel
     {
-        Safe = 0,
-        Warning = 1,
-        Blocked = 2,
-        Collision = 3
+        Safe      = 0,
+        Warning   = 1,
+        Collision = 2
     }
 
     // ============================================================
@@ -67,9 +99,6 @@ public class CollisionMonitor
             }
         }
 
-        /// <summary>
-        /// 返回 Collider 表面上距 worldPoint 最近的点
-        /// </summary>
         public Vector3 ClosestPoint(Vector3 worldPoint)
             => Raw.ClosestPoint(worldPoint);
     }
@@ -91,7 +120,7 @@ public class CollisionMonitor
     }
 
     // ============================================================
-    // 汇总数据（两套）
+    // 汇总数据（三组）
     // ============================================================
 
     public class CollisionSummary
@@ -109,11 +138,14 @@ public class CollisionMonitor
         }
     }
 
-    /// <summary>自体碰撞汇总（J4/J5/J6 vs J0/J1/J2 + Torch vs J0/J1/J2）</summary>
-    public CollisionSummary SelfCollision { get; private set; } = new();
+    /// <summary>机械臂本体（J0~J6，不含焊枪）vs 环境</summary>
+    public CollisionSummary BodyCollision { get; private set; } = new();
 
-    /// <summary>环境碰撞汇总（机械臂全节段 + Torch vs 工作台/工件）</summary>
-    public CollisionSummary EnvCollision { get; private set; } = new();
+    /// <summary>焊枪 vs 环境</summary>
+    public CollisionSummary GunCollision { get; private set; } = new();
+
+    /// <summary>自体碰撞（末端 vs 基座侧）</summary>
+    public CollisionSummary SelfCollision { get; private set; } = new();
 
     // ============================================================
     // 内部碰撞对定义
@@ -121,15 +153,17 @@ public class CollisionMonitor
 
     private struct ColliderPair
     {
-        /// <summary>A 侧碰撞体列表（可混合 Box/Capsule）</summary>
         public List<ColliderShape> A;
-        /// <summary>B 侧碰撞体列表（可混合 Box/Capsule）</summary>
         public List<ColliderShape> B;
         public string Label;
     }
 
+    private readonly List<ColliderPair> bodyPairs = new();
+    private readonly List<ColliderPair> gunPairs  = new();
     private readonly List<ColliderPair> selfPairs = new();
-    private readonly List<ColliderPair> envPairs = new();
+
+    // 环境碰撞体缓存（供 DistancePointToEnvironment 使用）
+    private readonly List<ColliderShape> envShapesCache = new();
 
     private bool initialized = false;
     public bool IsInitialized => initialized;
@@ -144,51 +178,77 @@ public class CollisionMonitor
     /// </summary>
     public void Init(RobotBinder robot, WorkbenchBinder workbench)
     {
+        bodyPairs.Clear();
+        gunPairs.Clear();
         selfPairs.Clear();
-        envPairs.Clear();
+        BodyCollision.Pairs.Clear();
+        GunCollision.Pairs.Clear();
         SelfCollision.Pairs.Clear();
-        EnvCollision.Pairs.Clear();
+        envShapesCache.Clear();
         initialized = false;
 
-        // ---- 将机械臂各节段包装为 ColliderShape 列表 ----
-        // arm[0~6] = J0(底座)~J6，arm[7] = Torch（CapsuleCollider 单独处理）
-        // BoxColliders.Count == 7，索引 0~6 对应 J0~J6
+        // ---- 机械臂各节段包装（BoxColliders[0~6] = J0~J6）----
         int armCount = robot.BoxColliders.Count; // 应为 7
-
-        // 构建每节段的 shape 列表（Box）
         var armShapes = new List<List<ColliderShape>>(armCount);
         for (int i = 0; i < armCount; i++)
         {
             var shapes = new List<ColliderShape>();
             var boxes = robot.BoxColliders[i];
             if (boxes != null)
-            {
                 foreach (var b in boxes)
                     if (b != null) shapes.Add(new ColliderShape(b));
-            }
             armShapes.Add(shapes);
         }
 
-        // Torch 单独作为一个节段（CapsuleCollider）
-        var torchShapes = new List<ColliderShape>();
+        // ---- 焊枪（CapsuleCollider）----
+        var gunShapes = new List<ColliderShape>();
         if (robot.TorchCollider != null)
-            torchShapes.Add(new ColliderShape(robot.TorchCollider));
+            gunShapes.Add(new ColliderShape(robot.TorchCollider));
+
+        // ---- 环境碰撞体（工作台 + 工件）----
+        var envShapes = new List<ColliderShape>();
+        if (workbench.WorkbenchCollider != null)
+            envShapes.Add(new ColliderShape(workbench.WorkbenchCollider));
+        foreach (var wc in workbench.WorkpieceColliders)
+            if (wc != null) envShapes.Add(new ColliderShape(wc));
+
+        // 缓存供 DistancePointToEnvironment 使用
+        envShapesCache.AddRange(envShapes);
 
         // ----------------------------------------------------------------
-        // 自体碰撞对
-        //
-        // 末端侧（distal）：J4(idx=4), J5(idx=5), J6(idx=6), Torch
-        // 基座侧（proximal）：J0(idx=0), J1(idx=1), J2(idx=2)
-        //
-        // 相邻关节（J3↔J4, J4↔J5 等）物理上不可能碰撞，不检测
+        // Body 碰撞对：J0~J6（不含焊枪）vs 环境
         // ----------------------------------------------------------------
-        int[] distalArmIdx = { 4, 5, 6 };
-        int[] proximalArmIdx = { 0, 1, 2 };
-
-        // J4/J5/J6 vs J0/J1/J2
-        foreach (int d in distalArmIdx)
+        if (envShapes.Count > 0)
         {
-            foreach (int p in proximalArmIdx)
+            for (int i = 0; i < armCount; i++)
+            {
+                if (armShapes[i].Count == 0) continue;
+                string label = $"Body: J{i} vs Env";
+                bodyPairs.Add(new ColliderPair { A = armShapes[i], B = envShapes, Label = label });
+                BodyCollision.Pairs.Add(new CollisionPairData { Label = label });
+            }
+        }
+
+        // ----------------------------------------------------------------
+        // Gun 碰撞对：焊枪 vs 环境
+        // ----------------------------------------------------------------
+        if (envShapes.Count > 0 && gunShapes.Count > 0)
+        {
+            string gunLabel = "Gun: Torch vs Env";
+            gunPairs.Add(new ColliderPair { A = gunShapes, B = envShapes, Label = gunLabel });
+            GunCollision.Pairs.Add(new CollisionPairData { Label = gunLabel });
+        }
+
+        // ----------------------------------------------------------------
+        // Self 碰撞对：末端（J4/J5/J6 + 焊枪）vs 基座侧（J0/J1/J2）
+        // 相邻关节物理上不可能碰撞，不检测
+        // ----------------------------------------------------------------
+        int[] distalIdx   = { 4, 5, 6 };
+        int[] proximalIdx = { 0, 1, 2 };
+
+        foreach (int d in distalIdx)
+        {
+            foreach (int p in proximalIdx)
             {
                 if (armShapes[d].Count == 0 || armShapes[p].Count == 0) continue;
                 string label = $"Self: J{d} vs J{p}";
@@ -197,51 +257,16 @@ public class CollisionMonitor
             }
         }
 
-        // Torch vs J0/J1/J2
-        if (torchShapes.Count > 0)
+        // 焊枪 vs J0/J1/J2
+        if (gunShapes.Count > 0)
         {
-            foreach (int p in proximalArmIdx)
+            foreach (int p in proximalIdx)
             {
                 if (armShapes[p].Count == 0) continue;
                 string label = $"Self: Torch vs J{p}";
-                selfPairs.Add(new ColliderPair { A = torchShapes, B = armShapes[p], Label = label });
+                selfPairs.Add(new ColliderPair { A = gunShapes, B = armShapes[p], Label = label });
                 SelfCollision.Pairs.Add(new CollisionPairData { Label = label });
             }
-        }
-
-        // ----------------------------------------------------------------
-        // 环境碰撞对
-        //
-        // 机械臂侧：J0~J6 + Torch
-        // 环境侧：WorkbenchCollider + WorkpieceColliders[]
-        // ----------------------------------------------------------------
-        var envShapes = new List<ColliderShape>();
-        if (workbench.WorkbenchCollider != null)
-            envShapes.Add(new ColliderShape(workbench.WorkbenchCollider));
-        foreach (var wc in workbench.WorkpieceColliders)
-            if (wc != null) envShapes.Add(new ColliderShape(wc));
-
-        if (envShapes.Count == 0)
-        {
-            initialized = true;
-            return;
-        }
-
-        // J0~J6
-        for (int i = 0; i < armCount; i++)
-        {
-            if (armShapes[i].Count == 0) continue;
-            string label = $"Env: J{i} vs Workbench/Workpiece";
-            envPairs.Add(new ColliderPair { A = armShapes[i], B = envShapes, Label = label });
-            EnvCollision.Pairs.Add(new CollisionPairData { Label = label });
-        }
-
-        // Torch
-        if (torchShapes.Count > 0)
-        {
-            string label = "Env: Torch vs Workbench/Workpiece";
-            envPairs.Add(new ColliderPair { A = torchShapes, B = envShapes, Label = label });
-            EnvCollision.Pairs.Add(new CollisionPairData { Label = label });
         }
 
         initialized = true;
@@ -254,11 +279,12 @@ public class CollisionMonitor
     public void Update()
     {
         if (!initialized) return;
-        UpdateSummary(selfPairs, SelfCollision);
-        UpdateSummary(envPairs, EnvCollision);
+        UpdateSummary(bodyPairs, BodyCollision, BodyThresholds);
+        UpdateSummary(gunPairs,  GunCollision,  GunThresholds);
+        UpdateSummary(selfPairs, SelfCollision, SelfThresholds);
     }
 
-    private void UpdateSummary(List<ColliderPair> pairs, CollisionSummary summary)
+    private void UpdateSummary(List<ColliderPair> pairs, CollisionSummary summary, CollisionThresholds thresholds)
     {
         summary.Reset();
 
@@ -270,7 +296,6 @@ public class CollisionMonitor
             float minDist = float.MaxValue;
             Vector3 bestA = Vector3.zero, bestB = Vector3.zero;
 
-            // A 侧 × B 侧，取所有子碰撞箱中的最小距离
             foreach (var shapeA in pair.A)
             {
                 foreach (var shapeB in pair.B)
@@ -285,16 +310,15 @@ public class CollisionMonitor
                 }
             }
 
-            data.Distance = minDist;
+            data.Distance      = minDist;
             data.ClosestPointA = bestA;
             data.ClosestPointB = bestB;
-            data.Level = ClassifyDistance(minDist);
+            data.Level         = ClassifyDistance(minDist, thresholds);
 
-            // 更新汇总
             if (minDist < summary.MinDistance)
             {
                 summary.MinDistance = minDist;
-                summary.WorstPair = data;
+                summary.WorstPair   = data;
             }
             if (data.Level > summary.WorstLevel)
                 summary.WorstLevel = data.Level;
@@ -302,18 +326,12 @@ public class CollisionMonitor
     }
 
     // ============================================================
-    // 距离计算核心
-    // 支持 Box×Box / Box×Capsule / Capsule×Capsule
+    // 距离计算核心（支持 Box×Box / Box×Capsule / Capsule×Capsule）
     // ============================================================
 
-    /// <summary>
-    /// 计算两个 ColliderShape 之间的最近距离
-    /// 返回值：正数 = 分离距离（米）；负数 = 穿透深度（米）
-    /// </summary>
     private float ComputeDistance(ColliderShape a, ColliderShape b,
                                   out Vector3 ptA, out Vector3 ptB)
     {
-        // 1. 先用 ComputePenetration 检测穿透（适用于所有 Collider 组合）
         bool penetrating = Physics.ComputePenetration(
             a.Raw, a.Raw.transform.position, a.Raw.transform.rotation,
             b.Raw, b.Raw.transform.position, b.Raw.transform.rotation,
@@ -324,104 +342,96 @@ public class CollisionMonitor
         {
             ptA = a.WorldCenter;
             ptB = b.WorldCenter;
-            return -depth; // 负值表示穿透
+            return -depth;
         }
 
-        // 2. 未穿透：双向 ClosestPoint 取最小
-        //    ClosestPoint 对 Box 和 Capsule 均有效
         Vector3 centerA = a.WorldCenter;
         Vector3 centerB = b.WorldCenter;
 
-        // A 中心 → B 表面最近点，再反查 A 表面
-        Vector3 onB = b.ClosestPoint(centerA);
-        Vector3 onA = a.ClosestPoint(onB);
+        Vector3 onB  = b.ClosestPoint(centerA);
+        Vector3 onA  = a.ClosestPoint(onB);
         float d1 = Vector3.Distance(onA, onB);
 
-        // B 中心 → A 表面最近点，再反查 B 表面
         Vector3 onA2 = a.ClosestPoint(centerB);
         Vector3 onB2 = b.ClosestPoint(onA2);
         float d2 = Vector3.Distance(onA2, onB2);
 
-        if (d1 <= d2)
-        {
-            ptA = onA;
-            ptB = onB;
-            return d1;
-        }
-        else
-        {
-            ptA = onA2;
-            ptB = onB2;
-            return d2;
-        }
+        if (d1 <= d2) { ptA = onA;  ptB = onB;  return d1; }
+        else          { ptA = onA2; ptB = onB2; return d2; }
     }
 
-    private CollisionLevel ClassifyDistance(float dist)
+    private CollisionLevel ClassifyDistance(float dist, CollisionThresholds t)
     {
-        if (dist <= CollisionDistance) return CollisionLevel.Collision;
-        if (dist <= BlockedDistance) return CollisionLevel.Blocked;
-        if (dist <= SafeDistance) return CollisionLevel.Warning;
+        if (dist <= t.CollisionDistance) return CollisionLevel.Collision;
+        if (dist <= t.WarningDistance)   return CollisionLevel.Warning;
         return CollisionLevel.Safe;
     }
 
     // ============================================================
-    // 点到环境最近距离查询（供 APF 等规划算法使用）
+    // 点到环境最近距离查询（供 APF / RRT 等规划算法使用）
+    // 只查询环境碰撞体，不依赖机械臂姿态
     // ============================================================
 
     /// <summary>
     /// 查询空间中某点到所有环境碰撞体（工作台+工件）的最近距离及最近点
-    /// 返回值：正数 = 分离距离；0 = 恰好接触；负数 = 穿透深度
+    /// 返回值：正数 = 分离距离；负数 = 穿透深度
     /// </summary>
-    /// <param name="worldPos">世界坐标系中的查询点</param>
-    /// <param name="closestPoint">最近点位置（世界坐标）</param>
-    /// <returns>最近距离（米）</returns>
     public float DistancePointToEnvironment(Vector3 worldPos, out Vector3 closestPoint)
     {
         closestPoint = worldPos;
         float minDist = float.MaxValue;
 
-        foreach (var envPair in envPairs)
+        foreach (var shape in envShapesCache)
         {
-            foreach (var shapeB in envPair.B)
-            {
-                // 用双向 ClosestPoint 估算点到碰撞体的最近距离
-                Vector3 onB = shapeB.ClosestPoint(worldPos);
-                Vector3 onQuery = shapeB.ClosestPoint(onB);
-                float d = Vector3.Distance(worldPos, onQuery);
+            Vector3 onB    = shape.ClosestPoint(worldPos);
+            Vector3 onQuery = shape.ClosestPoint(onB);
+            float d = Vector3.Distance(worldPos, onQuery);
 
-                if (d < minDist)
-                {
-                    minDist = d;
-                    closestPoint = onQuery;
-                }
+            if (d < minDist)
+            {
+                minDist = d;
+                closestPoint = onQuery;
             }
         }
 
-        // 如果没有环境碰撞对，返回安全距离
-        if (minDist == float.MaxValue)
-            return SafeDistance + 1f;
-
-        return minDist;
+        return minDist == float.MaxValue ? BodyThresholds.WarningDistance + 1f : minDist;
     }
 
     // ============================================================
     // 便捷查询
     // ============================================================
 
-    /// <summary>当前是否存在任何碰撞（穿透）</summary>
+    /// <summary>任意组存在穿透碰撞</summary>
     public bool HasCollision =>
-        SelfCollision.WorstLevel == CollisionLevel.Collision ||
-        EnvCollision.WorstLevel == CollisionLevel.Collision;
+        BodyCollision.WorstLevel == CollisionLevel.Collision ||
+        GunCollision.WorstLevel  == CollisionLevel.Collision ||
+        SelfCollision.WorstLevel == CollisionLevel.Collision;
 
-    /// <summary>当前是否处于阻滞或更危险状态</summary>
-    public bool IsBlocked =>
-        SelfCollision.WorstLevel >= CollisionLevel.Blocked ||
-        EnvCollision.WorstLevel >= CollisionLevel.Blocked;
+    /// <summary>任意组处于 Warning 或更危险状态</summary>
+    public bool HasWarning =>
+        BodyCollision.WorstLevel >= CollisionLevel.Warning ||
+        GunCollision.WorstLevel  >= CollisionLevel.Warning ||
+        SelfCollision.WorstLevel >= CollisionLevel.Warning;
 
     /// <summary>当前整体最危险等级</summary>
     public CollisionLevel OverallLevel =>
         (CollisionLevel)Mathf.Max(
-            (int)SelfCollision.WorstLevel,
-            (int)EnvCollision.WorstLevel
+            Mathf.Max((int)BodyCollision.WorstLevel, (int)GunCollision.WorstLevel),
+            (int)SelfCollision.WorstLevel
         );
+
+    /// <summary>
+    /// 路径规划安全性检查：三组均为 Safe，且各组最近距离 >= 对应 Warning 阈值 + margin
+    /// </summary>
+    /// <param name="margin">额外安全裕度（米）</param>
+    public bool IsSafeForPlanning(float margin = 0f)
+    {
+        if (HasCollision) return false;
+
+        if (BodyCollision.MinDistance < BodyThresholds.WarningDistance + margin) return false;
+        if (GunCollision.MinDistance  < GunThresholds.WarningDistance  + margin) return false;
+        if (SelfCollision.MinDistance < SelfThresholds.WarningDistance + margin) return false;
+
+        return true;
+    }
 }

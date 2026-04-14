@@ -1,0 +1,46 @@
+{
+  "TaskName": "测试包角焊缝任务",
+  "WorkpieceFileName": "example_workpiece.fbx",
+  "UserOrigin": { "x": 1.0, "y": 0.0, "z": 0.3 },
+  "WeldSeams": [
+    {
+      "Type": "Line",
+      "ID": 1,
+      "Name": "Line_1",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.05, "y": -0.01, "z": 0.0 },
+      "EndPoint": { "x": 0.05, "y": -0.01, "z": 0.0 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 2,
+      "Name": "Line_2",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.05, "y": -0.01, "z": 0.0 },
+      "EndPoint": { "x": 0.05, "y": 0.01, "z": 0.0 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 3,
+      "Name": "Line_3",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.05, "y": 0.01, "z": 0.0 },
+      "EndPoint": { "x": -0.05, "y": 0.01, "z": 0.0 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.0
+    }
+  ]
+}

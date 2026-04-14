@@ -3,72 +3,85 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ÃèÊöº¸·ì¶ÔÏó
+/// ç„Šç¼åŸºç±»
 /// </summary>
 public abstract class WeldSeam
 {
     /// <summary>
-    /// º¸·ìID
+    /// ç„Šç¼ID
     /// </summary>
     public int Id = 0;
 
     /// <summary>
-    /// º¸·ìÃû³Æ
+    /// ç„Šç¼åç§°
     /// </summary>
     public string Name = "WeldSeam";
 
     /// <summary>
-    /// º¸½ÓÏßËÙ¶È£¨Ã×/Ãë£©
+    /// ç„Šæ¥çº¿é€Ÿåº¦ï¼ˆç±³/ç§’ï¼‰
     /// </summary>
     public float Speed = 0f;
 
     /// <summary>
-    /// º¸Ç¹½Ç¶È£¨¶È£©
+    /// ç„Šæªè§’åº¦ï¼ˆåº¦ï¼‰
     /// </summary>
     public float GunAngle = 90f;
 
     /// <summary>
-    /// º¸Ç¹¾àº¸·ìµÄ¾àÀë£¨Ã×£©
+    /// ç„Šæªè·ç„Šç¼çš„è·ç¦»ï¼ˆç±³ï¼‰
     /// </summary>
     public float GunDistance = 0.01f;
 
     /// <summary>
-    /// ÆğÊ¼µã£¨Ã×£©
+    /// èµ·å§‹ç‚¹ï¼ˆç±³ï¼‰
     /// </summary>
     public Vector3 StartPoint = Vector3.zero;
 
     /// <summary>
-    /// ½áÊøµã£¨Ã×£©
+    /// ç»“æŸç‚¹ï¼ˆç±³ï¼‰
     /// </summary>
     public Vector3 EndPoint = Vector3.zero;
 
     /// <summary>
-    /// ¼¸ºÎ×Ü³¤¶È
+    /// ç„Šç¼æ€»é•¿åº¦
     /// </summary>
     public float Length = 0f;
 
     /// <summary>
-    /// ¼¸ºÎËùÔÚÆ½ÃæµÄ·¨Ïò£¨Line ¿É·µ»Ø¹Ì¶¨Öµ£©
+    /// ç„Šç¼é¢æ³•å‘ï¼ˆå•ä½å‘é‡ï¼‰
     /// </summary>
     public Vector3 Normal = Vector3.forward;
 
     /// <summary>
-    /// Æ«²îÖµ£¨Ã×£©
+    /// åå·®å€¼ï¼ˆç±³ï¼‰
     /// </summary>
     public float LengthDeviation;
 
     /// <summary>
-    /// º¸·ì²ÎÊı»¯ s (0,1)
+    /// åŒ…è§’åŠå¾„ï¼ˆç±³ï¼‰ï¼šè¯¥ç„Šç¼ç»“å°¾ä¸ä¸‹ä¸€æ¡ç„Šç¼ä¹‹é—´çš„åœ†è§’åŠå¾„
+    /// </summary>
+    public float CornerRadius;
+
+    /// <summary>
+    /// è·å–ç„Šç¼ä¸Š s (0,1) å¯¹åº”çš„ç‚¹
     /// </summary>
     public abstract Vector3 GetPoint(float s);
 
     /// <summary>
-    /// È¡ÇĞÏß·½Ïò£¨µ¥Î»ÏòÁ¿£©
+    /// å–å¾—ç‚¹åˆ‡å‘ï¼ˆå•ä½å‘é‡ï¼‰
     /// </summary>
     public abstract Vector3 GetTangent(float s);
 
     /// <summary>
-    /// »ñÈ¡Â·¾¶²ÎÊıs´¦µÄÇúÂÊ
+    /// å–å¾—è·¯å¾„åœ¨ s å¤„çš„æ›²ç‡
     /// </summary>
     public abstract float GetCurvature(float s);
+
+    /// <summary>
+    /// åˆ¤æ–­ç‚¹ p æ˜¯å¦ä½äºè¯¥ç„Šç¼çš„æœ‰æ•ˆèŒƒå›´å†…ï¼ˆå‡ ä½•åˆ¤å®šï¼‰
+    /// </summary>
+    /// <param name="p">å¾…æ£€æµ‹ç‚¹ï¼ˆä¸–ç•Œåæ ‡ï¼‰</param>
+    /// <param name="tol">è·ç¦»å®¹å·®ï¼ˆç±³ï¼‰</param>
+    /// <returns>p åœ¨ç„Šç¼ä¸Šè¿”å› true</returns>
+    public abstract bool ContainsPoint(Vector3 p, float tol = 1e-5f);
 }

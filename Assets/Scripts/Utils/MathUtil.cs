@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,12 +41,12 @@ public static class MathUtil
 
     public static bool IsVector3Equal(Vector3 a, Vector3 b)
     {
-        return (a - b).sqrMagnitude < 1e-10f;
+        return (a - b).sqrMagnitude < 1e-8f;
     }
 
     public static bool IsQuaternionEqual(Quaternion a, Quaternion b)
     {
-        return Mathf.Abs(Quaternion.Dot(a, b)) > 0.99999f;
+        return Mathf.Abs(Quaternion.Dot(a, b)) > 0.9999f;
     }
 
     public static bool IsPoseEqual(Pose a, Pose b)
@@ -295,7 +295,7 @@ public static class MathUtil
     // ------------------------
     // 方向向量转换（不含平移，仅旋转）
     // 与 D2UPosition / U2DPosition 相同的坐标轴映射，但不取反
-    // D → U: U.x = -D.y, U.y = D.z, U.z = D.x
+    // D -> U: U.x = -D.y, U.y = D.z, U.z = D.x
     // ------------------------
     public static Vector3 D2UDirection(Vector3 d)
     {
@@ -305,5 +305,47 @@ public static class MathUtil
     public static Vector3 U2DDirection(Vector3 u)
     {
         return new Vector3(u.z, -u.x, u.y);
+    }
+
+    /// <summary>
+    /// 带符号夹角（弧度），在 normal 指定的平面内，范围 (-PI, PI]
+    /// </summary>
+    public static float SignedAngle(Vector3 from, Vector3 to, Vector3 normal)
+    {
+        float cosA = Mathf.Clamp(Vector3.Dot(from.normalized, to.normalized), -1f, 1f);
+        float sinA = Vector3.Dot(normal, Vector3.Cross(from.normalized, to.normalized));
+        return Mathf.Atan2(sinA, cosA);
+    }
+
+    /// <summary>
+    /// 构造两直线过渡圆弧
+    /// </summary>
+    public static bool FilletArc(
+        Vector3 V, Vector3 d1, Vector3 d2, float r,
+        out Vector3 T1, out Vector3 T2, out Vector3 O, out Vector3 M)
+    {
+        T1 = V;
+        T2 = V;
+        O = V;
+        M = V;
+        // -d1 与 d2 的夹角（外角，即圆弧要绕过去的那个角）
+        float cosTheta = Vector3.Dot(d1, d2);
+        float theta = Mathf.Acos(cosTheta);
+        float halfRad = theta * 0.5f;
+
+        // θ 过小（接近共线或反向）-> 无法构造有效 fillet
+        if (Mathf.Sin(halfRad) < 1e-4f) return false;
+
+        // 沿每条边的截取距离
+        float cutDist = r / Mathf.Tan(halfRad);
+
+        T1 = V - d1.normalized * cutDist;
+        T2 = V + d2.normalized * cutDist;
+        // 角平分线
+        Vector3 b = (d2.normalized - d1.normalized).normalized;
+        float dist = r / Mathf.Sin(theta / 2);
+        O = V + b * dist;
+        M = O - b * r;
+        return true;
     }
 }

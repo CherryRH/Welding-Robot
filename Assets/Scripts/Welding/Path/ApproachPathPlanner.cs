@@ -14,12 +14,11 @@ public class ApproachPathPlanner
     {
         Safe,   // 经安全高度（Z轴上方）绕行
         Direct, // 直线插值
-        APF,    // 人工势场法（梯度下降，易局部极小）
         RRT     // 快速随机树（概率完备，不易失败）
     }
 
     /// <summary>当前使用的接近策略</summary>
-    public ApproachStrategy Strategy { get; private set; } = ApproachStrategy.RRT;
+    public ApproachStrategy Strategy { get; private set; } = ApproachStrategy.Safe;
 
     private RobotModel robot;
 
@@ -45,19 +44,13 @@ public class ApproachPathPlanner
         if (start == null || end == null || MathUtil.IsPoseEqual(start, end))
             return new List<TcpPathPoint>();
 
-        switch (Strategy)
+        return Strategy switch
         {
-            case ApproachStrategy.Safe:
-                return PlanSafePath(start, end, seam);
-            case ApproachStrategy.Direct:
-                return PlanDirectPath(start, end, seam);
-            case ApproachStrategy.APF:
-                return PlanApfPath(start, end, shadowRobotBinder, shadowCollisionMonitor, seam);
-            case ApproachStrategy.RRT:
-                return PlanRrtPath(start, end, shadowRobotBinder, shadowCollisionMonitor, seam);
-            default:
-                return PlanSafePath(start, end, seam);
-        }
+            ApproachStrategy.Safe => PlanSafePath(start, end, seam),
+            ApproachStrategy.Direct => PlanDirectPath(start, end, seam),
+            ApproachStrategy.RRT => PlanRrtPath(start, end, shadowRobotBinder, shadowCollisionMonitor, seam),
+            _ => PlanSafePath(start, end, seam),
+        };
     }
 
     /// <summary>
@@ -87,25 +80,6 @@ public class ApproachPathPlanner
         points.Add(new(start, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
         points.Add(new(end, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
         return points;
-    }
-
-    /// <summary>
-    /// APF 路径：委托给 ApfPathPlanner
-    /// </summary>
-    private List<TcpPathPoint> PlanApfPath(
-        Pose start, Pose end,
-        RobotBinder shadowRobotBinder,
-        CollisionMonitor shadowCollisionMonitor,
-        WeldSeam seam = null)
-    {
-        List<TcpPathPoint> path = ApfPathPlanner.Plan(
-            start, end, robot, shadowCollisionMonitor, shadowRobotBinder, seam);
-
-        if (path != null && path.Count > 0)
-            return path;
-
-        Debug.LogWarning($"[ApproachPathPlanner] APF failed, falling back to Safe.");
-        return PlanSafePath(start, end, seam);
     }
 
     /// <summary>
