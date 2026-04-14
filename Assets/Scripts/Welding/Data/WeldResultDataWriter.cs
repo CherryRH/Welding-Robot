@@ -40,7 +40,7 @@ public class WeldResultDataWriter
         resultData.AddFrame(frame);
 
         // 输出帧详细信息
-        if (resultData.Frames.Count <= 2)
+        if (resultData.Frames.Count % 100 == 0)
         {
             Debug.Log(LogUtil.FormatWeldResultFrame(frame, resultData.Frames.Count));
         }

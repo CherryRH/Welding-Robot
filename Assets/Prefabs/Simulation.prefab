@@ -16958,6 +16958,7 @@ MonoBehaviour:
   WeldSeamVisualizer: {fileID: 2905511714276155193}
   TcpPathVisualizer: {fileID: 2099847154793607848}
   ColliderVisualizer: {fileID: 2561421213962801964}
+  MoltenPoolVisualizer: {fileID: 2607045705247532550}
   BeforeSimulationUpdate:
     m_PersistentCalls:
       m_Calls: []
@@ -17249,6 +17250,7 @@ GameObject:
   - component: {fileID: 2905511714276155193}
   - component: {fileID: 2099847154793607848}
   - component: {fileID: 2561421213962801964}
+  - component: {fileID: 2607045705247532550}
   m_Layer: 0
   m_Name: Visualization
   m_TagString: Untagged
@@ -17310,6 +17312,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DefaultColor: {r: 0, g: 1, b: 0, a: 0.9}
+--- !u!114 &2607045705247532550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8354069457065895611}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bda1cfdc6adf41b4995e96bec6ff4b89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rayLength: 0.1
+  workpieceLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  baseRadius: 0.005
+  speedFactor: 10
+  stripColor: {r: 0.9, g: 0.9, b: 0.9, a: 0.8}
+  stripMaterial: {fileID: 2100000, guid: eddd004c2dd9bdb4b998345d45cf283a, type: 2}
+  debugLog: 0
+  Tcp: {fileID: 2750890599132617734}
 --- !u!1 &8454896253034747668
 GameObject:
   m_ObjectHideFlags: 0

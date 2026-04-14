@@ -101,17 +101,30 @@ class WorkState : SimulationStateBase
         if (finishedSegment != null)
             ctx.ResultWriter.RecordSegment(finishedSegment);
 
-        // 焊接特效
+        // 焊接特效 + 熔池可视化
         if (ctx.Trajectory.CurrentSegment != null && ctx.Trajectory.CurrentSegment.Type == TrajectorySegment.TrajectorySegmentType.Weld)
+        {
             ctx.EffectBinder.PlayWeldingEffect();
+            // 焊接段开始时创建新条带
+            if (ctx.MoltenPoolVisualizer != null && !ctx.MoltenPoolVisualizer.IsStripActive)
+                ctx.MoltenPoolVisualizer.StartStrip();
+        }
         else
+        {
             ctx.EffectBinder.StopWeldingEffect();
+            // 焊接段结束时冻结当前条带
+            if (ctx.MoltenPoolVisualizer != null && ctx.MoltenPoolVisualizer.IsStripActive)
+                ctx.MoltenPoolVisualizer.FinalizeStrip();
+        }
     }
 
     public override void Exit(SimulationContext ctx)
     {
         // 停止焊接特效
         ctx.EffectBinder.StopWeldingEffect();
+        // 冻结当前熔池条带
+        if (ctx.MoltenPoolVisualizer != null && ctx.MoltenPoolVisualizer.IsStripActive)
+            ctx.MoltenPoolVisualizer.FinalizeStrip();
     }
 
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)

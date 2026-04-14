@@ -71,6 +71,7 @@ public class SimulationContext : MonoBehaviour
     public WeldSeamVisualizer WeldSeamVisualizer;
     public TcpPathVisualizer TcpPathVisualizer;
     public ColliderVisualizer ColliderVisualizer;
+    public MoltenPoolVisualizer MoltenPoolVisualizer;
 
     // ============================================================
     // 结果数据
@@ -129,6 +130,17 @@ public class SimulationContext : MonoBehaviour
             if (Clock.IsRunning)
             {
                 ResultWriter.RecordFrame(Clock.Time, RobotModel);
+            }
+
+            // 7. 熔池可视化采样（仅焊接段）
+            if (Clock.IsRunning && MoltenPoolVisualizer != null)
+            {
+                bool isWelding = Trajectory.CurrentSegment != null &&
+                                 Trajectory.CurrentSegment.Type == TrajectorySegment.TrajectorySegmentType.Weld;
+                if (isWelding)
+                {
+                    MoltenPoolVisualizer.AddSample(RobotBinder.Tcp, RobotModel.TcpSpeed);
+                }
             }
 
             OnSimulationUpdate?.Invoke(this);
@@ -301,7 +313,8 @@ public class SimulationContext : MonoBehaviour
         TcpPathPlanner.Clear();
         Trajectory.Clear();
         TaskState.Reset();
-        TcpPathVisualizer.Clear();
+        if (TcpPathVisualizer != null) TcpPathVisualizer.Clear();
+        if (MoltenPoolVisualizer != null) MoltenPoolVisualizer.Clear();
     }
 
     // ============================================================
