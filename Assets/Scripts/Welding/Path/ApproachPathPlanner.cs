@@ -17,6 +17,26 @@ public class ApproachPathPlanner
         RRT     // 快速随机树（概率完备，不易失败）
     }
 
+    /// <summary>
+    /// 是否启用路径后处理平滑器（PathSmoother）
+    /// 应用于 RRT 等算法生成的路径，进行拉直、平滑和排斥优化
+    /// </summary>
+    public bool EnablePathSmoother = true;
+
+    /// <summary>
+    /// 路径平滑器配置（仅在 EnablePathSmoother = true 时生效）
+    /// </summary>
+    public PathSmoother.Config SmootherConfig = new()
+    {
+        Iterations = 10,
+        AttractStrength = 0.01f,
+        PullStrength = 0.1f,
+        SmoothStrength = 0.5f,
+        RepulsionStrength = 0.05f,
+        RepulsionRadius = 0.02f,
+        Margin = 0.005f
+    };
+
     private RobotModel robot;
 
     public void Init(RobotModel robot)
@@ -103,13 +123,31 @@ public class ApproachPathPlanner
             maxIterations: 2000,
             stepSize: 0.015f,
             goalBias: 0.1f,
-            maxDistanceToGoal: 0.015f);
+            maxDistanceToGoal: 0.015f,
+            enableShortcutSmoothing: false);  // 捷径优化默认关闭，与 PathSmoother 冲突
 
         if (result.Success)
         {
+            List<TcpPathPoint> finalPath = result.Path;
+            int afterSmoother = result.Path.Count;
+
+            // 后处理平滑器（可开关）
+            if (EnablePathSmoother)
+            {
+                var smoothed = PathSmoother.Smooth(
+                    result.Path,
+                    robot,
+                    shadowCollisionMonitor,
+                    shadowRobotBinder,
+                    SmootherConfig);
+                afterSmoother = smoothed.Count;
+                finalPath = smoothed;
+            }
+
             Debug.Log($"[Approach] RRT succeeded: {result.Iterations} iters, {result.NodesGenerated} nodes, " +
-                $"path {result.PathNodesBeforeSmooth} → {result.PathNodesAfterSmooth} after smoothing.");
-            return result.Path;
+                $"path {result.PathNodesBeforeSmooth} → {afterSmoother} (smoother={(EnablePathSmoother ? "on" : "off")})");
+
+            return finalPath;
         }
 
         Debug.LogWarning($"[Approach] RRT failed ({result.NodesGenerated} nodes generated), falling back to Safe.");

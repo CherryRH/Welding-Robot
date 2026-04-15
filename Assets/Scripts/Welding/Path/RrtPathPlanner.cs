@@ -89,7 +89,8 @@ public static class RrtPathPlanner
         int maxIterations = 2000,
         float stepSize = 0.015f,
         float goalBias = 0.1f,
-        float maxDistanceToGoal = 0.015f)
+        float maxDistanceToGoal = 0.015f,
+        bool enableShortcutSmoothing = false)
     {
         if (start == null || end == null || MathUtil.IsPoseEqual(start, end))
             return new PlanResult(null, false, 0, 0, 0, 0);
@@ -165,15 +166,22 @@ public static class RrtPathPlanner
 
                 List<TcpPathPoint> rawPath = TracePath(goalNode, seam, robot);
                 int beforeSmooth = rawPath.Count;
+                int afterSmooth = beforeSmooth;
 
-                // 事后平滑
-                var smoothed = ShortcutSmoothing(rawPath, robot, shadowCollisionMonitor, shadowRobotBinder, new SmoothConfig());
-                int afterSmooth = smoothed.Count;
+                List<TcpPathPoint> finalPath = rawPath;
+
+                // 捷径优化（可开关）
+                if (enableShortcutSmoothing)
+                {
+                    var smoothed = ShortcutSmoothing(rawPath, robot, shadowCollisionMonitor, shadowRobotBinder, new SmoothConfig());
+                    afterSmooth = smoothed.Count;
+                    finalPath = smoothed;
+                }
 
                 Debug.Log($"[RRT] Reached goal at iter {iter + 1}: {nodesGenerated} nodes, " +
-                    $"path {beforeSmooth} → {afterSmooth} after smoothing.");
+                    $"path {beforeSmooth} → {afterSmooth} (shortcut={(enableShortcutSmoothing ? "on" : "off")}).");
 
-                return new PlanResult(smoothed, true, iter + 1, nodesGenerated, beforeSmooth, afterSmooth);
+                return new PlanResult(finalPath, true, iter + 1, nodesGenerated, beforeSmooth, afterSmooth);
             }
 
             // ---- 8. 绕圈检测 ----
@@ -203,10 +211,19 @@ public static class RrtPathPlanner
             var goalNode = new RrtNode(end.position, end.rotation, best);
             List<TcpPathPoint> rawPath = TracePath(goalNode, seam, robot);
             int beforeSmooth = rawPath.Count;
-            var smoothed = ShortcutSmoothing(rawPath, robot, shadowCollisionMonitor, shadowRobotBinder, new SmoothConfig());
+            int afterSmooth = beforeSmooth;
+            List<TcpPathPoint> finalPath = rawPath;
+
+            if (enableShortcutSmoothing)
+            {
+                var smoothed = ShortcutSmoothing(rawPath, robot, shadowCollisionMonitor, shadowRobotBinder, new SmoothConfig());
+                afterSmooth = smoothed.Count;
+                finalPath = smoothed;
+            }
+
             Debug.LogWarning($"[RRT] Fallback success: best node dist={Vector3.Distance(best.Position, end.position):F3}m, " +
-                $"path {beforeSmooth} → {smoothed.Count}");
-            return new PlanResult(smoothed, false, maxIterations, nodesGenerated, beforeSmooth, smoothed.Count);
+                $"path {beforeSmooth} → {afterSmooth}");
+            return new PlanResult(finalPath, false, maxIterations, nodesGenerated, beforeSmooth, afterSmooth);
         }
 
         Debug.LogError($"[RRT] Complete failure: {nodesGenerated} nodes, no valid fallback.");

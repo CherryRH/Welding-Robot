@@ -16460,10 +16460,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.50000125
+  m_Radius: 1
   m_Height: 2.0000005
   m_Direction: 1
-  m_Center: {x: 0.000015318394, y: 2.6645332e-16, z: -0.0000014305106}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &6129373137572881800
 GameObject:
   m_ObjectHideFlags: 0
@@ -17332,7 +17332,6 @@ MonoBehaviour:
   speedFactor: 10
   stripColor: {r: 0.9, g: 0.9, b: 0.9, a: 0.8}
   stripMaterial: {fileID: 2100000, guid: eddd004c2dd9bdb4b998345d45cf283a, type: 2}
-  debugLog: 0
   Tcp: {fileID: 2750890599132617734}
 --- !u!1 &8454896253034747668
 GameObject:
