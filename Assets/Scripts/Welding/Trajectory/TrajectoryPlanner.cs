@@ -298,8 +298,7 @@ public class TrajectoryPlanResult
         Ok,
         JointSpeedLimitViolated,
         TcpPositionUnreachable,
-        SingularOrFlipDetected,
-        CollisionPredicted
+        SingularOrFlipDetected
     }
     public TrajectoryPlanStatus PlanStatus = TrajectoryPlanStatus.Ok;
 

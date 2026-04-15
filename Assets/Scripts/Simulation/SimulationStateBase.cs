@@ -68,8 +68,11 @@ class WorkState : SimulationStateBase
         // 持续规划轨迹（保持轨迹缓冲区水位）
         if (ctx.Trajectory.UnderHighWaterMark && ctx.TaskState.Status != WeldTaskPlanState.PlanStatus.Failed)
         {
+            // 获取 TCP 路径点并规划轨迹
             List<TcpPathPoint> points = ctx.TcpPathPlanner.GetPathPart();
             TrajectoryPlanResult result = ctx.TrajectoryPlanner.Plan(points, ctx.Clock.Time);
+
+            // 处理规划结果
             ctx.TcpPathPlanner.HandleTrajectoryPlanResult(result);
 
             // 规划状态变化时更新可视化

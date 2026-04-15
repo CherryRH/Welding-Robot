@@ -421,16 +421,16 @@ public class CollisionMonitor
         );
 
     /// <summary>
-    /// 路径规划安全性检查：三组均为 Safe，且各组最近距离 >= 对应 Warning 阈值 + margin
+    /// 路径规划安全性检查：三组均为 Safe，且各组最近距离 >= 对应 Collision 阈值 + margin
     /// </summary>
     /// <param name="margin">额外安全裕度（米）</param>
-    public bool IsSafeForPlanning(float margin = 0f)
+    public bool IsSafeForPlanning(float margin = 0.005f)
     {
         if (HasCollision) return false;
 
-        if (BodyCollision.MinDistance < BodyThresholds.WarningDistance + margin) return false;
-        if (GunCollision.MinDistance  < GunThresholds.WarningDistance  + margin) return false;
-        if (SelfCollision.MinDistance < SelfThresholds.WarningDistance + margin) return false;
+        if (BodyCollision.MinDistance < BodyThresholds.CollisionDistance + margin) return false;
+        if (GunCollision.MinDistance  < GunThresholds.CollisionDistance  + margin) return false;
+        if (SelfCollision.MinDistance < SelfThresholds.CollisionDistance + margin) return false;
 
         return true;
     }

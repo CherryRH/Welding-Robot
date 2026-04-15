@@ -343,7 +343,7 @@ public static class RrtPathPlanner
         RobotModel robot,
         CollisionMonitor shadowMonitor,
         RobotBinder shadowRobotBinder,
-        float margin = 0f)
+        float margin = 0.005f)
     {
         RobotModel shadowRobot = shadowRobotBinder.Robot;
 

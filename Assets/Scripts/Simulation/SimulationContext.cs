@@ -143,6 +143,10 @@ public class SimulationContext : MonoBehaviour
                 }
             }
 
+            // 8. 重规划冷却递减
+            if (TaskState.ReplanCooldown > 0f)
+                TaskState.ReplanCooldown -= Time.deltaTime;
+
             OnSimulationUpdate?.Invoke(this);
         }
 
@@ -158,7 +162,7 @@ public class SimulationContext : MonoBehaviour
     // ============================================================
 
     /// <summary>
-    /// 碰撞响应处理：回滚或状态切换
+    /// 碰撞响应处理：回滚、状态切换或重规划
     /// </summary>
     private void HandleCollisionResponse()
     {
@@ -172,10 +176,31 @@ public class SimulationContext : MonoBehaviour
         switch (level)
         {
             case CollisionMonitor.CollisionLevel.Safe:
+                TaskState.ConsecutiveWarnings = 0;
+                TaskState.NarrowSpaceMode = false;
                 break;
 
             case CollisionMonitor.CollisionLevel.Warning:
-                // 预警：可在此添加 UI 提示
+                // 冷却中：仅累加计数，不触发
+                if (TaskState.ReplanCooldown > 0f)
+                {
+                    TaskState.ConsecutiveWarnings++;
+                    if (!TaskState.NarrowSpaceMode &&
+                        TaskState.ConsecutiveWarnings >= WeldTaskPlanState.MaxConsecutiveWarnings)
+                    {
+                        TaskState.NarrowSpaceMode = true;
+                        Debug.Log("[Replan] Narrow space detected, allowing continued operation.");
+                    }
+                    break;
+                }
+
+                // 狭窄空间：放行，不重规划
+                if (TaskState.NarrowSpaceMode)
+                    break;
+
+                // 正常工作状态：触发重规划
+                if (StateMachine.CurrentState == SimulationState.Work)
+                    TriggerReplan();
                 break;
 
             case CollisionMonitor.CollisionLevel.Collision:
@@ -189,6 +214,40 @@ public class SimulationContext : MonoBehaviour
                 }
                 break;
         }
+    }
+
+    /// <summary>
+    /// 触发重规划（从当前实际位置重新规划接近路径）
+    /// </summary>
+    private void TriggerReplan()
+    {
+        // 必须有当前轨迹段才能重规划
+        if (Trajectory.CurrentSegment == null)
+        {
+            Debug.LogWarning("[Replan] No current segment to replan from.");
+            return;
+        }
+
+        Debug.Log($"[Replan] Triggered. Current segment: {Trajectory.CurrentSegment.StartPoint.Flag} → {Trajectory.CurrentSegment.EndPoint.Flag}");
+
+        // 标记重规划中
+        TaskState.IsReplanning = true;
+        TaskState.ReplanCooldown = WeldTaskPlanState.ReplanCooldownDuration;
+        TaskState.ConsecutiveWarnings = 0;
+
+        // 重规划 TCP 路径
+        TcpPathPlanner.ReplanFromPosition(
+            Trajectory.CurrentSegment,
+            ShadowCollisionMonitor,
+            ShadowRobotBinder);
+
+        // 清空轨迹缓冲区（下一帧 WorkState 会自动重建）
+        Trajectory.Clear();
+
+        // 刷新路径可视化
+        TcpPathVisualizer.ShowTcpPathPoints(TcpPathPlanner);
+
+        TaskState.IsReplanning = false;
     }
 
     /// <summary>

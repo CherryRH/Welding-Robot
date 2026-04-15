@@ -17,9 +17,6 @@ public class ApproachPathPlanner
         RRT     // 快速随机树（概率完备，不易失败）
     }
 
-    /// <summary>当前使用的接近策略</summary>
-    public ApproachStrategy Strategy { get; private set; } = ApproachStrategy.Safe;
-
     private RobotModel robot;
 
     public void Init(RobotModel robot)
@@ -28,23 +25,25 @@ public class ApproachPathPlanner
     }
 
     /// <summary>
-    /// 规划接近路径（外部调用入口，自动适配策略）
+    /// 规划接近路径（显式指定策略，供重规划调用）
     /// </summary>
     /// <param name="start">起点（Data 坐标系）</param>
     /// <param name="end">终点（Data 坐标系）</param>
     /// <param name="shadowCollisionMonitor">影子机械臂碰撞监测器</param>
     /// <param name="shadowRobotBinder">影子机械臂绑定器</param>
     /// <param name="seam">焊缝信息</param>
+    /// <param name="strategy">使用的接近策略</param>
     public List<TcpPathPoint> Plan(
         Pose start, Pose end,
         CollisionMonitor shadowCollisionMonitor,
         RobotBinder shadowRobotBinder,
-        WeldSeam seam = null)
+        WeldSeam seam = null,
+        ApproachStrategy strategy = ApproachStrategy.Direct)
     {
         if (start == null || end == null || MathUtil.IsPoseEqual(start, end))
             return new List<TcpPathPoint>();
 
-        return Strategy switch
+        return strategy switch
         {
             ApproachStrategy.Safe => PlanSafePath(start, end, seam),
             ApproachStrategy.Direct => PlanDirectPath(start, end, seam),
