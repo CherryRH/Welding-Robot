@@ -41,7 +41,14 @@ public class ApproachPathPlanner
         ApproachStrategy strategy = ApproachStrategy.Direct)
     {
         if (start == null || end == null || MathUtil.IsPoseEqual(start, end))
+        {
+            Debug.LogWarning("[Approach] Start == End or null, returning empty path.");
             return new List<TcpPathPoint>();
+        }
+
+        Debug.Log($"[Approach] Strategy={strategy}, " +
+            $"start=({start.position.x:F3},{start.position.y:F3},{start.position.z:F3}), " +
+            $"end=({end.position.x:F3},{end.position.y:F3},{end.position.z:F3})");
 
         return strategy switch
         {
@@ -67,17 +74,18 @@ public class ApproachPathPlanner
         Pose endSafe = robot.GetSafePose(end);
         points.Add(new(endSafe, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
         points.Add(new(end, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
+
+        Debug.Log($"[Approach] Safe: {points.Count} pts (start → safe-start → safe-end → end)");
         return points;
     }
 
-    /// <summary>
-    /// 直线路径：起点 + 终点，无中间点
-    /// </summary>
     private List<TcpPathPoint> PlanDirectPath(Pose start, Pose end, WeldSeam seam = null)
     {
         List<TcpPathPoint> points = new();
         points.Add(new(start, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
         points.Add(new(end, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
+
+        Debug.Log($"[Approach] Direct: 2 pts");
         return points;
     }
 
@@ -99,12 +107,12 @@ public class ApproachPathPlanner
 
         if (result.Success)
         {
-            Debug.Log($"[ApproachPathPlanner] RRT succeeded: {result.Iterations} iters, {result.NodesGenerated} nodes, " +
+            Debug.Log($"[Approach] RRT succeeded: {result.Iterations} iters, {result.NodesGenerated} nodes, " +
                 $"path {result.PathNodesBeforeSmooth} → {result.PathNodesAfterSmooth} after smoothing.");
             return result.Path;
         }
 
-        Debug.LogWarning($"[ApproachPathPlanner] RRT failed ({result.NodesGenerated} nodes generated), falling back to Safe.");
+        Debug.LogWarning($"[Approach] RRT failed ({result.NodesGenerated} nodes generated), falling back to Safe.");
         return PlanSafePath(start, end, seam);
     }
 }

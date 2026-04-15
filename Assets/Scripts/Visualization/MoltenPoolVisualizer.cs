@@ -105,7 +105,6 @@ public class MoltenPoolVisualizer : MonoBehaviour
     public void FinalizeStrip()
     {
         if (_currentStrip == null) return;
-        _currentStrip.Finalize();
         _currentStrip = null;
     }
 
@@ -239,14 +238,6 @@ internal class MoltenPoolStrip
         // 保存本帧端点
         _prevLeft = left;
         _prevRight = right;
-    }
-
-    /// <summary>
-    /// 冻结条带 — 不再更新
-    /// </summary>
-    public void Finalize()
-    {
-        // Mesh 已经是最新状态，无需额外操作
     }
 
     /// <summary>

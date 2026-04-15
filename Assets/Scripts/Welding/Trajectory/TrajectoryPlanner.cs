@@ -60,7 +60,13 @@ public class TrajectoryPlanner
             // 确定起始关节角度
             float[] startJoints = joints;
             // 确定结束关节角度
-            float[] endJoints = PlanEndJoints(startJoints, start, end);
+            if (!PlanEndJoints(startJoints, start, end, out float[] endJoints))
+            {
+                // IK 无解：该路径点不可达
+                result.PlanStatus = TrajectoryPlanResult.TrajectoryPlanStatus.TcpPositionUnreachable;
+                result.CurrentPoint = end;
+                break;
+            }
             joints = endJoints;
 
             // 确定当前轨迹的起始时间和结束时间
@@ -138,9 +144,12 @@ public class TrajectoryPlanner
         }
     }
 
-    private float[] PlanEndJoints(float[] startJoints, TcpPathPoint start, TcpPathPoint end)
+    /// <summary>
+    /// 规划结束关节角度
+    /// </summary>
+    /// <returns>true=IK有解, false=不可达</returns>
+    private bool PlanEndJoints(float[] startJoints, TcpPathPoint start, TcpPathPoint end, out float[] endJoints)
     {
-        // 规划结束关节角度
         switch (start.Flag)
         {
             case TcpPathPoint.PointFlag.SingularityApproach:
@@ -148,7 +157,8 @@ public class TrajectoryPlanner
                     // 进入奇异状态，J5归零
                     float[] singularity = (float[])startJoints.Clone();
                     singularity[4] = 0f;
-                    return singularity;
+                    endJoints = singularity;
+                    return true;
                 }
             case TcpPathPoint.PointFlag.FlipWrist:
                 {
@@ -163,19 +173,20 @@ public class TrajectoryPlanner
                     adjusted[3] = MathUtil.NormalizeEulerAngle(adjusted[3]);
                     adjusted[5] = MathUtil.NormalizeEulerAngle(adjusted[5]);
 
-                    return adjusted;
-                }
-            case TcpPathPoint.PointFlag.SingularityLeave:
-                {
-                    // 通过IK求解
-                    float[] endJoints = robot.IK.Solve(end.Pose, startJoints) ?? startJoints;
-                    return endJoints;
+                    endJoints = adjusted;
+                    return true;
                 }
             default:
                 {
-                    // 其他类型的点，直接通过IK求解
-                    float[] endJoints = robot.IK.Solve(end.Pose, startJoints) ?? startJoints;
-                    return endJoints;
+                    // 通过IK求解
+                    float[] ikResult = robot.IK.Solve(end.Pose, startJoints);
+                    if (ikResult == null)
+                    {
+                        endJoints = null;
+                        return false;
+                    }
+                    endJoints = ikResult;
+                    return true;
                 }
         }
     }

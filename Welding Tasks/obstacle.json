@@ -1,6 +1,6 @@
 {
   "TaskName": "测试障碍物任务",
-  "UserOrigin": { "x": 2.0, "y": 0.0, "z": 0.3 },
+  "UserOrigin": { "x": 1.0, "y": 0.0, "z": 0.3 },
   "Workpiece": {
     "FileName": "board.glb",
     "Position": { "x": -0.005, "y": -0.25, "z": 0.0 },

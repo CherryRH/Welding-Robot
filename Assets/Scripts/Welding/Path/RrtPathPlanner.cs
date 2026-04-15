@@ -95,6 +95,7 @@ public static class RrtPathPlanner
             return new PlanResult(null, false, 0, 0, 0, 0);
 
         float totalStartDist = Vector3.Distance(start.position, end.position);
+        Debug.Log($"[RRT] Starting: dist={totalStartDist:F3}m, maxIter={maxIterations}, step={stepSize:F3}, goalBias={goalBias}");
 
         // 初始化树
         var root = new RrtNode(start.position, start.rotation);
@@ -169,6 +170,9 @@ public static class RrtPathPlanner
                 var smoothed = ShortcutSmoothing(rawPath, robot, shadowCollisionMonitor, shadowRobotBinder, new SmoothConfig());
                 int afterSmooth = smoothed.Count;
 
+                Debug.Log($"[RRT] Reached goal at iter {iter + 1}: {nodesGenerated} nodes, " +
+                    $"path {beforeSmooth} → {afterSmooth} after smoothing.");
+
                 return new PlanResult(smoothed, true, iter + 1, nodesGenerated, beforeSmooth, afterSmooth);
             }
 
@@ -192,7 +196,7 @@ public static class RrtPathPlanner
         }
 
         // 未到达终点：贪心补救
-        Debug.LogWarning($"[RRT] Max iterations ({maxIterations}) reached, trying fallback.");
+        Debug.LogWarning($"[RRT] Max iterations ({maxIterations}) reached, {nodesGenerated} nodes. Trying fallback.");
         RrtNode best = FindBestEffortNode(nodes, end.position);
         if (best != null && Vector3.Distance(best.Position, end.position) < maxDistanceToGoal * 5f)
         {
@@ -200,9 +204,12 @@ public static class RrtPathPlanner
             List<TcpPathPoint> rawPath = TracePath(goalNode, seam, robot);
             int beforeSmooth = rawPath.Count;
             var smoothed = ShortcutSmoothing(rawPath, robot, shadowCollisionMonitor, shadowRobotBinder, new SmoothConfig());
+            Debug.LogWarning($"[RRT] Fallback success: best node dist={Vector3.Distance(best.Position, end.position):F3}m, " +
+                $"path {beforeSmooth} → {smoothed.Count}");
             return new PlanResult(smoothed, false, maxIterations, nodesGenerated, beforeSmooth, smoothed.Count);
         }
 
+        Debug.LogError($"[RRT] Complete failure: {nodesGenerated} nodes, no valid fallback.");
         return new PlanResult(null, false, maxIterations, nodesGenerated, 0, 0);
     }
 

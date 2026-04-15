@@ -36,18 +36,27 @@ public class TcpPathPlanner
         // 从机械臂当前位置开始，按焊缝顺序规划TCP路径
         Clear();
         Pose currentPose = robot.TCPPose;
-        foreach (var seam in task.WeldSeams)
+        int totalApproachPoints = 0;
+        int totalWeldPoints = 0;
+
+        for (int i = 0; i < task.WeldSeams.Count; i++)
         {
+            var seam = task.WeldSeams[i];
+
             // 规划焊接路径点
             List<TcpPathPoint> weldSeamPoints = weldPlanner.Plan(seam);
             // 路径点数量不足，跳过
             if (weldSeamPoints == null || weldSeamPoints.Count < 2)
+            {
+                Debug.LogWarning($"[TcpPath] Seam {i}: weld path too short ({weldSeamPoints?.Count ?? 0} pts), skipped.");
                 continue;
+            }
+
             // 规划接近路径，取首个焊接点姿态
             Pose targetPose = weldSeamPoints[0].Pose;
             List<TcpPathPoint> approachPoints = approachPlanner.Plan(
                 currentPose, targetPose,
-                shadowCollisionMonitor, shadowRobotBinder, 
+                shadowCollisionMonitor, shadowRobotBinder,
                 seam);
 
             // 追加路径
@@ -56,11 +65,18 @@ public class TcpPathPlanner
             foreach (var item in weldSeamPoints)
                 Points.AddLast(item);
 
+            totalApproachPoints += approachPoints.Count;
+            totalWeldPoints += weldSeamPoints.Count;
+
             // 更新当前姿态
             currentPose = weldSeamPoints[weldSeamPoints.Count - 1].Pose;
         }
+
         // 置位当前节点
         TaskState.CurrentNode = Points.First;
+
+        Debug.Log($"[TcpPath] Plan complete: {task.WeldSeams.Count} seams, " +
+            $"{totalApproachPoints} approach pts + {totalWeldPoints} weld pts = {Points.Count} total.");
     }
 
     public List<TcpPathPoint> GetPathPart()
@@ -76,6 +92,11 @@ public class TcpPathPlanner
             if (point.Flag == TcpPathPoint.PointFlag.End)
                 break;
         }
+
+        if (result.Count > 0)
+            Debug.Log($"[TcpPath] GetPathPart: {result.Count} pts, " +
+                $"{result[0].Type}/{result[0].Flag} → {result[^1].Type}/{result[^1].Flag}");
+
         return result;
     }
 
@@ -91,6 +112,8 @@ public class TcpPathPlanner
 
             case TrajectoryPlanResult.TrajectoryPlanStatus.JointSpeedLimitViolated:
                 TaskState.ToPoint(result.CurrentPoint);
+                Debug.LogWarning($"[TcpPath] Joint speed limit violated at " +
+                    $"{result.CurrentPoint.Type}/{result.CurrentPoint.Flag}, inserting adjust path.");
                 if (TaskState.CurrentNode != null && TaskState.CurrentNode.Value == result.CurrentPoint)
                 {
                     TcpPathPoint point = TaskState.CurrentNode.Value;
@@ -113,7 +136,17 @@ public class TcpPathPlanner
                 }
                 break;
 
+            case TrajectoryPlanResult.TrajectoryPlanStatus.TcpPositionUnreachable:
+                TaskState.Status = WeldTaskPlanState.PlanStatus.Failed;
+                Debug.LogError($"[TcpPath] TCP unreachable at " +
+                    $"{result.CurrentPoint?.Type}/{result.CurrentPoint?.Flag} " +
+                    $"pos=({result.CurrentPoint?.Pose.position.x:F3}, " +
+                    $"{result.CurrentPoint?.Pose.position.y:F3}, " +
+                    $"{result.CurrentPoint?.Pose.position.z:F3}). Task FAILED.");
+                break;
+
             default:
+                Debug.LogWarning($"[TcpPath] Unknown plan status: {result.PlanStatus}");
                 break;
         }
 
@@ -138,14 +171,22 @@ public class TcpPathPlanner
         CollisionMonitor shadowCollisionMonitor,
         RobotBinder shadowRobotBinder)
     {
-        if (currentSegment == null) return;
+        if (currentSegment == null)
+        {
+            Debug.LogWarning("[TcpPath] ReplanFromPosition: currentSegment is null, abort.");
+            return;
+        }
 
         TcpPathPoint startPoint = currentSegment.StartPoint;
         TcpPathPoint endPoint = currentSegment.EndPoint;
 
         // ===== Step 1：定位 EndPoint 节点 =====
         LinkedListNode<TcpPathPoint> endNode = FindNode(endPoint);
-        if (endNode == null) return;
+        if (endNode == null)
+        {
+            Debug.LogWarning("[TcpPath] ReplanFromPosition: endNode not found in Points, abort.");
+            return;
+        }
 
         // ===== Step 2：向前遍历，找到 Approach End（第一个 Flag=End 的节点）=====
         LinkedListNode<TcpPathPoint> approachEndNode = endNode;
@@ -155,10 +196,18 @@ public class TcpPathPlanner
                 break;
             approachEndNode = approachEndNode.Next;
         }
-        if (approachEndNode == null) return;
+        if (approachEndNode == null)
+        {
+            Debug.LogWarning("[TcpPath] ReplanFromPosition: no End-flag node found after endNode, abort.");
+            return;
+        }
 
         Pose targetPose = approachEndNode.Value.Pose;
         WeldSeam targetSeam = approachEndNode.Value.Seam;
+
+        Debug.Log($"[TcpPath] Replan: truncating from " +
+            $"({endPoint.Type}/{endPoint.Flag}) to ({approachEndNode.Value.Type}/{approachEndNode.Value.Flag}), " +
+            $"target=({targetPose.position.x:F3}, {targetPose.position.y:F3}, {targetPose.position.z:F3})");
 
         // ===== Step 3：在 StartPoint 之后插入截断 End 点 =====
         TcpPathPoint truncateEnd = new(
@@ -169,25 +218,32 @@ public class TcpPathPlanner
             robot.Config.TCPMaxSpeed);
 
         LinkedListNode<TcpPathPoint> startNode = FindNode(startPoint);
-        if (startNode == null) return;
+        if (startNode == null)
+        {
+            Debug.LogWarning("[TcpPath] ReplanFromPosition: startNode not found in Points, abort.");
+            return;
+        }
 
         LinkedListNode<TcpPathPoint> insertAfter = Points.AddAfter(startNode, truncateEnd);
 
         // ===== Step 4：删除 EndPoint 到 ApproachEnd（含）的所有节点 =====
+        int removedCount = 0;
         LinkedListNode<TcpPathPoint> removeNode = endNode;
         while (removeNode != null && removeNode != approachEndNode)
         {
             LinkedListNode<TcpPathPoint> next = removeNode.Next;
             Points.Remove(removeNode);
             removeNode = next;
+            removedCount++;
         }
         // 删除 approachEndNode
         if (removeNode == approachEndNode)
+        {
             Points.Remove(approachEndNode);
+            removedCount++;
+        }
 
         // ===== Step 5：重新规划接近路径并插入 =====
-        // 注意：链表现在是：startNode → truncateEnd → 原remaining部分
-        // 在truncateEnd之后插入新接近路径即可
         List<TcpPathPoint> newApproach = approachPlanner.Plan(
             robot.TCPPose,
             targetPose,
@@ -201,6 +257,10 @@ public class TcpPathPlanner
 
         // ===== Step 6：CurrentNode 指向新路径 Start 点 =====
         TaskState.CurrentNode = Points.Find(newApproach[0]);
+
+        Debug.Log($"[TcpPath] Replan done: removed {removedCount} nodes, " +
+            $"inserted {newApproach.Count} new approach pts. " +
+            $"List size now {Points.Count}.");
     }
 
     /// <summary>

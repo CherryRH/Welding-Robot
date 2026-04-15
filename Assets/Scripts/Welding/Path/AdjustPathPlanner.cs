@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// µ÷ÕûÂ·¾¶¹æ»®Æ÷
+/// è°ƒæ•´è·¯å¾„è§„åˆ’å™¨
 /// </summary>
 public class AdjustPathPlanner
 {
@@ -17,23 +17,31 @@ public class AdjustPathPlanner
     public List<TcpPathPoint> Plan(Pose pose, WeldSeam seam = null)
     {
         List<TcpPathPoint> points = new();
-        if (pose == null) return points;
-        // Æğµã
+        if (pose == null) 
+        {
+            Debug.LogWarning("[Adjust] Pose is null, returning empty.");
+            return points;
+        }
+
+        Debug.Log($"[Adjust] Planning adjust path at ({pose.position.x:F3}, {pose.position.y:F3}, {pose.position.z:F3})");
+
+        // èµ·ç‚¹
         points.Add(new(pose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
-        // °²È«¸ß¶È£¬¿ªÊ¼µ÷×Ë
+        // å®‰å…¨é«˜åº¦ï¼ˆèµ·ç‚¹ï¼‰
         Pose safePose = robot.GetSafePose(pose);
         points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
-        // ½øÈëÆæÒì×´Ì¬
+        // è¿›å…¥å¥‡å¼‚çŠ¶æ€
         points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.SingularityApproach, seam, robot.Config.TCPMaxSpeed));
-        // ·­Íó
+        // ç¿»è½¬è…•éƒ¨
         points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.FlipWrist, seam, robot.Config.TCPMaxSpeed));
-        // Àë¿ªÆæÒì×´Ì¬
+        // ç¦»å¼€å¥‡å¼‚çŠ¶æ€
         points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.SingularityLeave, seam, robot.Config.TCPMaxSpeed));
-        // ÏÂ½µµ½³õÊ¼¸ß¶È
+        // ä¸‹é™åˆ°èµ·å§‹é«˜åº¦
         points.Add(new(safePose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
-        // »Øµ½ÆğÊ¼µã
+        // å›åˆ°èµ·å§‹ç‚¹
         points.Add(new(pose, TcpPathPoint.PointType.Adjust, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
 
+        Debug.Log($"[Adjust] Done: {points.Count} points");
         return points;
     }
 }

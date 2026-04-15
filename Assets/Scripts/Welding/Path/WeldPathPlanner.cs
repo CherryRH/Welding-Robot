@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// º¸½ÓÂ·¾¶µã¹æ»®Æ÷
+/// ç„Šæ¥è·¯å¾„è§„åˆ’å™¨
 /// </summary>
 public class WeldPathPlanner
 {
     /// <summary>
-    /// ×î´ó¼ä¸ô£¨Ã×£©
+    /// æœ€å¤§é‡‡æ ·é—´éš”ï¼ˆç±³ï¼‰
     /// </summary>
     public float MaxInterval = 0.01f;
 
     /// <summary>
-    /// ×îĞ¡¼ä¸ô£¨Ã×£©
+    /// æœ€å°é‡‡æ ·é—´éš”ï¼ˆç±³ï¼‰
     /// </summary>
     public float MinInterval = 0.001f;
 
@@ -27,30 +27,36 @@ public class WeldPathPlanner
     public List<TcpPathPoint> Plan(WeldSeam seam)
     {
         List<TcpPathPoint> points = new();
-        if (seam == null || seam.Length <= 0) return points;
+        if (seam == null || seam.Length <= 0)
+        {
+            Debug.LogWarning("[Weld] Seam null or zero length, returning empty.");
+            return points;
+        }
 
-        // ²ÉÑù²ÎÊı
+        Debug.Log($"[Weld] Planning seam: length={seam.Length:F3}m");
+
+        // é‡‡æ ·
         float s = 0f;
         List<float> samples = new() { s };
         while (s < 1f)
         {
-            // ¸ù¾İµ±Ç°ÇúÂÊ¼ÆËã¼ä¸ô
+            // æ ¹æ®å½“å‰è·¯å¾„é•¿åº¦é‡‡æ ·
             float currentCurvature = seam.GetCurvature(s);
             float interval = CalculateAdaptiveInterval(currentCurvature);
 
-            // È·±£ s ²»³¬¹ı 1
+            // ç¡®ä¿ s æœ€ç»ˆåˆ°è¾¾ 1
             s = Mathf.Min(s + interval / seam.Length, 1f);
 
-            // ±ÜÃâÖØ¸´Ìí¼Ó£¨Èç¹û s ÒÑ¾­ÊÇ 1f£¬Ìø¹ıÌí¼Ó£¬ÓÉºóÃæµÄÈ·±£Óï¾ä´¦Àí£©
+            // æ·»åŠ åˆ°æ ·æœ¬ï¼ˆå¦‚æœ s å·²ç»è¾¾åˆ° 1f åˆ™ä¸æ·»åŠ ï¼Œç­‰åé¢çš„ 1f æ£€æŸ¥å¤„ç†ï¼‰
             if (s < 1f)
                 samples.Add(s);
         }
 
-        // È·±£Ä©¶Ëµã±»²ÉÑù£¨Èç¹û×îºóÒ»¸öµã²»ÊÇ 1f£©
+        // ç¡®ä¿ç»ˆç‚¹è¢«åŒ…å«ï¼ˆå¦‚æœæœ€åä¸€ä¸ªæ ·æœ¬ä¸æ˜¯ 1fï¼Œåˆ™æ·»åŠ ï¼‰
         if (samples.Count == 0 || samples[^1] < 1f)
             samples.Add(1f);
 
-        // Éú³É TCP Â·¾¶µã
+        // ç”Ÿæˆ TCP è·¯å¾„ç‚¹
         for (int i = 0; i < samples.Count; i++)
         {
             s = samples[i];
@@ -64,36 +70,38 @@ public class WeldPathPlanner
 
             points.Add(new TcpPathPoint(pose, TcpPathPoint.PointType.Weld, flag, seam, seam.Speed));
         }
+
+        Debug.Log($"[Weld] Seam done: {points.Count} TCP points");
         return points;
     }
 
     /// <summary>
-    /// ¼ÆËã×ÔÊÊÓ¦²ÉÑù¼ä¸ô
+    /// è‡ªé€‚åº”é‡‡æ ·é—´éš”è®¡ç®—
     /// </summary>
     private float CalculateAdaptiveInterval(float curvature)
     {
-        // Ê¹ÓÃ·ÇÏßĞÔÓ³Éä£ºÇúÂÊÔ½´ó£¬¼ä¸ôÔ½Ğ¡
+        // ä½¿ç”¨åæ¯”ä¾‹æ˜ å°„ï¼šæ›²ç‡è¶Šå¤§ï¼Œé—´éš”è¶Šå°
         float ds = MinInterval + (MaxInterval - MinInterval) / (1 + curvature * 1e-1f);
 
         return ds;
     }
 
     /// <summary>
-    /// ¼ÆËãº¸Ç¹TCPÎ»×Ë
+    /// è®¡ç®—ç„ŠæªTCPä½ç½®
     /// </summary>
     private Pose CalculateTcpPose(WeldSeam seam, Vector3 weldPoint, Vector3 weldDirection)
     {
-        // ¼ÆËãº¸Ç¹·½Ïò
+        // è®¡ç®—ç„Šæªæ–¹å‘
         Vector3 right = Vector3.Cross(weldDirection, seam.Normal).normalized;
         float gunAngleRad = seam.GunAngle * Mathf.Deg2Rad;
         Vector3 gunDirection = -(Mathf.Cos(gunAngleRad) * right + Mathf.Sin(gunAngleRad) * seam.Normal).normalized;
 
-        // Ó¦ÓÃº¸Ç¹¾àÀë£ºº¸Ç¹Î»ÖÃ = º¸½Óµã - º¸Ç¹·½Ïò * ¾àÀë
+        // åº”ç”¨ç„Šæªè·ç¦»ï¼šç„Šæªä½ç½® = ç„Šç‚¹ - ç„Šæªæ–¹å‘ * è·ç¦»
         Vector3 gunPosition = weldPoint - gunDirection * seam.GunDistance;
-        // ×ª»¯µ½»ù×ù×ø±êÏµ
+        // è½¬æ¢åˆ°æœºå™¨äººåæ ‡ç³»
         gunPosition = robot.UserToRobot(gunPosition);
 
-        // ¼ÆËãº¸Ç¹Ğı×ª£ºZÖáÖ¸Ïòº¸Ç¹·½Ïò£¬YÖáÖ¸Ïòº¸½Ó·½Ïò
+        // è®¡ç®—ç„Šæªæ—‹è½¬ï¼šZè½´æŒ‡å‘ç„Šæªæ–¹å‘ï¼ŒYè½´æŒ‡å‘ç„Šæ¥æ–¹å‘
         Quaternion gunRotation = Quaternion.LookRotation(gunDirection, weldDirection);
 
         return new Pose(gunPosition, gunRotation);
