@@ -351,7 +351,7 @@ public static class RrtPathPlanner
 
             path.Add(new TcpPathPoint(
                 new Pose(nodeList[i].Position, nodeList[i].Rotation),
-                TcpPathPoint.PointType.Approach, flag, seam, robot.Config.TCPMaxSpeed));
+                WeldStateType.Approach, flag, seam, robot.Config.TCPMaxSpeed));
         }
         return path;
     }

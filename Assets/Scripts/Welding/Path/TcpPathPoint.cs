@@ -25,13 +25,7 @@ public class TcpPathPoint
     /// <summary>
     /// 路径点类型
     /// </summary>
-    public enum PointType
-    {
-        Approach,
-        Weld,
-        Adjust
-    }
-    public PointType Type = PointType.Approach;
+    public WeldStateType Type = WeldStateType.Approach;
 
     /// <summary>
     /// 路径点标记
@@ -47,7 +41,7 @@ public class TcpPathPoint
     }
     public PointFlag Flag = PointFlag.Start;
 
-    public TcpPathPoint(Pose pose, PointType type, PointFlag flag, WeldSeam weldSeam = null, float speed = 0f)
+    public TcpPathPoint(Pose pose, WeldStateType type, PointFlag flag, WeldSeam weldSeam = null, float speed = 0f)
     {
         Pose = pose;
         Type = type;

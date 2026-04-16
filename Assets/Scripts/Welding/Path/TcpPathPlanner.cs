@@ -212,7 +212,7 @@ public class TcpPathPlanner
         // ===== Step 3：在 StartPoint 之后插入截断 End 点 =====
         TcpPathPoint truncateEnd = new(
             robot.TCPPose,
-            TcpPathPoint.PointType.Approach,
+            WeldStateType.Approach,
             TcpPathPoint.PointFlag.End,
             targetSeam,
             robot.Config.TCPMaxSpeed);

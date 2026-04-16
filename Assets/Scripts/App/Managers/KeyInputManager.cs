@@ -159,5 +159,6 @@ public class KeyInputManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.RightShift)) OnCommandKeyPressed?.Invoke(KeyCode.RightShift);
         if (Input.GetKeyDown(KeyCode.Space)) OnCommandKeyPressed?.Invoke(KeyCode.Space);
         if (Input.GetKeyDown(KeyCode.Escape)) OnCommandKeyPressed?.Invoke(KeyCode.Escape);
+        if (Input.GetKeyDown(KeyCode.Tab)) OnCommandKeyPressed?.Invoke(KeyCode.Tab);
     }
 }

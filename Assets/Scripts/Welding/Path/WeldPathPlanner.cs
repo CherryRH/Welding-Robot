@@ -68,7 +68,7 @@ public class WeldPathPlanner
             if (i == 0) flag = TcpPathPoint.PointFlag.Start;
             else if (i == samples.Count - 1) flag = TcpPathPoint.PointFlag.End;
 
-            points.Add(new TcpPathPoint(pose, TcpPathPoint.PointType.Weld, flag, seam, seam.Speed));
+            points.Add(new TcpPathPoint(pose, WeldStateType.Weld, flag, seam, seam.Speed));
         }
 
         Debug.Log($"[Weld] Seam done: {points.Count} TCP points");

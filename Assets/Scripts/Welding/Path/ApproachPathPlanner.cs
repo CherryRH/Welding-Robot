@@ -85,16 +85,15 @@ public class ApproachPathPlanner
     private List<TcpPathPoint> PlanSafePath(Pose start, Pose end, WeldSeam seam = null)
     {
         List<TcpPathPoint> points = new();
-        points.Add(new(start, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
+        points.Add(new(start, WeldStateType.Approach, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
 
         Pose safePose = robot.GetSafePose(start);
         safePose.rotation = end.rotation;
-        points.Add(new(safePose, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
+        points.Add(new(safePose, WeldStateType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
 
         Pose endSafe = robot.GetSafePose(end);
-        points.Add(new(endSafe, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
-        points.Add(new(end, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
-
+        points.Add(new(endSafe, WeldStateType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
+        points.Add(new(end, WeldStateType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
         Debug.Log($"[Approach] Safe: {points.Count} pts (start → safe-start → safe-end → end)");
         return points;
     }
@@ -102,8 +101,8 @@ public class ApproachPathPlanner
     private List<TcpPathPoint> PlanDirectPath(Pose start, Pose end, WeldSeam seam = null)
     {
         List<TcpPathPoint> points = new();
-        points.Add(new(start, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
-        points.Add(new(end, TcpPathPoint.PointType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
+        points.Add(new(start, WeldStateType.Approach, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
+        points.Add(new(end, WeldStateType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
 
         Debug.Log($"[Approach] Direct: 2 pts");
         return points;
@@ -120,10 +119,10 @@ public class ApproachPathPlanner
     {
         var result = RrtPathPlanner.Plan(
             start, end, robot, shadowCollisionMonitor, shadowRobotBinder, seam,
-            maxIterations: 2000,
-            stepSize: 0.015f,
-            goalBias: 0.1f,
-            maxDistanceToGoal: 0.015f,
+            maxIterations: 5000,
+            stepSize: 0.02f,
+            goalBias: 0.2f,
+            maxDistanceToGoal: 0.02f,
             enableShortcutSmoothing: false);  // 捷径优化默认关闭，与 PathSmoother 冲突
 
         if (result.Success)

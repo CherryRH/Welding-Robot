@@ -7,13 +7,7 @@ using UnityEngine;
 /// </summary>
 public class TrajectorySegment
 {
-    public enum TrajectorySegmentType
-    {
-        Approach,
-        Weld,
-        Adjust
-    }
-    public TrajectorySegmentType Type;
+    public WeldStateType Type;
 
     public TcpPathPoint StartPoint;
     public TcpPathPoint EndPoint;
@@ -27,7 +21,7 @@ public class TrajectorySegment
     public IJointInterpolator Interpolation;
 
     public TrajectorySegment(
-        TrajectorySegmentType type,
+        WeldStateType type,
         TcpPathPoint startPoint, TcpPathPoint endPoint,
         float startTime, float endTime,
         float[] qStart, float[] qEnd,

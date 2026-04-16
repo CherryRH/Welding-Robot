@@ -1,10 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// ∑¬’Êøÿ÷∆ UI
+/// ÊéßÂà∂Èù¢Êùø UI
 /// </summary>
 public class ControlView : MonoBehaviour
 {
@@ -50,8 +48,21 @@ public class ControlView : MonoBehaviour
         }
         else if (stateBase is WorkState workState)
         {
-            
+            if (context.Task != null)
+            {
+                text += $"Task: {context.Task.TaskName}\n";
+            }
         }
+        else if (stateBase is ReplayState replayState)
+        {
+            var resultData = context.ResultWriter.GetResultData();
+            if (resultData != null)
+            {
+                text += $"Task: {resultData.TaskName}\n";
+                text += $"Status: {resultData.PlanStatus}";
+            }
+        }
+
         StateDetailText.text = text;
 
         switch (context.RobotModel.IK.IKMethod)
@@ -84,6 +95,9 @@ public class ControlView : MonoBehaviour
             case SimulationState.Fail:
                 StateText.text = "Fail";
                 break;
+            case SimulationState.Replay:
+                StateText.text = "Replay";
+                break;
             case SimulationState.Joint:
                 StateText.text = "Rotate Joint";
                 break;
@@ -100,11 +114,11 @@ public class ControlView : MonoBehaviour
 
     void Start()
     {
-        
+
     }
 
     void Update()
     {
-        
+
     }
 }

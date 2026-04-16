@@ -42,13 +42,25 @@ public class WeldResultFrame
     /// </summary>
     public float[] JointAccelerations;
 
+    /// <summary>
+    /// 当前轨迹点类型（Approach / Weld / Adjust）
+    /// </summary>
+    public WeldStateType PointType;
+
+    /// <summary>
+    /// 所属焊缝 ID（-1 表示不属于任何焊缝）
+    /// </summary>
+    public int SeamId;
+
     public WeldResultFrame(
         float timestamp,
         Vector3 tcpPos,
         Vector3 tcpVel,
         float[] jointAngles,
         float[] jointVelocities,
-        float[] jointAccelerations)
+        float[] jointAccelerations,
+        WeldStateType segmentType = WeldStateType.Approach,
+        int seamId = -1)
     {
         Timestamp = timestamp;
         TcpPosition = tcpPos;
@@ -57,5 +69,7 @@ public class WeldResultFrame
         JointAngles = (float[])jointAngles.Clone();
         JointVelocities = (float[])jointVelocities.Clone();
         JointAccelerations = (float[])jointAccelerations.Clone();
+        PointType = segmentType;
+        SeamId = seamId;
     }
 }

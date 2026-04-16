@@ -1,35 +1,36 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// TCPÂ·¾¶¿ÉÊÓ»¯Æ÷
+/// TCP è·¯å¾„å¯è§†åŒ–å™¨
 /// </summary>
 public class TcpPathVisualizer : MonoBehaviour
 {
     public GameObject SamplePoint;
 
-    private Dictionary<TcpPathPoint, GameObject> samplePoints = new();
+    private Dictionary<TcpPathPoint, GameObject> tcpPathPoints = new();
+
+    private Dictionary<WeldPointData, GameObject> weldPoints = new();
 
     void Start()
     {
-        
+
     }
 
     void Update()
     {
-        
+
     }
 
     public void ShowTcpPathPoints(TcpPathPlanner tcpPathPlanner)
     {
-        // ÏÔÊ¾²ÉÑùµã
+        // æ¸…é™¤æ—§æ•°æ®
         Clear();
         int i = 0;
         foreach (TcpPathPoint item in tcpPathPlanner.Points)
         {
             Pose pose = item.Pose;
-            // ÊµÀı»¯²ÉÑùµã
+            // å®ä¾‹åŒ–é‡‡æ ·ç‚¹
             GameObject point = Instantiate(
                 SamplePoint,
                 MathUtil.D2UPosition(pose.position),
@@ -37,17 +38,43 @@ public class TcpPathVisualizer : MonoBehaviour
                 transform
             );
             point.name = $"TcpPathPoint_{item.Type}_{++i}";
-            samplePoints.Add(item, point);
+            tcpPathPoints.Add(item, point);
+        }
+    }
+
+    /// <summary>
+    /// æ˜¾ç¤ºç„Šæ¥ç‚¹æ•°æ®åˆ—è¡¨ï¼ˆç”¨äº Replay çŠ¶æ€ï¼‰
+    /// </summary>
+    public void ShowWeldPointData(List<WeldPointData> points)
+    {
+        Clear();
+        int i = 0;
+        foreach (var item in points)
+        {
+            Pose pose = item.TcpPose;
+            GameObject point = Instantiate(
+                SamplePoint,
+                MathUtil.D2UPosition(pose.position),
+                MathUtil.D2URotation(pose.rotation),
+                transform
+            );
+            point.name = $"WeldPoint_{item.Type}_{++i}";
+            weldPoints.Add(item, point);
         }
     }
 
     public void Clear()
     {
-        // Çå³ı²ÉÑùµã
-        foreach (var item in samplePoints)
+        // æ¸…é™¤æ‰€æœ‰ç‚¹
+        foreach (var item in tcpPathPoints)
         {
             Destroy(item.Value);
         }
-        samplePoints.Clear();
+        tcpPathPoints.Clear();
+        foreach (var item in weldPoints)
+        {
+            Destroy(item.Value);
+        }
+        weldPoints.Clear();
     }
 }

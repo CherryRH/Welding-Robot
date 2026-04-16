@@ -36,12 +36,12 @@ public class TrajectoryPlanner
         }
 
         // 路径类型
-        TrajectorySegmentType segmentType = points[0].Type switch
+        WeldStateType segmentType = points[0].Type switch
         {
-            TcpPathPoint.PointType.Weld => TrajectorySegmentType.Weld,
-            TcpPathPoint.PointType.Approach => TrajectorySegmentType.Approach,
-            TcpPathPoint.PointType.Adjust => TrajectorySegmentType.Adjust,
-            _ => TrajectorySegmentType.Approach
+            WeldStateType.Weld => WeldStateType.Weld,
+            WeldStateType.Approach => WeldStateType.Approach,
+            WeldStateType.Adjust => WeldStateType.Adjust,
+            _ => WeldStateType.Approach
         };
         // 记录每个点的时间和关节角
         List<float> timeList = new();
@@ -106,7 +106,7 @@ public class TrajectoryPlanner
         return result;
     }
 
-    private void BuildLinearTrajectory(List<TcpPathPoint> points, List<float> timeList, List<float[]> jointsList, TrajectorySegmentType segmentType)
+    private void BuildLinearTrajectory(List<TcpPathPoint> points, List<float> timeList, List<float[]> jointsList, WeldStateType segmentType)
     {
         // 构造关节空间线性插值下的轨迹
         for (int i = 0; i < timeList.Count-1; i++)
@@ -125,7 +125,7 @@ public class TrajectoryPlanner
         }
     }
 
-    private void BuildCubicHermiteTrajectory(List<TcpPathPoint> points, List<float> timeList, List<float[]> jointsList, List<float[]> velocities, TrajectorySegmentType segmentType)
+    private void BuildCubicHermiteTrajectory(List<TcpPathPoint> points, List<float> timeList, List<float[]> jointsList, List<float[]> velocities, WeldStateType segmentType)
     {
         // 构造关节空间三次Hermite样条插值下的轨迹段
         for (int i = 0; i < timeList.Count-1; i++)
@@ -197,9 +197,9 @@ public class TrajectoryPlanner
         float duration = 0f;
         duration = start.Type switch
         {
-            TcpPathPoint.PointType.Weld => GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed),
-            TcpPathPoint.PointType.Approach => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints)),
-            TcpPathPoint.PointType.Adjust => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints, 2.0f)),
+            WeldStateType.Weld => GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed),
+            WeldStateType.Approach => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints)),
+            WeldStateType.Adjust => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints, 2.0f)),
             _ => Mathf.Max(GetTcpReferenceDuration(start.Pose, end.Pose, start.Speed), GetJointLimitedDuration(startJoints, endJoints))
         };
         return duration;

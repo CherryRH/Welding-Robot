@@ -24,10 +24,13 @@ public class WeldResultDataWriter
     /// <summary>
     /// 记录仿真帧的实时数据
     /// </summary>
-    public void RecordFrame(float timestamp, RobotModel robotModel)
+    public void RecordFrame(float timestamp, RobotModel robotModel, TrajectorySegment currentSegment = null)
     {
         // 跳过 t=0 的预触发帧（用于建立参照，不保存）
         if (timestamp <= 0f) return;
+
+        WeldStateType segmentType = currentSegment?.Type ?? WeldStateType.Approach;
+        int seamId = currentSegment?.EndPoint?.Seam?.Id ?? -1;
 
         var frame = new WeldResultFrame(
             timestamp,
@@ -35,7 +38,9 @@ public class WeldResultDataWriter
             robotModel.SmoothedTcpVelocity,
             robotModel.JointAngles,
             robotModel.JointVelocities,
-            robotModel.JointAccelerations
+            robotModel.JointAccelerations,
+            segmentType,
+            seamId
         );
         resultData.AddFrame(frame);
 

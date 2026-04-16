@@ -38,6 +38,7 @@ public class SimulationStateMachine
             { SimulationState.Work, new WorkState(this) },
             { SimulationState.Succeed, new SucceedState(this) },
             { SimulationState.Fail, new FailState(this) },
+            { SimulationState.Replay, new ReplayState(this) },
             { SimulationState.Joint, new JointState(this) },
             { SimulationState.TCP, new TCPState(this) }
         };
@@ -124,8 +125,10 @@ public class SimulationStateMachine
         return from switch
         {
             SimulationState.Idle => to == SimulationState.Work || to == SimulationState.Joint || to == SimulationState.TCP,
-            SimulationState.Joint or SimulationState.TCP or SimulationState.Succeed or SimulationState.Fail => to == SimulationState.Idle,
+            SimulationState.Joint or SimulationState.TCP => to == SimulationState.Idle,
+            SimulationState.Succeed or SimulationState.Fail => to == SimulationState.Idle || to == SimulationState.Replay,
             SimulationState.Work => to == SimulationState.Idle || to == SimulationState.Succeed || to == SimulationState.Fail,
+            SimulationState.Replay => to == SimulationState.Idle,
             _ => false,
         };
     }
@@ -144,6 +147,8 @@ public enum SimulationState
     Succeed = 4,
     // 失败，焊接任务失败
     Fail = 5,
+    // 重播，回放上一次仿真的帧数据
+    Replay = 6,
     // 关节控制，直接控制关节旋转
     Joint = 9,
     // TCP 控制，直接控制 TCP 平移

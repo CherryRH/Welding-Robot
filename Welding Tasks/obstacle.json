@@ -1,5 +1,5 @@
 {
-  "TaskName": "测试障碍物任务",
+  "TaskName": "Obstacle",
   "UserOrigin": { "x": 1.0, "y": 0.0, "z": 0.3 },
   "Workpiece": {
     "FileName": "board.glb",

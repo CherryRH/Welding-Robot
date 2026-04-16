@@ -64,7 +64,7 @@ public class MoltenPoolVisualizer : MonoBehaviour
     }
 
     /// <summary>
-    /// 每帧采样 — 射线检测 + 追加顶点
+    /// 每帧采样（通用重载，直接传入段类型，用于 Replay 等无 Trajectory 的场景）
     /// </summary>
     /// <param name="tcp">TCP Transform</param>
     /// <param name="tcpSpeed">当前 TCP 线速度标量（m/s）</param>

@@ -127,17 +127,15 @@ public class SimulationContext : MonoBehaviour
 
             // 6. 更新实时数据（速度等）并记录仿真帧
             RobotModel.UpdateRealtimeData(Clock.Time, Clock.FixedDeltaTime);
-            if (Clock.IsRunning)
+            if (StateMachine.CurrentState == SimulationState.Work)
             {
-                ResultWriter.RecordFrame(Clock.Time, RobotModel);
+                ResultWriter.RecordFrame(Clock.Time, RobotModel, Trajectory.CurrentSegment);
             }
 
             // 7. 熔池可视化采样（仅焊接段）
-            if (Clock.IsRunning && MoltenPoolVisualizer != null)
+            if (Clock.IsRunning && MoltenPoolVisualizer != null && Trajectory.CurrentSegment != null)
             {
-                bool isWelding = Trajectory.CurrentSegment != null &&
-                                 Trajectory.CurrentSegment.Type == TrajectorySegment.TrajectorySegmentType.Weld;
-                if (isWelding)
+                if (Trajectory.CurrentSegment.Type == WeldStateType.Weld)
                 {
                     MoltenPoolVisualizer.AddSample(RobotBinder.Tcp, RobotModel.TcpSpeed);
                 }
