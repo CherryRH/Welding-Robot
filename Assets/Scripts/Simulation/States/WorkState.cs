@@ -17,7 +17,7 @@ public class WorkState : SimulationStateBase
         ctx.TcpPathVisualizer.ShowTcpPathPoints(ctx.TcpPathPlanner);
 
         // 初始化结果记录器
-        ctx.ResultWriter.Init(ctx.Task?.TaskName ?? "UnknownTask");
+        ctx.ResultWriter.Init(ctx.Task ?? null);
 
         // 重置实时数据状态（速度、加速度等）
         ctx.RobotModel.ResetRealtimeData();

@@ -1,6 +1,5 @@
 {
   "TaskName": "Corner",
-  "WorkpieceFileName": "example_workpiece.fbx",
   "UserOrigin": { "x": 1.0, "y": 0.0, "z": 0.3 },
   "WeldSeams": [
     {

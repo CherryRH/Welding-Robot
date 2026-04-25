@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
-/// ¹¤×÷Ì¨°ó¶¨
+/// å·¥ä½œå°ç»‘å®šå™¨
 /// </summary>
 public class WorkbenchBinder : MonoBehaviour
 {
@@ -15,15 +15,15 @@ public class WorkbenchBinder : MonoBehaviour
 
     public Material WorkpieceMaterial;
 
-    // ¹¤×÷Ì¨Åö×²Ïä
+    // å·¥ä½œå°ç¢°æ’ç®±
     public BoxCollider WorkbenchCollider;
 
-    // ¹¤¼şÅö×²Ïä£¨¶¯Ì¬¼ÓÔØºóÌî³ä£©
+    // å·¥ä»¶ç¢°æ’ç®±ï¼ˆåŠ¨æ€æ·»åŠ å’Œç§»é™¤ï¼‰
     public List<BoxCollider> WorkpieceColliders = new();
 
     private GlbLoader glbLoader;
 
-    // Åö×²Ïä¿ÉÊÓ»¯Ïà¹Ø
+    // ç¢°æ’ç®±å¯è§†åŒ–å™¨
     private List<int> colliderVisualIds = new();
     private ColliderVisualizer colliderVisualizer;
 
@@ -46,7 +46,7 @@ public class WorkbenchBinder : MonoBehaviour
     public void Bind(WeldTask task)
     {
         if (task == null) return;
-        // ÉèÖÃ¹¤×÷Ì¨Î»ÖÃ
+        // è®¾ç½®å·¥ä½œå°ä½ç½®
         Vector3 originPos = MathUtil.D2UPosition(task.UserOrigin);
         originPos.y -= 0.5f;
         transform.position = originPos;
@@ -54,59 +54,78 @@ public class WorkbenchBinder : MonoBehaviour
 
     public async Task LoadWorkpiece(Workpiece w, string directory)
     {
-        // ¼ÓÔØ¹¤¼şµ½¹¤×÷Ì¨ÉÏ
+        // åŠ è½½å·¥ä»¶åˆ°å·¥ä½œå°
         if (w == null || glbLoader == null) return;
-        string file = Path.Combine(directory, w.FileName);
-        if (File.Exists(file))
+        
+        // æ¸…ç©ºæ—§çš„å·¥ä»¶ç¢°æ’ç®±åˆ—è¡¨
+        WorkpieceColliders.Clear();
+        
+        string file = string.IsNullOrEmpty(w.FileName) ? null : Path.Combine(directory, w.FileName);
+        bool hasModelFile = !string.IsNullOrEmpty(file) && File.Exists(file);
+        
+        Vector3 pos = MathUtil.D2UPosition(w.Position);
+        Quaternion rot = MathUtil.D2URotation(Quaternion.Euler(w.Rotation));
+        Vector3 scale = MathUtil.Abs(MathUtil.D2UPosition(w.Scale));
+        
+        if (hasModelFile)
         {
+            // åŠ è½½æ¨¡å‹æ–‡ä»¶
             Workpiece = await glbLoader.LoadAsync(file, Origin);
-            Vector3 pos = MathUtil.D2UPosition(w.Position);
-            Quaternion rot = MathUtil.D2URotation(Quaternion.Euler(w.Rotation));
-            Vector3 scale = MathUtil.Abs(MathUtil.D2UPosition(w.Scale));
             Workpiece.transform.SetLocalPositionAndRotation(pos, rot);
             Workpiece.transform.localScale = w.Scale;
-
-            // Çå¿Õ¾ÉµÄ¹¤¼şÅö×²ÏäÒıÓÃ
-            WorkpieceColliders.Clear();
-
-            foreach (var c in w.Colliders)
-            {
-                BoxCollider box = Workpiece.AddComponent<BoxCollider>();
-
-                // 1. ÏÈ°Ñ Data ×ø±êÏµµÄµã×ª»»µ½ Unity ×ø±êÏµ
-                Vector3 startU = MathUtil.D2UPosition(c.Min);
-                Vector3 endU = MathUtil.D2UPosition(c.Max);
-
-                // 2. ±ä»»µ½¹¤¼şµÄ¾Ö²¿¿Õ¼ä£¨ÄæÏòÓ¦ÓÃ¹¤¼şµÄĞı×ª£©
-                Vector3 startLocal = Quaternion.Inverse(rot) * startU;
-                Vector3 endLocal = Quaternion.Inverse(rot) * endU;
-
-                // 3. Ó¦ÓÃËõ·Å
-                startLocal = MathUtil.Division(startLocal, scale);
-                endLocal = MathUtil.Division(endLocal, scale);
-
-                // 4. ¼ÆËãÖĞĞÄµãºÍ³ß´ç
-                box.center = (startLocal + endLocal) / 2f;
-                box.size = MathUtil.Abs(startLocal - endLocal);
-
-                // ±£´æÒıÓÃ
-                WorkpieceColliders.Add(box);
-            }
         }
         else
         {
-            Debug.LogWarning($"Workpiece file does not exist: {file}");
+            // æ²¡æœ‰æ¨¡å‹æ–‡ä»¶ï¼Œåˆ›å»º empty GameObject
+            if (!string.IsNullOrEmpty(file))
+            {
+                Debug.LogWarning($"Workpiece file does not exist: {file}, creating empty GameObject instead.");
+            }
+            else
+            {
+                Debug.Log("No workpiece file specified, creating empty GameObject.");
+            }
+            
+            Workpiece = new GameObject("Workpiece_Empty");
+            Workpiece.transform.SetParent(Origin, false);
+            Workpiece.transform.SetLocalPositionAndRotation(pos, rot);
+            Workpiece.transform.localScale = w.Scale;
+        }
+        
+        // æ·»åŠ å·¥ä»¶ç¢°æ’ç®±
+        foreach (var c in w.Colliders)
+        {
+            BoxCollider box = Workpiece.AddComponent<BoxCollider>();
+
+            // 1. å…ˆæŠŠ Data åæ ‡ç³»çš„ç‚¹è½¬æ¢åˆ° Unity åæ ‡ç³»
+            Vector3 startU = MathUtil.D2UPosition(c.Min);
+            Vector3 endU = MathUtil.D2UPosition(c.Max);
+
+            // 2. å˜æ¢åˆ°å·¥ä»¶çš„å±€éƒ¨ç©ºé—´ï¼ˆéœ€è¦åº”ç”¨å·¥ä»¶æ—‹è½¬ï¼‰
+            Vector3 startLocal = Quaternion.Inverse(rot) * startU;
+            Vector3 endLocal = Quaternion.Inverse(rot) * endU;
+
+            // 3. åº”ç”¨ç¼©æ”¾
+            startLocal = MathUtil.Division(startLocal, scale);
+            endLocal = MathUtil.Division(endLocal, scale);
+
+            // 4. è®¡ç®—ä¸­å¿ƒç‚¹å’Œå°ºå¯¸
+            box.center = (startLocal + endLocal) / 2f;
+            box.size = MathUtil.Abs(startLocal - endLocal);
+
+            // æ·»åŠ åˆ°åˆ—è¡¨
+            WorkpieceColliders.Add(box);
         }
     }
 
     public Vector3 GetOriginPoint()
     {
-        // »ñÈ¡¹¤×÷Ì¨Ô­µãÎ»ÖÃ£¨Êı¾İ×ø±êÏµ£©
+        // è·å–å·¥ä½œå°åŸç‚¹ä½ç½®ï¼ˆæ•°æ®åæ ‡ç³»ï¼‰
         return Origin != null ? MathUtil.U2DPosition(Origin.position) : Vector3.zero;
     }
 
     /// <summary>
-    /// Ìí¼ÓËùÓĞÅö×²Ïäµ½¿ÉÊÓ»¯Æ÷£¨¹¤×÷Ì¨ 1 ¸ö + ¹¤¼şÈô¸É¸ö£©
+    /// æ·»åŠ æ‰€æœ‰ç¢°æ’ç®±åˆ°å¯è§†åŒ–å™¨ï¼ˆå·¥ä½œå° 1 ä¸ª + å·¥ä»¶è‹¥å¹²ï¼‰
     /// </summary>
     public void AddCollidersToVisualizer(ColliderVisualizer visualizer)
     {
@@ -115,14 +134,14 @@ public class WorkbenchBinder : MonoBehaviour
         colliderVisualizer = visualizer;
         colliderVisualIds.Clear();
 
-        // ¹¤×÷Ì¨Åö×²Ïä£¨ÇàÉ«£¬¾²Ì¬£©
+        // å·¥ä½œå°ç¢°æ’ç®±ï¼ˆé’è‰²ï¼Œé™æ€ï¼‰
         if (WorkbenchCollider != null)
         {
             int id = visualizer.Add(WorkbenchCollider, Color.cyan);
             colliderVisualIds.Add(id);
         }
 
-        // ¹¤¼şÅö×²Ïä£¨ÂÌÉ«£¬¾²Ì¬£©
+        // å·¥ä»¶ç¢°æ’ç®±ï¼ˆç»¿è‰²ï¼ŒåŠ¨æ€ï¼‰
         Color workpieceColor = Color.green;
         foreach (var collider in WorkpieceColliders)
         {
@@ -133,7 +152,7 @@ public class WorkbenchBinder : MonoBehaviour
     }
 
     /// <summary>
-    /// ´Ó¿ÉÊÓ»¯Æ÷ÖĞÒÆ³ıËùÓĞÅö×²Ïä
+    /// ä»å¯è§†åŒ–å™¨ç§»é™¤æ‰€æœ‰ç¢°æ’ç®±
     /// </summary>
     public void RemoveCollidersFromVisualizer()
     {

@@ -272,7 +272,7 @@ public class SimulationContext : MonoBehaviour
         // 加载焊接任务数据
         string weldTaskFile = Path.Combine(WeldTaskDirectory, WeldTaskFileName);
         WeldTaskData data = WeldTaskDataLoader.LoadFromFile(weldTaskFile);
-        Task = new(data);
+        Task = new(data, weldTaskFile);
 
         // 初始化机器人模型
         RobotModel.Init(RobotConfig);

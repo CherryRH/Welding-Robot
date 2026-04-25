@@ -13,6 +13,11 @@ public class WeldTask
     public string TaskName;
 
     /// <summary>
+    /// 任务文件路径
+    /// </summary>
+    public string TaskFilePath;
+
+    /// <summary>
     /// 用户坐标系原点（米）
     /// </summary>
     public Vector3 UserOrigin;
@@ -32,8 +37,9 @@ public class WeldTask
     /// </summary>
     private int _nextId;
 
-    public WeldTask(WeldTaskData data)
+    public WeldTask(WeldTaskData data, string taskFilePath)
     {
+        TaskFilePath = taskFilePath;
         TaskName = data.TaskName;
         UserOrigin = data.UserOrigin;
 
@@ -65,11 +71,14 @@ public class WeldTask
     // ==================== 优化项 ====================
 
     /// <summary>
-    /// 在相邻焊缝之间插入包角圆弧过渡段
+    /// 在相邻焊缝之间插入包角圆弧过渡段，支持多环检测
     /// </summary>
     private void InsertCornerArcs()
     {
         if (WeldSeams == null || WeldSeams.Count < 2) return;
+
+        // 维护当前连续焊缝串的起点索引
+        int chainStart = 0;
 
         int i = 0;
         while (i < WeldSeams.Count - 1)
@@ -81,13 +90,18 @@ public class WeldTask
             float r = current.CornerRadius;
             if (r <= 0f)
             {
+                // 当前焊缝不做包角，检查当前串是否成环，然后开启新串
+                TryCloseLoop(chainStart, i);
+                chainStart = i + 1;
                 i++;
                 continue;
             }
 
-            // 端点不相邻 → 跳过
+            // 端点不相邻 → 断开，检查当前串是否成环，然后开启新串
             if (!MathUtil.IsVector3Equal(current.EndPoint, next.StartPoint))
             {
+                TryCloseLoop(chainStart, i);
+                chainStart = i + 1;
                 i++;
                 continue;
             }
@@ -95,14 +109,54 @@ public class WeldTask
             // 构造包角圆弧
             if (!TryCreateCornerArc(current, next, r, out WeldSeam corner))
             {
+                // 构造失败，检查当前串是否成环，然后开启新串
+                TryCloseLoop(chainStart, i);
+                chainStart = i + 1;
                 i++;
                 continue;
             }
 
             // 缩短相邻焊缝端点，插入圆弧段
             TrimAndInsert(i, corner);
-            i += 2;
+            i += 2; // 跳过刚插入的圆弧段
         }
+
+        // 最后检查末尾的串是否成环
+        TryCloseLoop(chainStart, WeldSeams.Count - 1);
+    }
+
+    /// <summary>
+    /// 尝试闭合从 chainStart 到 chainEnd 的焊缝串
+    /// 如果该串的起点和终点相连，则插入闭环包角
+    /// </summary>
+    private void TryCloseLoop(int chainStart, int chainEnd)
+    {
+        // 至少需要两条焊缝才能成环
+        if (chainEnd - chainStart < 1) return;
+
+        WeldSeam first = WeldSeams[chainStart];
+        WeldSeam last  = WeldSeams[chainEnd];
+
+        // 使用最后一条焊缝的 CornerRadius
+        float r = last.CornerRadius;
+        if (r <= 0f) return;
+
+        // 检查首尾是否相连
+        if (!MathUtil.IsVector3Equal(last.EndPoint, first.StartPoint))
+            return;
+
+        // 构造闭环包角圆弧
+        if (!TryCreateCornerArc(last, first, r, out WeldSeam corner))
+            return;
+
+        // 缩短首尾焊缝端点
+        if (last is LineSeam ls)
+            ls.SetEndPoint(corner.StartPoint);
+        if (first is LineSeam fs)
+            fs.SetStartPoint(corner.EndPoint);
+
+        // 在 chainEnd 之后插入圆弧段
+        WeldSeams.Insert(chainEnd + 1, corner);
     }
 
     /// <summary>

@@ -12,11 +12,12 @@ public class WeldResultDataWriter
     /// <summary>
     /// 仿真开始时调用，重置所有数据
     /// </summary>
-    public void Init(string taskName)
+    public void Init(WeldTask task)
     {
         resultData = new WeldResultData
         {
-            TaskName = taskName,
+            TaskName = task?.TaskName ?? "UnknownTask",
+            TaskFilePath = task?.TaskFilePath ?? "",
             PlanStatus = WeldTaskPlanState.PlanStatus.Unfinished
         };
     }

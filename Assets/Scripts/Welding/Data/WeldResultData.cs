@@ -13,6 +13,11 @@ public class WeldResultData
     public string TaskName;
 
     /// <summary>
+    /// 任务文件路径
+    /// </summary>
+    public string TaskFilePath;
+
+    /// <summary>
     /// 规划状态
     /// </summary>
     public WeldTaskPlanState.PlanStatus PlanStatus;
