@@ -84,4 +84,31 @@ public abstract class WeldSeam
     /// <param name="tol">距离容差（米）</param>
     /// <returns>p 在焊缝上返回 true</returns>
     public abstract bool ContainsPoint(Vector3 p, float tol = 1e-5f);
+
+    /// <summary>
+    /// 计算点 p 到焊缝的几何误差（米）。
+    /// 对于直线焊缝：点到直线的垂直距离，若投影超出线段范围则加上到最近端点的距离。
+    /// 对于圆弧焊缝：径向误差，若角度超出弧段范围则加上最小角度差对应的弧长。
+    /// </summary>
+    public abstract float ComputePositionError(Vector3 p);
+
+    /// <summary>
+    /// 计算点 p 在焊缝上的投影位置（s 值，范围 [0,1]）。如果 p 不在焊缝附近，则返回最近端点的 s 值（0 或 1）。
+    /// </summary>
+    /// <param name="p"></param>
+    /// <returns></returns>
+    public abstract float ProjectPointToSeam(Vector3 p);
+
+    /// <summary>
+    /// 计算焊缝上某点的参考焊枪方向
+    /// </summary>
+    /// <param name="weldDirection">该点处的焊接方向（切向）</param>
+    /// <returns>焊枪指向方向（从焊枪TCP指向焊点的单位向量）</returns>
+    public virtual Vector3 ComputeGunDirection(Vector3 weldDirection)
+    {
+        Vector3 right = Vector3.Cross(weldDirection, Normal).normalized;
+        float gunAngleRad = GunAngle * Mathf.Deg2Rad;
+        Vector3 gunDir = -(Mathf.Cos(gunAngleRad) * right + Mathf.Sin(gunAngleRad) * Normal).normalized;
+        return gunDir;
+    }
 }

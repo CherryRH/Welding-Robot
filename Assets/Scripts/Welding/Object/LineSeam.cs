@@ -88,4 +88,36 @@ public class LineSeam : WeldSeam
         float perpendicularDist = (diff - s * Length * direction).magnitude;
         return perpendicularDist < tol;
     }
+
+    public override float ProjectPointToSeam(Vector3 p)
+    {
+        // 投影到直线方向，计算 s 参数
+        Vector3 diff = p - StartPoint;
+        float s = Length > 1e-6f
+            ? Vector3.Dot(diff, direction) / Length
+            : 0f;
+        return Mathf.Clamp01(s);
+    }
+
+    public override float ComputePositionError(Vector3 p)
+    {
+        Vector3 diff = p - StartPoint;
+        float s = Length > 1e-6f
+            ? Vector3.Dot(diff, direction) / Length
+            : 0f;
+
+        // 垂直距离
+        float perpDist = (diff - s * Length * direction).magnitude;
+
+        // 若投影在 [0,1] 内，仅返回垂直距离
+        if (s >= 0f && s <= 1f)
+            return perpDist;
+
+        // 若超出范围，加上到最近端点的距离
+        float endpointDist = s < 0f
+            ? Vector3.Distance(p, StartPoint)
+            : Vector3.Distance(p, EndPoint);
+
+        return perpDist + endpointDist;
+    }
 }

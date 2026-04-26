@@ -76,7 +76,6 @@ public class RobotModel
     private float[] _prevJointAngles;
     private float[] _prevJointVelocities;
     private float _prevTime = -1f;
-    private bool _firstFrame = true;
     [SerializeField] private float _velocityAlpha = 0.3f;
 
     public void Init(RobotConfig robotConfig)
@@ -100,9 +99,10 @@ public class RobotModel
         _prevJointVelocities = new float[Joints.Length];
         JointVelocities = new float[Joints.Length];
         JointAccelerations = new float[Joints.Length];
-        
+
         // 用当前关节角度初始化历史缓冲
         System.Array.Copy(JointAngles, _prevJointAngles, Joints.Length);
+        System.Array.Clear(_prevJointVelocities, 0, Joints.Length);
     }
 
     /// <summary>
@@ -224,26 +224,13 @@ public class RobotModel
     /// </summary>
     public void UpdateRealtimeData(float currentTime, float dt)
     {
-        if (dt <= 0f) return;
-
-        float[] currentAngles = JointAngles;
-
-        // 仿真第一帧：保存状态并更新历史缓冲，避免第二帧加速度跳变
-        if (currentTime > 0f && _firstFrame)
+        // 防御：dt 过小或时间戳未推进时跳过，避免 NAN/Inf
+        if (dt < 1e-6f || currentTime <= _prevTime)
         {
-            _prevTcpPos = TCPPosition;
-            // --- 关节角速度（前向差分）---
-            for (int i = 0; i < JointsCount; i++)
-            {
-                JointVelocities[i] = (currentAngles[i] - _prevJointAngles[i]) / dt;
-            }
-            // 不更新加速度，避免第一帧跳变
-            _prevTime = currentTime;
-            System.Array.Copy(currentAngles, _prevJointAngles, JointsCount);
-            System.Array.Copy(JointVelocities, _prevJointVelocities, JointsCount);
-            _firstFrame = false;
             return;
         }
+
+        float[] currentAngles = JointAngles;
 
         // --- TCP 线速度（前向差分 + EMA 平滑）---
         Vector3 rawTcpVel = (TCPPosition - _prevTcpPos) / dt;
@@ -251,17 +238,32 @@ public class RobotModel
         SmoothedTcpVelocity = _velocityAlpha * rawTcpVel
                              + (1f - _velocityAlpha) * SmoothedTcpVelocity;
         TcpSpeed = SmoothedTcpVelocity.magnitude;
-
+        
         // --- 关节角速度（前向差分）---
         for (int i = 0; i < JointsCount; i++)
         {
-            JointVelocities[i] = (currentAngles[i] - _prevJointAngles[i]) / dt;
+            float delta = currentAngles[i] - _prevJointAngles[i];
+            float velocity = delta / dt;
+            
+            if (float.IsNaN(velocity) || float.IsInfinity(velocity))
+            {
+                velocity = 0f;
+            }
+            JointVelocities[i] = velocity;
         }
 
         // --- 关节角加速度（角速度的前向差分）---
         for (int i = 0; i < JointsCount; i++)
         {
-            JointAccelerations[i] = (JointVelocities[i] - _prevJointVelocities[i]) / dt;
+            float deltaV = JointVelocities[i] - _prevJointVelocities[i];
+            float acc = deltaV / dt;
+
+            // 防御：角加速度跳变检测（停顿点或异常帧）
+            if (MathUtil.FloatArrayMagnitude(_prevJointVelocities) < 1e-6f || float.IsNaN(acc) || float.IsInfinity(acc))
+            {
+                acc = 0f;
+            }
+            JointAccelerations[i] = acc;
         }
 
         // --- 保存本帧数据供下帧差分 ---
@@ -272,12 +274,27 @@ public class RobotModel
     }
 
     /// <summary>
+    /// 初始化历史缓冲，使下一帧差分基于当前状态。
+    /// 在 t=0 预触发帧调用，避免第一帧产生异常差分值。
+    /// </summary>
+    public void InitHistoryBuffers()
+    {
+        _prevTime = -1f;
+        _prevTcpPos = TCPPosition;
+        if (JointAngles != null && _prevJointAngles != null)
+        {
+            System.Array.Copy(JointAngles, _prevJointAngles, JointsCount);
+        }
+        System.Array.Clear(_prevJointVelocities, 0, _prevJointVelocities.Length);
+    }
+
+    /// <summary>
     /// 重置实时数据状态（仿真开始前调用）
     /// </summary>
     public void ResetRealtimeData()
     {
-        _firstFrame = true;
         _prevTime = -1f;
+        _prevTcpPos = TCPPosition;
         TcpVelocity = Vector3.zero;
         SmoothedTcpVelocity = Vector3.zero;
         TcpSpeed = 0f;

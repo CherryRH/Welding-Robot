@@ -92,9 +92,7 @@ public class WeldPathPlanner
     private Pose CalculateTcpPose(WeldSeam seam, Vector3 weldPoint, Vector3 weldDirection)
     {
         // 计算焊枪方向
-        Vector3 right = Vector3.Cross(weldDirection, seam.Normal).normalized;
-        float gunAngleRad = seam.GunAngle * Mathf.Deg2Rad;
-        Vector3 gunDirection = -(Mathf.Cos(gunAngleRad) * right + Mathf.Sin(gunAngleRad) * seam.Normal).normalized;
+        Vector3 gunDirection = seam.ComputeGunDirection(weldDirection);
 
         // 应用焊枪距离：焊枪位置 = 焊点 - 焊枪方向 * 距离
         Vector3 gunPosition = weldPoint - gunDirection * seam.GunDistance;

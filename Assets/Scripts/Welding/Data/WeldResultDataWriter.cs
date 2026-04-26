@@ -34,7 +34,36 @@ public class WeldResultDataWriter
         if (timestamp <= 0f) return;
 
         WeldStateType segmentType = currentSegment?.Type ?? WeldStateType.Approach;
-        int seamId = currentSegment?.EndPoint?.Seam?.Id ?? -1;
+        WeldSeam seam = currentSegment?.StartPoint?.Seam;
+        int seamId = seam?.Id ?? -1;
+
+        // --- 计算误差 ---
+        float speedError = 0f;
+        float positionError = 0f;
+        float orientationError = 0f;
+
+        // 1. 线速度误差：当前速度 - 参考速度（取起点参考速度）
+        float refSpeed = currentSegment?.StartPoint?.Speed ?? 0f;
+        speedError = robotModel.TcpSpeed - refSpeed;
+
+        // 2. 焊点误差和姿态误差
+        if (seam != null)
+        {
+            // 当前焊枪方向：TCP的forward（Data坐标系）
+            Vector3 currentGunDir = robotModel.TCPRotation * Vector3.forward;
+
+            // 焊点误差：TCP位置转换到Data坐标系后计算
+            Vector3 tcpPosInData = robotModel.RobotToUser(robotModel.TCPPosition);
+            positionError = seam.ComputePositionError(tcpPosInData + currentGunDir * seam.GunDistance);
+
+            // 焊枪姿态误差
+            // 参考方向：基于当前TCP位置在焊缝上的投影点计算
+            Vector3 weldDir = seam.GetTangent(seam.ProjectPointToSeam(tcpPosInData));
+            Vector3 refGunDir = seam.ComputeGunDirection(weldDir);
+
+            // 计算夹角（度）
+            orientationError = Vector3.Angle(currentGunDir, refGunDir);
+        }
 
         var frame = new WeldResultFrame(
             timestamp,
@@ -44,7 +73,10 @@ public class WeldResultDataWriter
             robotModel.JointVelocities,
             robotModel.JointAccelerations,
             segmentType,
-            seamId
+            seamId,
+            speedError,
+            positionError,
+            orientationError
         );
         resultData.AddFrame(frame);
 

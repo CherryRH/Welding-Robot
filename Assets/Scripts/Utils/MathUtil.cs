@@ -7,6 +7,16 @@ using UnityEngine;
 /// </summary>
 public static class MathUtil
 {
+    public static float FloatArrayMagnitude(float[] arr)
+    {
+        float sumSqr = 0f;
+        foreach (float v in arr)
+        {
+            sumSqr += v * v;
+        }
+        return Mathf.Sqrt(sumSqr);
+    }
+
     public static Vector3 CalculateCircleCenter(Vector3 A, Vector3 B, Vector3 C)
     {
         // 计算由三点A、B、C确定的圆心

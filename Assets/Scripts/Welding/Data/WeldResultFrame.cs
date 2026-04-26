@@ -52,6 +52,21 @@ public class WeldResultFrame
     /// </summary>
     public int SeamId;
 
+    /// <summary>
+    /// 线速度误差（米/秒）= 当前速度 - 参考速度，不取绝对值
+    /// </summary>
+    public float SpeedError;
+
+    /// <summary>
+    /// 焊点位置误差（米）：点到焊缝的几何距离
+    /// </summary>
+    public float PositionError;
+
+    /// <summary>
+    /// 焊枪姿态误差（度）：当前焊枪方向与参考方向的夹角
+    /// </summary>
+    public float OrientationError;
+
     public WeldResultFrame(
         float timestamp,
         Vector3 tcpPos,
@@ -60,7 +75,10 @@ public class WeldResultFrame
         float[] jointVelocities,
         float[] jointAccelerations,
         WeldStateType segmentType = WeldStateType.Approach,
-        int seamId = -1)
+        int seamId = -1,
+        float speedError = 0f,
+        float positionError = 0f,
+        float orientationError = 0f)
     {
         Timestamp = timestamp;
         TcpPosition = tcpPos;
@@ -71,5 +89,8 @@ public class WeldResultFrame
         JointAccelerations = (float[])jointAccelerations.Clone();
         PointType = segmentType;
         SeamId = seamId;
+        SpeedError = speedError;
+        PositionError = positionError;
+        OrientationError = orientationError;
     }
 }

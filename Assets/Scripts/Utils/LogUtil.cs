@@ -378,6 +378,15 @@ public static class LogUtil
         sb.Append("  关节角加速 = ");
         sb.AppendLine(FormatFloatArray(frame.JointAccelerations, "rad/s²"));
 
+        // 误差数据（仅当非零时显示，减少日志噪音）
+        if (frame.SpeedError != 0f || frame.PositionError != 0f || frame.OrientationError != 0f)
+        {
+            sb.AppendLine($"  ── 误差分析 ──");
+            sb.AppendLine($"  线速度误差 = {frame.SpeedError:F4} m/s (当前 - 参考)");
+            sb.AppendLine($"  焊点位置误差 = {frame.PositionError:F4} m");
+            sb.AppendLine($"  焊枪姿态误差 = {frame.OrientationError:F4} rad ({frame.OrientationError * Mathf.Rad2Deg:F2}°)");
+        }
+
         return sb.ToString();
     }
 

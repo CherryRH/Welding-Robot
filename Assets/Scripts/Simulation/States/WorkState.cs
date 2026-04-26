@@ -24,6 +24,9 @@ public class WorkState : SimulationStateBase
 
         // 启动仿真时钟
         ctx.Clock.Start();
+
+        // t=0 预触发帧：初始化历史缓冲，使第一帧差分基于当前状态
+        ctx.RobotModel.InitHistoryBuffers();
     }
 
     public override void Update(SimulationContext ctx, float dt)

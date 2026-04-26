@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
+using Unity.Burst.Intrinsics;
 using UnityEngine;
 
 /// <summary>
@@ -23,10 +25,10 @@ public class ArcSeam : WeldSeam
     public float Angle;
 
     /// <summary>
-    /// 圆平面基向量
+    /// 圆平面基向量（u: 起点方向, v: 垂直于u在圆平面内）
     /// </summary>
-    private Vector3 u;
-    private Vector3 v;
+    public Vector3 u { get; private set; }
+    public Vector3 v { get; private set; }
 
     public ArcSeam(WeldSeamData data)
     {
@@ -185,5 +187,59 @@ public class ArcSeam : WeldSeam
             return angle >= -angleTol && angle <= Angle + angleTol;
         else
             return angle <= angleTol && angle >= Angle - angleTol;
+    }
+
+    public override float ProjectPointToSeam(Vector3 p)
+    {
+        // 投影到圆平面，再归一化到半径
+        Vector3 toPoint = p - Center;
+        Vector3 projected = toPoint.normalized * Radius;
+        // 限制在弧段范围内
+        float angle = Mathf.Atan2(Vector3.Dot(projected, v), Vector3.Dot(projected, u));
+        // 根据 Angle 的符号正确限制范围
+        if (Angle >= 0f)
+            angle = Mathf.Clamp(angle, 0f, Angle);
+        else
+            angle = Mathf.Clamp(angle, Angle, 0f);
+        return angle / Angle;
+    }
+
+    public override float ComputePositionError(Vector3 p)
+    {
+        // 1. 径向误差
+        float radialError = Mathf.Abs(Vector3.Distance(p, Center) - Radius);
+
+        // 2. 角度误差
+        Vector3 d = (p - Center).normalized;
+        float angle = Mathf.Atan2(Vector3.Dot(d, v), Vector3.Dot(d, u));
+
+        // 将角度归一化到与 Angle 同符号的最小角度差
+        float angleDiff = 0f;
+        if (Angle >= 0f)
+        {
+            if (angle < 0f)
+                angle += 2f * Mathf.PI;
+            if (angle > Angle)
+                angleDiff = angle - Angle;
+            else if (angle < 0f)
+                angleDiff = -angle;
+        }
+        else
+        {
+            if (angle > 0f)
+                angle -= 2f * Mathf.PI;
+            if (angle < Angle)
+                angleDiff = Angle - angle;
+            else if (angle > 0f)
+                angleDiff = angle;
+        }
+
+        // 若角度在范围内，仅返回径向误差
+        if (angleDiff <= 1e-6f)
+            return radialError;
+
+        // 若超出范围，加上角度差对应的弧长
+        float arcLengthError = Mathf.Abs(angleDiff * Radius);
+        return radialError + arcLengthError;
     }
 }
