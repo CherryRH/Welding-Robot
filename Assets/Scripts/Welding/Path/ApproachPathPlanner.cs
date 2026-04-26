@@ -30,8 +30,8 @@ public class ApproachPathPlanner
     {
         Iterations = 10,
         AttractStrength = 0.0f,
-        PullStrength = 0.0f,
-        SmoothStrength = 0.1f,
+        PullStrength = 0.05f,
+        SmoothStrength = 0.2f,
         RepulsionStrength = 0.1f,
         RepulsionRadius = 0.02f,
         Margin = 0.005f
@@ -150,7 +150,7 @@ public class ApproachPathPlanner
     {
         var result = RrtPathPlanner.Plan(
             start, end, robot, shadowCollisionMonitor, shadowRobotBinder, seam,
-            maxIterations: 10000,
+            maxIterations: 2000,
             stepSize: 0.01f,
             goalBias: 0.1f,
             maxDistanceToGoal: 0.01f,

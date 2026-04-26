@@ -63,7 +63,7 @@ public class TrajectoryPlanner
             {
                 // IK 无解：该路径点不可达
                 result.PlanStatus = TrajectoryPlanResult.TrajectoryPlanStatus.TcpPositionUnreachable;
-                result.CurrentPoint = end;
+                result.CurrentPoint = start;
                 break;
             }
             joints = endJoints;
@@ -79,6 +79,8 @@ public class TrajectoryPlanner
             {
                 result.PlanStatus = TrajectoryPlanResult.TrajectoryPlanStatus.JointSpeedLimitViolated;
                 result.CurrentPoint = start;
+                Debug.LogWarning($"{LogUtil.FormatFloatArray(startJoints, "")} -> {LogUtil.FormatFloatArray(endJoints, "")}");
+                Debug.LogWarning($"Duration: {duration:F3}s, StartTime: {startTime:F3}s, EndTime: {endTime:F3}s");
                 break;
             }
 

@@ -18,7 +18,7 @@
       "Type": "Line",
       "ID": 1,
       "Name": "Seam_1",
-      "Speed": 0.05,
+      "Speed": 0.04,
       "GunAngle": 45.0,
       "GunDistance": 0.02,
       "StartPoint": { "x": -0.1, "y": 0.0, "z": 0.02 },

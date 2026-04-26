@@ -37,7 +37,7 @@ public class TcpPathVisualizer : MonoBehaviour
                 MathUtil.D2URotation(pose.rotation),
                 transform
             );
-            point.name = $"TcpPathPoint_{item.Type}_{++i}";
+            point.name = $"TcpP_{item.Type}_{item.Flag}_{++i}";
             tcpPathPoints.Add(item, point);
         }
     }
@@ -58,7 +58,7 @@ public class TcpPathVisualizer : MonoBehaviour
                 MathUtil.D2URotation(pose.rotation),
                 transform
             );
-            point.name = $"WeldPoint_{item.Type}_{++i}";
+            point.name = $"WeldP_{item.Type}_{item.PathFlag}_{++i}";
             weldPoints.Add(item, point);
         }
     }

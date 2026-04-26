@@ -57,11 +57,6 @@ public class WeldPointData
     public float[] JointAccelerations;
 
     /// <summary>
-    /// 轨迹点类型（Approach / Weld / Adjust）
-    /// </summary>
-    public WeldStateType PointType;
-
-    /// <summary>
     /// 由段起点构造（记录进入该段时的状态）
     /// </summary>
     public static WeldPointData FromStartPoint(TrajectorySegment segment)
@@ -71,13 +66,12 @@ public class WeldPointData
             TcpPose = segment.StartPoint.Pose,
             SeamId = segment.StartPoint.Seam?.Id ?? -1,
             SeamName = segment.StartPoint.Seam?.Name ?? "",
-            Type = segment.StartPoint.Type,
+            Type = segment.Type,
             PathFlag = segment.StartPoint.Flag,
             Time = segment.StartTime,
             JointAngles = segment.QStart,
             JointVelocities = segment.Interpolation?.EvaluateVelocity(0f),
             JointAccelerations = segment.Interpolation?.EvaluateAcceleration(0f),
-            PointType = segment.Type
         };
     }
 
@@ -92,13 +86,12 @@ public class WeldPointData
             TcpPose = segment.EndPoint.Pose,
             SeamId = segment.EndPoint.Seam?.Id ?? -1,
             SeamName = segment.EndPoint.Seam?.Name ?? "",
-            Type = segment.EndPoint.Type,
+            Type = segment.Type,
             PathFlag = segment.EndPoint.Flag,
             Time = segment.EndTime,
             JointAngles = segment.QEnd,
             JointVelocities = segment.Interpolation?.EvaluateVelocity(duration),
             JointAccelerations = segment.Interpolation?.EvaluateAcceleration(duration),
-            PointType = segment.Type
         };
     }
 }

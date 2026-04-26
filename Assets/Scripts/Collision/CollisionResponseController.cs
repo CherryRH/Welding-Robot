@@ -71,7 +71,7 @@ public class CollisionResponseController
         Pose predictedPose = new Pose(predictPos, predictRot);
 
         // 影子机械臂 IK
-        float[] currentJoints = ctx.ShadowRobotModel.JointAngles;
+        float[] currentJoints = ctx.RobotModel.JointAngles;
         float[] solved = ctx.RobotModel.IK.Solve(predictedPose, currentJoints);
         if (solved == null || solved.Length != ctx.ShadowRobotModel.JointsCount)
         {
