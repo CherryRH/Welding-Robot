@@ -25,9 +25,9 @@ public static class RrtPathPlanner
     public class SmoothConfig
     {
         public int MaxIterations = 100;         // 平滑最大迭代次数
-        public float SegmentCheckStep = 0.005f; // 线段碰撞检测采样步长（米）
+        public float SegmentCheckStep = 0.01f; // 线段碰撞检测采样步长（米）
         /// <summary>平滑时的额外安全裕度，可比规划时更宽松</summary>
-        public float SmoothingMargin = 0.005f;
+        public float SmoothingMargin = 0.01f;
     }
 
     // ============================================================

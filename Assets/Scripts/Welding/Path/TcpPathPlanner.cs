@@ -13,6 +13,11 @@ public class TcpPathPlanner
     public LinkedList<TcpPathPoint> Points = new();
 
     /// <summary>
+    /// 运行时重规划的接近路径算法
+    /// </summary>
+    public ApproachPathPlanner.ApproachStrategy ReplanApproachStrategy = ApproachPathPlanner.ApproachStrategy.Safe;
+
+    /// <summary>
     /// 子规划器
     /// </summary>
     private ApproachPathPlanner approachPlanner = new();
@@ -166,10 +171,12 @@ public class TcpPathPlanner
     /// <param name="currentSegment">当前执行的轨迹段</param>
     /// <param name="shadowCollisionMonitor">影子机械臂碰撞检测器</param>
     /// <param name="shadowRobotBinder">影子机械臂绑定器</param>
+    /// <param name="replanRecord">重规划记录（可选）</param>
     public void ReplanFromPosition(
         TrajectorySegment currentSegment,
         CollisionMonitor shadowCollisionMonitor,
-        RobotBinder shadowRobotBinder)
+        RobotBinder shadowRobotBinder,
+        ReplanRecord replanRecord = null)
     {
         if (currentSegment == null)
         {
@@ -250,7 +257,8 @@ public class TcpPathPlanner
             shadowCollisionMonitor,
             shadowRobotBinder,
             targetSeam,
-            ApproachPathPlanner.ApproachStrategy.RRT);
+            ReplanApproachStrategy,
+            replanRecord);
 
         foreach (var point in newApproach)
             insertAfter = Points.AddAfter(insertAfter, point);

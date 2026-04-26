@@ -1,0 +1,74 @@
+{
+  "TaskName": "Test 2",
+  "UserOrigin": { "x": 1.0, "y": 0.0, "z": 0.3 },
+  "Workpiece": {
+    "FileName": "",
+    "Position": { "x": 0.0, "y": 0.0, "z": 0.02 },
+    "Rotation": { "x": 0.0, "y": 0.0, "z": 0.0 },
+    "Scale": { "x": 1.0, "y": 1.0, "z": 1.0 },
+    "Colliders": [
+      {
+        "Min": { "x": -0.3, "y": -0.3, "z": -0.02 },
+        "Max": { "x": 0.3, "y": 0.3, "z": 0.0 }
+      },
+      {
+        "Min": { "x": -0.1, "y": -0.01, "z": 0.0 },
+        "Max": { "x": 0.1, "y": 0.01, "z": 0.05 }
+      }
+    ]
+  },
+  "WeldSeams": [
+    {
+      "Type": "Line",
+      "ID": 1,
+      "Name": "Seam_1",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.1, "y": -0.01, "z": 0.02 },
+      "EndPoint": { "x": 0.1, "y": -0.01, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 2,
+      "Name": "Seam_2",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.1, "y": -0.01, "z": 0.02 },
+      "EndPoint": { "x": 0.1, "y": 0.01, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 3,
+      "Name": "Seam_3",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.1, "y": 0.01, "z": 0.02 },
+      "EndPoint": { "x": -0.1, "y": 0.01, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 4,
+      "Name": "Seam_4",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.1, "y": 0.01, "z": 0.02 },
+      "EndPoint": { "x": -0.1, "y": -0.01, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    }
+  ]
+}

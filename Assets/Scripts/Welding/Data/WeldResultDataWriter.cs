@@ -12,13 +12,16 @@ public class WeldResultDataWriter
     /// <summary>
     /// 仿真开始时调用，重置所有数据
     /// </summary>
-    public void Init(WeldTask task)
+    public void Init(SimulationContext ctx)
     {
         resultData = new WeldResultData
         {
-            TaskName = task?.TaskName ?? "UnknownTask",
-            TaskFilePath = task?.TaskFilePath ?? "",
-            PlanStatus = WeldTaskPlanState.PlanStatus.Unfinished
+            TaskName = ctx.Task?.TaskName ?? "UnknownTask",
+            TaskFilePath = ctx.Task?.TaskFilePath ?? "",
+            PlanStatus = WeldTaskPlanState.PlanStatus.Unfinished,
+            ReplanApproachStrategy = ctx.TcpPathPlanner.ReplanApproachStrategy,
+            IKMethodType = ctx.RobotModel.IK.IKMethod,
+            InterpolationMethod = ctx.TrajectoryPlanner.InterpolationMethod
         };
     }
 
@@ -62,11 +65,20 @@ public class WeldResultDataWriter
     }
 
     /// <summary>
-    /// 记录规划状态（仿真结束后调用）
+    /// 记录结果状态（仿真结束后调用）
     /// </summary>
-    public void SetPlanStatus(WeldTaskPlanState.PlanStatus status)
+    public void SetPlanStatus(WeldTaskPlanState state, float totalTime)
     {
-        resultData.PlanStatus = status;
+        resultData.PlanStatus = state.Status;
+        resultData.TotalTime = totalTime;
+    }
+
+    /// <summary>
+    /// 记录一次重规划
+    /// </summary>
+    public void AddReplanRecord(ReplanRecord record)
+    {
+        resultData?.AddReplanRecord(record);
     }
 
     /// <summary>

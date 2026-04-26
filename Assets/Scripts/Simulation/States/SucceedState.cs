@@ -10,7 +10,7 @@ public class SucceedState : SimulationStateBase
     public override void Enter(SimulationContext ctx)
     {
         ctx.Clock.Stop();
-        ctx.ResultWriter.SetPlanStatus(WeldTaskPlanState.PlanStatus.Suceeded);
+        ctx.ResultWriter.SetPlanStatus(ctx.TaskState, ctx.Clock.Time);
         ctx.ResultWriter.SaveToJson();
     }
 

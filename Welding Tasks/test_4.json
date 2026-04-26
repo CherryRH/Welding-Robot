@@ -1,0 +1,298 @@
+{
+  "TaskName": "Test 4",
+  "UserOrigin": { "x": 1.0, "y": 0.0, "z": 0.3 },
+  "Workpiece": {
+    "FileName": "",
+    "Position": { "x": 0.0, "y": 0.0, "z": 0.02 },
+    "Rotation": { "x": 0.0, "y": 0.0, "z": 0.0 },
+    "Scale": { "x": 1.0, "y": 1.0, "z": 1.0 },
+    "Colliders": [
+      {
+        "Min": { "x": -0.3, "y": -0.3, "z": -0.02 },
+        "Max": { "x": 0.3, "y": 0.3, "z": 0.0 }
+      },
+      {
+        "Min": { "x": -0.21, "y": -0.2, "z": 0.0 },
+        "Max": { "x": -0.19, "y": 0.2, "z": 0.05 }
+      },
+      {
+        "Min": { "x": -0.1, "y": -0.11, "z": 0.0 },
+        "Max": { "x": 0.1, "y": -0.09, "z": 0.05 }
+      },
+      {
+        "Min": { "x": -0.1, "y": -0.01, "z": 0.0 },
+        "Max": { "x": 0.1, "y": 0.01, "z": 0.05 }
+      },
+      {
+        "Min": { "x": -0.1, "y": 0.09, "z": 0.0 },
+        "Max": { "x": 0.1, "y": 0.11, "z": 0.05 }
+      },
+      {
+        "Min": { "x": 0.19, "y": -0.2, "z": 0.0 },
+        "Max": { "x": 0.21, "y": 0.2, "z": 0.05 }
+      }
+    ]
+  },
+  "WeldSeams": [
+    {
+      "Type": "Line",
+      "ID": 1,
+      "Name": "Seam_1",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.21, "y": -0.2, "z": 0.02 },
+      "EndPoint": { "x": -0.19, "y": -0.2, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 2,
+      "Name": "Seam_2",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.19, "y": -0.2, "z": 0.02 },
+      "EndPoint": { "x": -0.19, "y": 0.2, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 3,
+      "Name": "Seam_3",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.19, "y": 0.2, "z": 0.02 },
+      "EndPoint": { "x": -0.21, "y": 0.2, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 4,
+      "Name": "Seam_4",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.21, "y": 0.2, "z": 0.02 },
+      "EndPoint": { "x": -0.21, "y": -0.2, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 5,
+      "Name": "Seam_5",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.1, "y": -0.11, "z": 0.02 },
+      "EndPoint": { "x": 0.1, "y": -0.11, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 6,
+      "Name": "Seam_6",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.1, "y": -0.11, "z": 0.02 },
+      "EndPoint": { "x": 0.1, "y": -0.09, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 7,
+      "Name": "Seam_7",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.1, "y": -0.09, "z": 0.02 },
+      "EndPoint": { "x": -0.1, "y": -0.09, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 8,
+      "Name": "Seam_8",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.1, "y": -0.09, "z": 0.02 },
+      "EndPoint": { "x": -0.1, "y": -0.11, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 9,
+      "Name": "Seam_9",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.1, "y": -0.01, "z": 0.02 },
+      "EndPoint": { "x": 0.1, "y": -0.01, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 10,
+      "Name": "Seam_10",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.1, "y": -0.01, "z": 0.02 },
+      "EndPoint": { "x": 0.1, "y": 0.01, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 11,
+      "Name": "Seam_11",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.1, "y": 0.01, "z": 0.02 },
+      "EndPoint": { "x": -0.1, "y": 0.01, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 12,
+      "Name": "Seam_12",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.1, "y": 0.01, "z": 0.02 },
+      "EndPoint": { "x": -0.1, "y": -0.01, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 13,
+      "Name": "Seam_13",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.1, "y": 0.09, "z": 0.02 },
+      "EndPoint": { "x": 0.1, "y": 0.09, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 14,
+      "Name": "Seam_14",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.1, "y": 0.09, "z": 0.02 },
+      "EndPoint": { "x": 0.1, "y": 0.11, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 15,
+      "Name": "Seam_15",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.1, "y": 0.11, "z": 0.02 },
+      "EndPoint": { "x": -0.1, "y": 0.11, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 16,
+      "Name": "Seam_16",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": -0.1, "y": 0.11, "z": 0.02 },
+      "EndPoint": { "x": -0.1, "y": 0.09, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 17,
+      "Name": "Seam_17",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.19, "y": 0.2, "z": 0.02 },
+      "EndPoint": { "x": 0.19, "y": -0.2, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 18,
+      "Name": "Seam_18",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.19, "y": -0.2, "z": 0.02 },
+      "EndPoint": { "x": 0.21, "y": -0.2, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 19,
+      "Name": "Seam_19",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.21, "y": -0.2, "z": 0.02 },
+      "EndPoint": { "x": 0.21, "y": 0.2, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    },
+    {
+      "Type": "Line",
+      "ID": 20,
+      "Name": "Seam_20",
+      "Speed": 0.05,
+      "GunAngle": 45.0,
+      "GunDistance": 0.02,
+      "StartPoint": { "x": 0.21, "y": 0.2, "z": 0.02 },
+      "EndPoint": { "x": 0.19, "y": 0.2, "z": 0.02 },
+      "Normal": { "x": 0, "y": 0, "z": 1 },
+      "LengthDeviation": 0.0,
+      "CornerRadius": 0.005
+    }
+  ]
+}

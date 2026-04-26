@@ -29,10 +29,10 @@ public class ApproachPathPlanner
     public PathSmoother.Config SmootherConfig = new()
     {
         Iterations = 10,
-        AttractStrength = 0.01f,
-        PullStrength = 0.1f,
-        SmoothStrength = 0.5f,
-        RepulsionStrength = 0.05f,
+        AttractStrength = 0.0f,
+        PullStrength = 0.0f,
+        SmoothStrength = 0.1f,
+        RepulsionStrength = 0.1f,
         RepulsionRadius = 0.02f,
         Margin = 0.005f
     };
@@ -58,11 +58,12 @@ public class ApproachPathPlanner
         CollisionMonitor shadowCollisionMonitor,
         RobotBinder shadowRobotBinder,
         WeldSeam seam = null,
-        ApproachStrategy strategy = ApproachStrategy.Direct)
+        ApproachStrategy strategy = ApproachStrategy.Direct,
+        ReplanRecord replanRecord = null)
     {
         if (start == null || end == null || MathUtil.IsPoseEqual(start, end))
         {
-            Debug.LogWarning("[Approach] Start == End or null, returning empty path.");
+            Debug.Log("[Approach] Start == End or null, returning empty path.");
             return new List<TcpPathPoint>();
         }
 
@@ -74,13 +75,14 @@ public class ApproachPathPlanner
         {
             ApproachStrategy.Safe => PlanSafePath(start, end, seam),
             ApproachStrategy.Direct => PlanDirectPath(start, end, seam),
-            ApproachStrategy.RRT => PlanRrtPath(start, end, shadowRobotBinder, shadowCollisionMonitor, seam),
+            ApproachStrategy.RRT => PlanRrtPath(start, end, shadowRobotBinder, shadowCollisionMonitor, seam, replanRecord),
             _ => PlanSafePath(start, end, seam),
         };
     }
 
     /// <summary>
     /// 安全高度路径：经安全高度绕行，避免直接穿越障碍
+    /// 在直线路径段中插入中间点（间隔0.05m），仅插值位置，姿态保持不变
     /// </summary>
     private List<TcpPathPoint> PlanSafePath(Pose start, Pose end, WeldSeam seam = null)
     {
@@ -89,13 +91,42 @@ public class ApproachPathPlanner
 
         Pose safePose = robot.GetSafePose(start);
         safePose.rotation = end.rotation;
+        // 插入中间点：start → safePose
+        InsertIntermediatePoints(points, start, safePose, seam, robot.Config.TCPMaxSpeed);
         points.Add(new(safePose, WeldStateType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
 
         Pose endSafe = robot.GetSafePose(end);
+        // 插入中间点：safePose → endSafe
+        InsertIntermediatePoints(points, safePose, endSafe, seam, robot.Config.TCPMaxSpeed);
         points.Add(new(endSafe, WeldStateType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
+        // 插入中间点：endSafe → end
+        InsertIntermediatePoints(points, endSafe, end, seam, robot.Config.TCPMaxSpeed);
         points.Add(new(end, WeldStateType.Approach, TcpPathPoint.PointFlag.End, seam, robot.Config.TCPMaxSpeed));
-        Debug.Log($"[Approach] Safe: {points.Count} pts (start → safe-start → safe-end → end)");
+        Debug.Log($"[Approach] Safe: {points.Count} pts (start → safe-start → safe-end → end, with intermediates)");
         return points;
+    }
+
+    /// <summary>
+    /// 在两点之间的直线路径段中按固定间隔插入中间点
+    /// 仅插值位置，姿态保持与终点一致
+    /// 跳过与终点重合的点
+    /// </summary>
+    private void InsertIntermediatePoints(List<TcpPathPoint> points, Pose from, Pose to, WeldSeam seam, float speed)
+    {
+        const float interval = 0.05f; // 5cm间隔
+        float distance = Vector3.Distance(from.position, to.position);
+        int count = Mathf.FloorToInt(distance / interval);
+
+        for (int i = 1; i <= count; i++)
+        {
+            float t = i * interval / distance;
+            Vector3 pos = Vector3.Lerp(from.position, to.position, t);
+            Pose intermediate = new Pose(pos, to.rotation);
+            // 跳过与终点重合的点
+            if (MathUtil.IsPoseEqual(intermediate, to))
+                continue;
+            points.Add(new(intermediate, WeldStateType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, speed));
+        }
     }
 
     private List<TcpPathPoint> PlanDirectPath(Pose start, Pose end, WeldSeam seam = null)
@@ -115,15 +146,22 @@ public class ApproachPathPlanner
         Pose start, Pose end,
         RobotBinder shadowRobotBinder,
         CollisionMonitor shadowCollisionMonitor,
-        WeldSeam seam = null)
+        WeldSeam seam = null,
+        ReplanRecord replanRecord = null)
     {
         var result = RrtPathPlanner.Plan(
             start, end, robot, shadowCollisionMonitor, shadowRobotBinder, seam,
-            maxIterations: 5000,
-            stepSize: 0.02f,
-            goalBias: 0.2f,
-            maxDistanceToGoal: 0.02f,
+            maxIterations: 10000,
+            stepSize: 0.01f,
+            goalBias: 0.1f,
+            maxDistanceToGoal: 0.01f,
             enableShortcutSmoothing: false);  // 捷径优化默认关闭，与 PathSmoother 冲突
+
+        // 记录重规划是否成功
+        if (replanRecord != null)
+        {
+            replanRecord.IsSuccessful = result.Success;
+        }
 
         if (result.Success)
         {

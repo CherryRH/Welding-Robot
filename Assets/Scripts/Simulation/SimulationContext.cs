@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -187,7 +188,7 @@ public class SimulationContext : MonoBehaviour
                         TaskState.ConsecutiveWarnings >= WeldTaskPlanState.MaxConsecutiveWarnings)
                     {
                         TaskState.NarrowSpaceMode = true;
-                        Debug.Log("[Replan] Narrow space detected, allowing continued operation.");
+                        UnityEngine.Debug.Log("[Replan] Narrow space detected, allowing continued operation.");
                     }
                     break;
                 }
@@ -222,22 +223,45 @@ public class SimulationContext : MonoBehaviour
         // 必须有当前轨迹段才能重规划
         if (Trajectory.CurrentSegment == null)
         {
-            Debug.LogWarning("[Replan] No current segment to replan from.");
+            UnityEngine.Debug.LogWarning("[Replan] No current segment to replan from.");
             return;
         }
 
-        Debug.Log($"[Replan] Triggered. Current segment: {Trajectory.CurrentSegment.StartPoint.Flag} → {Trajectory.CurrentSegment.EndPoint.Flag}");
+        // 非接近状态不规划
+        if (Trajectory.CurrentSegment.Type != WeldStateType.Approach)
+        {
+            UnityEngine.Debug.LogWarning($"[Replan] Current segment is not in approach state. {Trajectory.CurrentSegment.EndPoint.Seam.Name}");
+            return;
+        }
+
+        UnityEngine.Debug.Log($"[Replan] Triggered. Current segment: {Trajectory.CurrentSegment.StartPoint.Flag} → {Trajectory.CurrentSegment.EndPoint.Flag}");
 
         // 标记重规划中
         TaskState.IsReplanning = true;
         TaskState.ReplanCooldown = WeldTaskPlanState.ReplanCooldownDuration;
         TaskState.ConsecutiveWarnings = 0;
 
+        // 重规划结果
+        ReplanRecord replanRecord = new();
+
+        // 测量重规划算法实际计算时间
+        Stopwatch sw = Stopwatch.StartNew();
+
         // 重规划 TCP 路径
         TcpPathPlanner.ReplanFromPosition(
             Trajectory.CurrentSegment,
             ShadowCollisionMonitor,
-            ShadowRobotBinder);
+            ShadowRobotBinder,
+            replanRecord);
+
+        sw.Stop();
+        float computationTimeMs = (float)sw.Elapsed.TotalMilliseconds;
+
+        // 记录重规划结果
+        replanRecord.ComputationTimeMs = computationTimeMs;
+        replanRecord.TriggerTimestamp = Clock.Time;
+        replanRecord.TcpPose = RobotModel.TCPPose;
+        ResultWriter.AddReplanRecord(replanRecord);
 
         // 清空轨迹缓冲区（下一帧 WorkState 会自动重建）
         Trajectory.Clear();

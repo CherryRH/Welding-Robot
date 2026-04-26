@@ -45,13 +45,13 @@ public class WeldTaskPlanState
     public float ReplanCooldown = 0f;
 
     /// <summary>两次重规划的最小间隔（秒）</summary>
-    public const float ReplanCooldownDuration = 1.0f;
+    public const float ReplanCooldownDuration = 0.5f;
 
     /// <summary>连续处于 Warning 级别的帧数</summary>
     public int ConsecutiveWarnings = 0;
 
     /// <summary>连续 Warning 帧数上限，超过后判定为狭窄空间</summary>
-    public const int MaxConsecutiveWarnings = 100;
+    public const int MaxConsecutiveWarnings = 50;
 
     /// <summary>狭窄空间模式：允许在 Warning 下继续运行</summary>
     public bool NarrowSpaceMode = false;

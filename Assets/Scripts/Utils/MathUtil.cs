@@ -41,7 +41,7 @@ public static class MathUtil
 
     public static bool IsVector3Equal(Vector3 a, Vector3 b)
     {
-        return (a - b).sqrMagnitude < 1e-8f;
+        return (a - b).sqrMagnitude < 1e-6f;
     }
 
     public static bool IsQuaternionEqual(Quaternion a, Quaternion b)
