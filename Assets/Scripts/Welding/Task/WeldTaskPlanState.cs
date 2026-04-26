@@ -29,32 +29,12 @@ public class WeldTaskPlanState
     public LinkedListNode<TcpPathPoint> CurrentNode = null;
 
     /// <summary>
-    /// 一次任务中同一位置重复规划的上限
+    /// 一次任务中同一位置重复调姿的上限
     /// </summary>
-    private const int MaxReplanCount = 3;
-    private int currentReplanCount = 0;
-    private WeldSeam lastReplanWeldSeam = null;
-    private Pose lastReplanPose = new();
-
-    // ===== 运行时重规划状态 =====
-
-    /// <summary>是否正在重规划过程中</summary>
-    public bool IsReplanning = false;
-
-    /// <summary>重规划冷却计时器（秒）</summary>
-    public float ReplanCooldown = 0f;
-
-    /// <summary>两次重规划的最小间隔（秒）</summary>
-    public const float ReplanCooldownDuration = 0.5f;
-
-    /// <summary>连续处于 Warning 级别的帧数</summary>
-    public int ConsecutiveWarnings = 0;
-
-    /// <summary>连续 Warning 帧数上限，超过后判定为狭窄空间</summary>
-    public const int MaxConsecutiveWarnings = 50;
-
-    /// <summary>狭窄空间模式：允许在 Warning 下继续运行</summary>
-    public bool NarrowSpaceMode = false;
+    private const int MaxAdjustCount = 3;
+    private int currentAdjustCount = 0;
+    private WeldSeam lastAdjustWeldSeam = null;
+    private Pose lastAdjustPose = new();
 
     public void ToNextPath()
     {
@@ -98,7 +78,7 @@ public class WeldTaskPlanState
         }
     }
 
-    public void CheckReplanCount(TrajectoryPlanResult result)
+    public void CheckAdjustCount(TrajectoryPlanResult result)
     {
         // 检查重规划次数
         if (CurrentNode == null || result == null) return;
@@ -107,18 +87,18 @@ public class WeldTaskPlanState
         
         if (result.PlanStatus != TrajectoryPlanResult.TrajectoryPlanStatus.Ok)
         {
-            if (point.Seam == lastReplanWeldSeam && MathUtil.IsPoseEqual(point.Pose, lastReplanPose))
+            if (point.Seam == lastAdjustWeldSeam && MathUtil.IsPoseEqual(point.Pose, lastAdjustPose))
             {
-                currentReplanCount++;
+                currentAdjustCount++;
             }
             else
             {
-                currentReplanCount = 1;
-                lastReplanWeldSeam = point.Seam;
-                lastReplanPose = point.Pose;
+                currentAdjustCount = 1;
+                lastAdjustWeldSeam = point.Seam;
+                lastAdjustPose = point.Pose;
             }
         }
-        if (currentReplanCount > MaxReplanCount)
+        if (currentAdjustCount > MaxAdjustCount)
         {
             Status = PlanStatus.Failed;
         }
@@ -128,14 +108,8 @@ public class WeldTaskPlanState
     {
         Status = PlanStatus.Unfinished;
         CurrentNode = null;
-        currentReplanCount = 0;
-        lastReplanWeldSeam = null;
-        lastReplanPose = new();
-
-        // 重规划状态重置
-        IsReplanning = false;
-        ReplanCooldown = 0f;
-        ConsecutiveWarnings = 0;
-        NarrowSpaceMode = false;
+        currentAdjustCount = 0;
+        lastAdjustWeldSeam = null;
+        lastAdjustPose = new();
     }
 }

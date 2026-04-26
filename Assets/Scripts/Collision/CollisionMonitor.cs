@@ -22,8 +22,8 @@ public class CollisionMonitor
 
     /// <summary>机械臂本体与环境的碰撞阈值</summary>
     public CollisionThresholds BodyThresholds = new CollisionThresholds(
-        warningDistance: 0.05f,
-        collisionDistance: 0.005f
+        warningDistance: 0.02f,
+        collisionDistance: 0.002f
     );
 
     /// <summary>焊枪与环境的碰撞阈值（焊枪靠近工件是正常工况，阈值更小）</summary>
@@ -34,8 +34,8 @@ public class CollisionMonitor
 
     /// <summary>自体碰撞阈值</summary>
     public CollisionThresholds SelfThresholds = new CollisionThresholds(
-        warningDistance: 0.05f,
-        collisionDistance: 0.005f
+        warningDistance: 0.02f,
+        collisionDistance: 0.002f
     );
 
     // ============================================================

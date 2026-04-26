@@ -57,6 +57,7 @@ public class SimulationContext : MonoBehaviour
     // ============================================================
     public CollisionMonitor CollisionMonitor = new();
     public CollisionMonitor ShadowCollisionMonitor = new();
+    public CollisionResponseController CollisionResponseController = new();
 
     // ============================================================
     // 绑定层（Unity ↔ 数据模型）
@@ -123,8 +124,22 @@ public class SimulationContext : MonoBehaviour
             // 4. 碰撞检测（此时 Transform 已更新）
             CollisionMonitor.Update();
 
-            // 5. 碰撞响应处理
-            HandleCollisionResponse();
+            // 5. 碰撞响应调度
+            var (shouldReplan, replanReason) = CollisionResponseController.Update(
+                this,
+                CollisionMonitor.OverallLevel,
+                StateMachine.CurrentState == SimulationState.Work,
+                StateMachine.CurrentState == SimulationState.Joint || StateMachine.CurrentState == SimulationState.TCP
+            );
+
+            if (shouldReplan)
+            {
+                TriggerReplan(replanReason);
+            }
+            else if (CollisionMonitor.OverallLevel == CollisionMonitor.CollisionLevel.Collision)
+            {
+                HandleCollisionImpact();
+            }
 
             // 6. 更新实时数据（速度等）并记录仿真帧
             RobotModel.UpdateRealtimeData(Clock.Time, Clock.FixedDeltaTime);
@@ -142,10 +157,6 @@ public class SimulationContext : MonoBehaviour
                 }
             }
 
-            // 8. 重规划冷却递减
-            if (TaskState.ReplanCooldown > 0f)
-                TaskState.ReplanCooldown -= Time.deltaTime;
-
             OnSimulationUpdate?.Invoke(this);
         }
 
@@ -161,64 +172,27 @@ public class SimulationContext : MonoBehaviour
     // ============================================================
 
     /// <summary>
-    /// 碰撞响应处理：回滚、状态切换或重规划
+    /// Collision 冲击处理（Fail 或 Rollback）
     /// </summary>
-    private void HandleCollisionResponse()
+    private void HandleCollisionImpact()
     {
-        var level = CollisionMonitor.OverallLevel;
-        float currentDist = CollisionMonitor.SelfCollision.MinDistance;
         bool isTeleop = StateMachine.CurrentState == SimulationState.Joint ||
                         StateMachine.CurrentState == SimulationState.TCP;
 
-        StateMachine.UpdateLastDistance(currentDist);
-
-        switch (level)
+        if (isTeleop)
         {
-            case CollisionMonitor.CollisionLevel.Safe:
-                TaskState.ConsecutiveWarnings = 0;
-                TaskState.NarrowSpaceMode = false;
-                break;
-
-            case CollisionMonitor.CollisionLevel.Warning:
-                // 冷却中：仅累加计数，不触发
-                if (TaskState.ReplanCooldown > 0f)
-                {
-                    TaskState.ConsecutiveWarnings++;
-                    if (!TaskState.NarrowSpaceMode &&
-                        TaskState.ConsecutiveWarnings >= WeldTaskPlanState.MaxConsecutiveWarnings)
-                    {
-                        TaskState.NarrowSpaceMode = true;
-                        UnityEngine.Debug.Log("[Replan] Narrow space detected, allowing continued operation.");
-                    }
-                    break;
-                }
-
-                // 狭窄空间：放行，不重规划
-                if (TaskState.NarrowSpaceMode)
-                    break;
-
-                // 正常工作状态：触发重规划
-                if (StateMachine.CurrentState == SimulationState.Work)
-                    TriggerReplan();
-                break;
-
-            case CollisionMonitor.CollisionLevel.Collision:
-                if (isTeleop)
-                {
-                    RollbackAndRefresh();
-                }
-                else if (StateMachine.CurrentState == SimulationState.Work)
-                {
-                    StateMachine.TryChangeState(SimulationState.Fail, this);
-                }
-                break;
+            RollbackAndRefresh();
+        }
+        else if (StateMachine.CurrentState == SimulationState.Work)
+        {
+            StateMachine.TryChangeState(SimulationState.Fail, this);
         }
     }
 
     /// <summary>
     /// 触发重规划（从当前实际位置重新规划接近路径）
     /// </summary>
-    private void TriggerReplan()
+    private void TriggerReplan(string reason)
     {
         // 必须有当前轨迹段才能重规划
         if (Trajectory.CurrentSegment == null)
@@ -230,16 +204,14 @@ public class SimulationContext : MonoBehaviour
         // 非接近状态不规划
         if (Trajectory.CurrentSegment.Type != WeldStateType.Approach)
         {
-            UnityEngine.Debug.LogWarning($"[Replan] Current segment is not in approach state. {Trajectory.CurrentSegment.EndPoint.Seam.Name}");
+            UnityEngine.Debug.LogWarning($"[Replan] Current segment is not in approach state.");
             return;
         }
 
-        UnityEngine.Debug.Log($"[Replan] Triggered. Current segment: {Trajectory.CurrentSegment.StartPoint.Flag} → {Trajectory.CurrentSegment.EndPoint.Flag}");
+        UnityEngine.Debug.Log($"[Replan] Triggered ({reason}). Current segment: {Trajectory.CurrentSegment.StartPoint.Flag} → {Trajectory.CurrentSegment.EndPoint.Flag}");
 
         // 标记重规划中
-        TaskState.IsReplanning = true;
-        TaskState.ReplanCooldown = WeldTaskPlanState.ReplanCooldownDuration;
-        TaskState.ConsecutiveWarnings = 0;
+        CollisionResponseController.OnReplanStarted();
 
         // 重规划结果
         ReplanRecord replanRecord = new();
@@ -269,7 +241,7 @@ public class SimulationContext : MonoBehaviour
         // 刷新路径可视化
         TcpPathVisualizer.ShowTcpPathPoints(TcpPathPlanner);
 
-        TaskState.IsReplanning = false;
+        CollisionResponseController.OnReplanFinished();
     }
 
     /// <summary>
@@ -387,6 +359,7 @@ public class SimulationContext : MonoBehaviour
     /// - TCP 路径规划器
     /// - 轨迹
     /// - 任务规划状态
+    /// - 碰撞响应控制器
     /// - TCP 路径可视化
     /// </summary>
     public void Clear()
@@ -394,6 +367,7 @@ public class SimulationContext : MonoBehaviour
         TcpPathPlanner.Clear();
         Trajectory.Clear();
         TaskState.Reset();
+        CollisionResponseController.Reset();
         if (TcpPathVisualizer != null) TcpPathVisualizer.Clear();
         if (MoltenPoolVisualizer != null) MoltenPoolVisualizer.Clear();
     }

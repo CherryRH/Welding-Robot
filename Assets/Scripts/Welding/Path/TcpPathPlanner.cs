@@ -15,7 +15,7 @@ public class TcpPathPlanner
     /// <summary>
     /// 运行时重规划的接近路径算法
     /// </summary>
-    public ApproachPathPlanner.ApproachStrategy ReplanApproachStrategy = ApproachPathPlanner.ApproachStrategy.Safe;
+    public ApproachPathPlanner.ApproachStrategy ReplanApproachStrategy = ApproachPathPlanner.ApproachStrategy.RRT;
 
     /// <summary>
     /// 子规划器
@@ -155,7 +155,7 @@ public class TcpPathPlanner
                 break;
         }
 
-        TaskState.CheckReplanCount(result);
+        TaskState.CheckAdjustCount(result);
     }
 
     /// <summary>

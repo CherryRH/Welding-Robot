@@ -21,9 +21,6 @@ public class SimulationStateMachine
     /// <summary>上一帧的关节角度备份（用于碰撞回滚）</summary>
     private float[] lastJointAngles = new float[6];
 
-    /// <summary>上一帧碰撞检测的最小距离（用于判断移动方向）</summary>
-    public float LastMinDistance { get; private set; } = float.MaxValue;
-
     /// <summary>当前帧是否发生了碰撞回滚</summary>
     public bool WasRollback { get; private set; } = false;
 
@@ -106,13 +103,7 @@ public class SimulationStateMachine
         OnRollback?.Invoke();
     }
 
-    /// <summary>
-    /// 更新上一帧距离记录
-    /// </summary>
-    public void UpdateLastDistance(float minDistance)
-    {
-        LastMinDistance = minDistance;
-    }
+
 
     public SimulationStateBase GetCurrentStateInstance()
     {

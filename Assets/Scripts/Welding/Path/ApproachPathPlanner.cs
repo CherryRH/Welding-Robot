@@ -90,7 +90,6 @@ public class ApproachPathPlanner
         points.Add(new(start, WeldStateType.Approach, TcpPathPoint.PointFlag.Start, seam, robot.Config.TCPMaxSpeed));
 
         Pose safePose = robot.GetSafePose(start);
-        safePose.rotation = end.rotation;
         // 插入中间点：start → safePose
         InsertIntermediatePoints(points, start, safePose, seam, robot.Config.TCPMaxSpeed);
         points.Add(new(safePose, WeldStateType.Approach, TcpPathPoint.PointFlag.Intermediate, seam, robot.Config.TCPMaxSpeed));
