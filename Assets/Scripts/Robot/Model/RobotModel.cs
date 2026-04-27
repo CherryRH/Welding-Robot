@@ -63,12 +63,12 @@ public class RobotModel
     public float TcpSpeed { get; private set; }
 
     /// <summary>
-    /// 各关节角速度（弧度/秒），前向差分
+    /// 各关节角速度（度/秒），前向差分
     /// </summary>
     public float[] JointVelocities { get; private set; }
 
     /// <summary>
-    /// 各关节角加速度（弧度/秒²），角速度的前向差分
+    /// 各关节角加速度（度/秒²），角速度的前向差分
     /// </summary>
     public float[] JointAccelerations { get; private set; }
 
@@ -225,7 +225,7 @@ public class RobotModel
     public void UpdateRealtimeData(float currentTime, float dt)
     {
         // 防御：dt 过小或时间戳未推进时跳过，避免 NAN/Inf
-        if (dt < 1e-6f || currentTime <= _prevTime)
+        if (dt < 1e-5f || currentTime <= _prevTime)
         {
             return;
         }
@@ -259,7 +259,7 @@ public class RobotModel
             float acc = deltaV / dt;
 
             // 防御：角加速度跳变检测（停顿点或异常帧）
-            if (MathUtil.FloatArrayMagnitude(_prevJointVelocities) < 1e-6f || float.IsNaN(acc) || float.IsInfinity(acc))
+            if (MathUtil.FloatArrayMagnitude(_prevJointVelocities) < 1e-5f || MathUtil.FloatArrayMagnitude(JointVelocities) < 1e-5f || float.IsNaN(acc) || float.IsInfinity(acc))
             {
                 acc = 0f;
             }

@@ -15,7 +15,7 @@ public static class RrtPathPlanner
     /// 规划时的额外安全裕度（米）
     /// 节点到障碍的距离必须 >= 各组 WarningDistance + PlanningMargin
     /// </summary>
-    private const float PlanningMargin = 0.005f;
+    private const float PlanningMargin = 0.01f;
 
     private const int TrajectoryWindow = 30;       // 绕圈检测窗口
 

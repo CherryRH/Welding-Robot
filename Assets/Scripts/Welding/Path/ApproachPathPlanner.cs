@@ -34,7 +34,7 @@ public class ApproachPathPlanner
         SmoothStrength = 0.2f,
         RepulsionStrength = 0.1f,
         RepulsionRadius = 0.02f,
-        Margin = 0.005f
+        Margin = 0.01f
     };
 
     private RobotModel robot;

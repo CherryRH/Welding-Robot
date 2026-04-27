@@ -28,17 +28,17 @@ public class WeldResultFrame
     public float TcpSpeed;
 
     /// <summary>
-    /// 各关节角（弧度），顺序 J0~J5
+    /// 各关节角（度），顺序 J0~J5
     /// </summary>
     public float[] JointAngles;
 
     /// <summary>
-    /// 各关节角速度（弧度/秒），前向差分
+    /// 各关节角速度（度/秒），前向差分
     /// </summary>
     public float[] JointVelocities;
 
     /// <summary>
-    /// 各关节角加速度（弧度/秒²），角速度的前向差分
+    /// 各关节角加速度（度/秒²），角速度的前向差分
     /// </summary>
     public float[] JointAccelerations;
 

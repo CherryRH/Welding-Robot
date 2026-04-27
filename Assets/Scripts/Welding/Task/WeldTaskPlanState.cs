@@ -13,7 +13,7 @@ public class WeldTaskPlanState
     public enum PlanStatus
     {
         Unfinished,
-        Suceeded,
+        Succeeded,
         Failed
     }
     public PlanStatus Status = PlanStatus.Unfinished;
@@ -53,7 +53,7 @@ public class WeldTaskPlanState
         // 全部规划完
         if (CurrentNode == null)
         {
-            Status = PlanStatus.Suceeded;
+            Status = PlanStatus.Succeeded;
         }
     }
 

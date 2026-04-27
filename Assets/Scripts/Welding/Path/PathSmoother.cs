@@ -38,7 +38,7 @@ public static class PathSmoother
         public float RepulsionRadius = 0.05f;
 
         /// <summary>碰撞检验安全裕度（米）</summary>
-        public float Margin = 0.005f;
+        public float Margin = 0.01f;
     }
 
     /// <summary>

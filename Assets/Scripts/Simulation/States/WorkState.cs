@@ -51,7 +51,7 @@ public class WorkState : SimulationStateBase
         {
             case WeldTaskPlanState.PlanStatus.Unfinished:
                 break;
-            case WeldTaskPlanState.PlanStatus.Suceeded:
+            case WeldTaskPlanState.PlanStatus.Succeeded:
                 if (!ctx.Trajectory.HasActiveSegment)
                     ctx.TryChangeState(SimulationState.Succeed);
                 break;

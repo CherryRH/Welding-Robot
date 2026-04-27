@@ -384,7 +384,7 @@ public static class LogUtil
             sb.AppendLine($"  ── 误差分析 ──");
             sb.AppendLine($"  线速度误差 = {frame.SpeedError:F4} m/s (当前 - 参考)");
             sb.AppendLine($"  焊点位置误差 = {frame.PositionError:F4} m");
-            sb.AppendLine($"  焊枪姿态误差 = {frame.OrientationError:F4} rad ({frame.OrientationError * Mathf.Rad2Deg:F2}°)");
+            sb.AppendLine($"  焊枪姿态误差 = {frame.OrientationError:F4} °)");
         }
 
         return sb.ToString();
