@@ -27,6 +27,10 @@ public class WorkbenchBinder : MonoBehaviour
     private List<int> colliderVisualIds = new();
     private ColliderVisualizer colliderVisualizer;
 
+    // 相机
+    public Camera FrontCamera;
+    public Camera UpCamera;
+
     void Awake()
     {
         glbLoader = GetComponent<GlbLoader>();
@@ -163,5 +167,24 @@ public class WorkbenchBinder : MonoBehaviour
             colliderVisualizer.Remove(id);
         }
         colliderVisualIds.Clear();
+    }
+
+    /// <summary>
+    /// 切换摄像机
+    /// </summary>
+    public void ToggleCamera()
+    {
+        if (FrontCamera == null || UpCamera == null) return;
+
+        if (FrontCamera.enabled)
+        {
+            FrontCamera.enabled = false;
+            UpCamera.enabled = true;
+        }
+        else
+        {
+            FrontCamera.enabled = true;
+            UpCamera.enabled = false;
+        }
     }
 }

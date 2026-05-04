@@ -15237,7 +15237,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2898305258753884477}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
@@ -15272,7 +15272,7 @@ Camera:
     m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
-  m_TargetDisplay: 1
+  m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
   m_AllowMSAA: 1
@@ -15482,6 +15482,8 @@ MonoBehaviour:
   WorkpieceMaterial: {fileID: 2100000, guid: a81f6879f03599e47a9fa9c549f23e39, type: 2}
   WorkbenchCollider: {fileID: 0}
   WorkpieceColliders: []
+  FrontCamera: {fileID: 9130748593983658443}
+  UpCamera: {fileID: 2743146585443714399}
 --- !u!114 &1766072712182778250
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17145,6 +17147,9 @@ MonoBehaviour:
   TcpPathVisualizer: {fileID: 2099847154793607848}
   ColliderVisualizer: {fileID: 2561421213962801964}
   MoltenPoolVisualizer: {fileID: 2607045705247532550}
+  AutoRun: 0
+  AutoRunCount: 1
+  AutoRunCompleted: 0
   BeforeSimulationUpdate:
     m_PersistentCalls:
       m_Calls: []
@@ -17154,7 +17159,6 @@ MonoBehaviour:
   OnClockUpdate:
     m_PersistentCalls:
       m_Calls: []
-  Success: 0
 --- !u!1 &8140085027006475755
 GameObject:
   m_ObjectHideFlags: 0

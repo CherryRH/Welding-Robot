@@ -306,12 +306,8 @@ ReplanRecords[]:   重规划记录 (时机/耗时/位姿/是否成功)
 | `Space` | 开始 / 暂停 |
 | `Tab` | 回放 |
 | `R` | 重置 |
+| `V` | 切换摄像头（正视/俯视） |
 | `Shift` | 切换 IK 算法 |
-| `Shift + 1~6` | 关节遥操作 |
-| `Shift + 7` | TCP 遥操作 |
-| `W/S` | TCP 前/后 |
-| `A/D` | TCP 左/右 |
-| `Q/E` | TCP 上/下 |
 
 ---
 
@@ -366,15 +362,6 @@ Welding Robot/
 | 碰撞监控 | `Collision/CollisionMonitor.cs` |
 | 熔池渲染 | `Visualization/MoltenPoolVisualizer.cs` |
 | 坐标转换 | `Utils/MathUtil.cs` |
-
----
-
-## 参考文献
-
-1. Siciliano, B. et al. — *Robotics: Modelling, Planning and Control*. Springer.
-2. LaValle & Kuffner (2001) — *RRT-Connect: An Efficient Approach to Single-Query Path Planning*.
-3. Fritsch & Carlson (1980) — *Monotone Piecewise Cubic Interpolation*. SIAM J. Numer. Anal.
-4. FANUC M-10iD 系列技术规格手册.
 
 ---
 

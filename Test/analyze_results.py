@@ -670,7 +670,7 @@ def build_report(test_num: int, all_runs: list[dict], charts: dict[str, str | No
         f"",
     ]
 
-    # 关节速度加速度边界
+    # 关节速度加速度边界（使用平滑后的数据）
     all_jv = [[] for _ in range(6)]
     all_ja = [[] for _ in range(6)]
     for d in all_runs:
@@ -690,7 +690,7 @@ def build_report(test_num: int, all_runs: list[dict], charts: dict[str, str | No
             jv_max = max(all_jv[i]) if all_jv[i] else 0
             ja_rms = float(np.sqrt(np.mean(np.array(all_ja[i]) ** 2))) if all_ja[i] else 0
             ja_max = max(abs(np.array(all_ja[i]))) if all_ja[i] else 0
-            lines.append(f"| J{i} | {jv_max:.3f} | {ja_rms:.3f} | {ja_max:.3f} |")
+            lines.append(f"| J{i+1} | {jv_max:.3f} | {ja_rms:.3f} | {ja_max:.3f} |")
         lines.append("")
 
     lines += [
@@ -720,7 +720,7 @@ def build_report(test_num: int, all_runs: list[dict], charts: dict[str, str | No
         f"1. **任务成功率:** {task_success_rate:.1f}% ({status_counts.get('Succeeded', 0)}/{n} 次运行成功)",
         f"2. **焊接精度:** 位置 RMS = {pos_st.get('rms', 0) * 1000:.2f} mm，姿态 MAE = {ori_st.get('mean', 0):.2f}°",
         f"3. **避障能力:** {n} 次运行共触发 {sum(r_counts)} 次重规划，成功率 {replan_success * 100:.1f}%",
-        f"4. **运动平滑性:** 各关节加速度 RMS 在合理范围内",
+        f"4. **运动平滑性:** 各关节加速度 RMS 在合理范围内（基于 EMA 平滑数据，α=0.3）",
         f"5. **仿真稳定性:** 任务完成时间标准差 {np.std(times):.2f}s，系统运行稳定",
         f"",
         f"---",
@@ -804,6 +804,6 @@ def analyze_test(test_num: int) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="焊接机器人仿真结果分析")
-    parser.add_argument("test", type=int, choices=[1, 2, 3, 4], help="Test 编号 1~4")
+    parser.add_argument("test", type=int, choices=[1, 2, 3, 4, 5], help="Test 编号 1~5")
     args = parser.parse_args()
     analyze_test(args.test)

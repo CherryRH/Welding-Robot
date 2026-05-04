@@ -103,8 +103,6 @@ public class SimulationStateMachine
         OnRollback?.Invoke();
     }
 
-
-
     public SimulationStateBase GetCurrentStateInstance()
     {
         states.TryGetValue(CurrentState, out var s);

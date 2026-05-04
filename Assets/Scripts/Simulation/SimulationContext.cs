@@ -81,13 +81,21 @@ public class SimulationContext : MonoBehaviour
     public WeldResultDataWriter ResultWriter = new();
 
     // ============================================================
+    // 自动运行
+    // ============================================================
+    [Tooltip("启用后自动进入Work状态并循环运行")]
+    public bool AutoRun = false;
+    [Tooltip("自动运行总次数（0表示无限循环）")]
+    public int AutoRunCount = 1;
+    [Tooltip("当前已完成次数")]
+    public int AutoRunCompleted = 0;
+
+    // ============================================================
     // 事件
     // ============================================================
     public UnityEvent<SimulationContext> BeforeSimulationUpdate;
     public UnityEvent<SimulationContext> OnSimulationUpdate;
     public UnityEvent<SimulationClock> OnClockUpdate;
-
-    public bool Success = false;
 
     // ============================================================
     // Unity 生命周期
@@ -102,6 +110,14 @@ public class SimulationContext : MonoBehaviour
     {
         await Load();
         Build();
+
+        // 自动运行：加载完成后自动进入Work状态
+        if (AutoRun)
+        {
+            AutoRunCompleted = 0;
+            UnityEngine.Debug.Log($"[AutoRun] 自动运行启动，计划运行 {AutoRunCount} 次。第 {AutoRunCompleted + 1}/{AutoRunCount} 次运行开始");
+            TryChangeState(SimulationState.Work);
+        }
     }
 
     void Update()
@@ -397,6 +413,22 @@ public class SimulationContext : MonoBehaviour
     public bool TryChangeState(SimulationState target)
     {
         return StateMachine.TryChangeState(target, this);
+    }
+
+    /// <summary>
+    /// 检查并执行自动运行循环
+    /// 在 Succeed/Fail 状态调用，决定是否自动开始下一次
+    /// 注意：Succeed/Fail 不能直接转 Work，必须先经过 Idle
+    /// </summary>
+    public bool TryAutoRun()
+    {
+        if (!AutoRun) return false;
+        AutoRunCompleted++;
+        if (AutoRunCount > 0 && AutoRunCompleted >= AutoRunCount) return false;
+        UnityEngine.Debug.Log($"[AutoRun] 第 {AutoRunCompleted + 1}/{AutoRunCount} 次运行开始");
+        Reset();
+        // Succeed/Fail → Idle → Work（状态机不允许直接跳转）
+        return TryChangeState(SimulationState.Idle);
     }
 
     public void TryInput(KeyCode commandKey, int num = -1)

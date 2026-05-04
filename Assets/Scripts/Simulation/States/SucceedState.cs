@@ -12,6 +12,9 @@ public class SucceedState : SimulationStateBase
         ctx.Clock.Stop();
         ctx.ResultWriter.SetPlanStatus(ctx.TaskState, ctx.Clock.Time);
         ctx.ResultWriter.SaveToJson();
+
+        // 自动运行：尝试开始下一次循环
+        if (ctx.TryAutoRun()) return;
     }
 
     public override void Exit(SimulationContext ctx)

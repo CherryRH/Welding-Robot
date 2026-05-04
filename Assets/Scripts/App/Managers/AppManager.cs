@@ -95,4 +95,9 @@ public class AppManager : MonoBehaviour
     {
         Debug.Log("Good bye!");
     }
+
+    public void QuitApp()
+    {
+        Application.Quit();
+    }
 }

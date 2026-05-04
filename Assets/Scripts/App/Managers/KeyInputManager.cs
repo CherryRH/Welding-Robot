@@ -59,6 +59,9 @@ public class KeyInputManager : MonoBehaviour
                 case KeyCode.O:
                     
                     break;
+                case KeyCode.V:
+                    target.WorkbenchBinder.ToggleCamera();
+                    break;
             }
         };
         reg.CommandAction = key =>
@@ -150,6 +153,7 @@ public class KeyInputManager : MonoBehaviour
         // ¼ì²â×ÖÄ¸¼ü°´ÏÂ
         if (Input.GetKeyDown(KeyCode.P)) OnLetterKeyPressed?.Invoke(KeyCode.P);
         if (Input.GetKeyDown(KeyCode.O)) OnLetterKeyPressed?.Invoke(KeyCode.O);
+        if (Input.GetKeyDown(KeyCode.V)) OnLetterKeyPressed?.Invoke(KeyCode.V);
     }
 
     private void GetCommandKeyDown()

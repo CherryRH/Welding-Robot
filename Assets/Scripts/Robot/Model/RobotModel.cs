@@ -75,8 +75,10 @@ public class RobotModel
     private Vector3 _prevTcpPos;
     private float[] _prevJointAngles;
     private float[] _prevJointVelocities;
+    private float[] _smoothedJointVelocities;
     private float _prevTime = -1f;
     [SerializeField] private float _velocityAlpha = 0.3f;
+    [SerializeField] private float _jointVelocityAlpha = 0.3f;
 
     public void Init(RobotConfig robotConfig)
     {
@@ -97,6 +99,7 @@ public class RobotModel
         _prevTcpPos = TCPPosition;
         _prevJointAngles = new float[Joints.Length];
         _prevJointVelocities = new float[Joints.Length];
+        _smoothedJointVelocities = new float[Joints.Length];
         JointVelocities = new float[Joints.Length];
         JointAccelerations = new float[Joints.Length];
 
@@ -239,17 +242,22 @@ public class RobotModel
                              + (1f - _velocityAlpha) * SmoothedTcpVelocity;
         TcpSpeed = SmoothedTcpVelocity.magnitude;
         
-        // --- 关节角速度（前向差分）---
+        // --- 关节角速度（前向差分 + EMA 平滑）---
         for (int i = 0; i < JointsCount; i++)
         {
             float delta = currentAngles[i] - _prevJointAngles[i];
-            float velocity = delta / dt;
+            float rawVelocity = delta / dt;
             
-            if (float.IsNaN(velocity) || float.IsInfinity(velocity))
+            if (float.IsNaN(rawVelocity) || float.IsInfinity(rawVelocity))
             {
-                velocity = 0f;
+                rawVelocity = 0f;
             }
-            JointVelocities[i] = velocity;
+            
+            // EMA 平滑：新值 = α * 原始值 + (1-α) * 历史平滑值
+            _smoothedJointVelocities[i] = _jointVelocityAlpha * rawVelocity
+                                         + (1f - _jointVelocityAlpha) * _smoothedJointVelocities[i];
+            
+            JointVelocities[i] = _smoothedJointVelocities[i];
         }
 
         // --- 关节角加速度（角速度的前向差分）---
@@ -286,6 +294,7 @@ public class RobotModel
             System.Array.Copy(JointAngles, _prevJointAngles, JointsCount);
         }
         System.Array.Clear(_prevJointVelocities, 0, _prevJointVelocities.Length);
+        System.Array.Clear(_smoothedJointVelocities, 0, _smoothedJointVelocities.Length);
     }
 
     /// <summary>
@@ -301,5 +310,6 @@ public class RobotModel
         System.Array.Clear(JointVelocities, 0, JointVelocities.Length);
         System.Array.Clear(JointAccelerations, 0, JointAccelerations.Length);
         System.Array.Clear(_prevJointVelocities, 0, _prevJointVelocities.Length);
+        System.Array.Clear(_smoothedJointVelocities, 0, _smoothedJointVelocities.Length);
     }
 }
