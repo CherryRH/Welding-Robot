@@ -119,6 +119,9 @@ public class ReplayState : SimulationStateBase
         {
             // 从头重新播放
             currentFrameIndex = 0;
+            // 清空焊缝
+            if (ctx.MoltenPoolVisualizer != null) ctx.MoltenPoolVisualizer.Clear();
+
             ctx.Clock.Reset();
             ctx.Clock.Start();
             Debug.Log("[Replay] 重新播放");

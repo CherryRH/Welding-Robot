@@ -26,13 +26,15 @@ public class FailState : SimulationStateBase
     public override void HandleInput(SimulationContext ctx, KeyCode key, int num)
     {
         if (ctx == null) return;
-        ctx.Reset();
+
         if (key == KeyCode.Escape || key == KeyCode.Space)
         {
+            ctx.Reset();
             ctx.TryChangeState(SimulationState.Idle);
         }
         else if (key == KeyCode.Tab)
         {
+            ctx.Reset();
             ctx.TryChangeState(SimulationState.Replay);
         }
     }

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="" width="120" alt="Welding Robot" />
+  <img src=".\Photo\app.png" alt="Welding Robot" />
 </p>
 
 <h1 align="center">Welding Robot</h1>

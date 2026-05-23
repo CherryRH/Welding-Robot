@@ -18,6 +18,8 @@
 | 任务成功率 | 100.0% (10/10) |
 | PlanStatus 分布 | Succeeded=10, Failed=0, Unfinished=0 |
 
+**表现最好焊缝:** #2（位置 RMS 最小）  |  **表现最差焊缝:** #1（位置 RMS 最大）
+
 ---
 
 ## 2. 焊接效果评估
@@ -34,7 +36,17 @@
 
 ### 2.2 误差分布直方图
 
-![误差分布](charts/error_histogram.png)
+#### 位置误差
+
+![位置误差分布](charts/error_histogram_pos.png)
+
+#### 姿态误差
+
+![姿态误差分布](charts/error_histogram_ori.png)
+
+#### 速度误差
+
+![速度误差分布](charts/error_histogram_spd.png)
 
 ### 2.3 各焊缝误差对比
 
@@ -55,13 +67,47 @@
 
 ![TCP 速度时间序列](charts/tcp_speed_timeline.png)
 
-### 2.6 焊缝 #1 详细时序
+### 2.6 焊缝 #2 详细时序（表现最好）
 
-![焊缝1详情](charts/seam_1_detail.png)
+#### 位置误差
 
-### 2.6 焊缝 #2 详细时序
+![焊缝2位置误差](charts/seam_2_pos.png)
 
-![焊缝2详情](charts/seam_2_detail.png)
+#### 姿态误差
+
+![焊缝2姿态误差](charts/seam_2_ori.png)
+
+#### TCP 速度
+
+![焊缝2TCP速度](charts/seam_2_spd.png)
+
+### 2.6 焊缝 #1 详细时序（表现最差）
+
+#### 位置误差
+
+![焊缝1位置误差](charts/seam_1_pos.png)
+
+#### 姿态误差
+
+![焊缝1姿态误差](charts/seam_1_ori.png)
+
+#### TCP 速度
+
+![焊缝1TCP速度](charts/seam_1_spd.png)
+
+### 2.7 全程误差时序
+
+#### 位置误差
+
+![全程位置误差](charts/full_error_pos.png)
+
+#### 姿态误差
+
+![全程姿态误差](charts/full_error_ori.png)
+
+#### 速度误差
+
+![全程速度误差](charts/full_error_spd.png)
 
 ---
 
@@ -79,26 +125,46 @@
 
 ### 3.2 重规划分析图
 
-![重规划分析](charts/replan_analysis.png)
+![重规划次数](charts/replan_count.png)
+
+![RRT耗时分布](charts/replan_time_histogram.png)
 
 ### 3.3 关节运动安全性
 
-| 关节 | 最大角速度 (°/s) | 角加速度 RMS (°/s²) | 最大角加速度 (°/s²) |
-|------|-------------------|---------------------|---------------------|
-| J0 | 11.735 | 32.539 | 426.771 |
-| J1 | 19.376 | 73.636 | 851.984 |
-| J2 | 25.094 | 96.926 | 1185.395 |
-| J3 | 25.679 | 45.712 | 679.997 |
-| J4 | 11.832 | 40.046 | 489.458 |
-| J5 | 16.179 | 51.497 | 817.778 |
+| 关节 | 角度最小值 (°) | 角度最大值 (°) | 最大角速度 (°/s) | 角加速度 RMS (°/s²) | 最大角加速度 (°/s²) |
+|------|----------------|----------------|-------------------|---------------------|---------------------|
+| J1 | -15.56 | -0.03 | 11.735 | 32.539 | 426.771 |
+| J2 | 0.04 | 50.59 | 19.376 | 73.636 | 851.984 |
+| J3 | -8.21 | 38.76 | 25.094 | 96.926 | 1185.395 |
+| J4 | -131.90 | -0.26 | 25.679 | 45.712 | 679.997 |
+| J5 | -67.22 | -0.12 | 11.832 | 40.046 | 489.458 |
+| J6 | 0.07 | 52.13 | 16.179 | 51.497 | 817.778 |
 
-### 3.4 关节运动时序
+### 3.4 关节运动时序（典型焊缝）
 
-![关节角度](charts/joint_angles.png)
+#### 焊缝 #2（表现最好）关节运动
 
-![关节角速度](charts/joint_velocities.png)
+![关节角度](charts/joint_angles_seam2_best.png)
 
-![关节角加速度](charts/joint_accelerations.png)
+![关节角速度](charts/joint_velocities_seam2_best.png)
+
+![关节角加速度](charts/joint_accelerations_seam2_best.png)
+
+#### 焊缝 #1（表现最差）关节运动
+
+![关节角度](charts/joint_angles_seam1_worst.png)
+
+![关节角速度](charts/joint_velocities_seam1_worst.png)
+
+![关节角加速度](charts/joint_accelerations_seam1_worst.png)
+
+### 3.5 全程关节运动时序
+
+![全程关节角度](charts/joint_angles_full.png)
+
+![全程关节角速度](charts/joint_velocities_full.png)
+
+![全程关节角加速度](charts/joint_accelerations_full.png)
 
 ---
 
@@ -123,4 +189,4 @@
 
 ---
 
-*报告生成时间: 2026-04-28 18:23:54*
+*报告生成时间: 2026-05-23 17:11:24*
